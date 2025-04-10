@@ -1,7 +1,4 @@
 
 1. npm install
 2. composer install
-3. npm run dev
-
-//open another terminal
-php artisan serve
+3. composer run dev
