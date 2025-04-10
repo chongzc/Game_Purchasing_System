@@ -1,8 +1,8 @@
 <script setup>
-import AuthProvider from '@/views/pages/authentication/AuthProvider.vue'
 import logo from '@images/logo.svg?raw'
 import authV1BottomShape from '@images/svg/auth-v1-bottom-shape.svg?url'
 import authV1TopShape from '@images/svg/auth-v1-top-shape.svg?url'
+import { useRouter } from 'vue-router'
 
 const form = ref({
   email: '',
@@ -11,6 +11,24 @@ const form = ref({
 })
 
 const isPasswordVisible = ref(false)
+const router = useRouter()
+
+// Function to handle login
+const handleLogin = () => {
+  // In a real application, you would make an API call to validate credentials
+  // For demo purposes, we'll just set a cookie and redirect
+  
+  // Set authentication cookie that expires in 1 day (or longer if "remember me" is checked)
+  const expiryDays = form.value.remember ? 30 : 1
+  const expiryDate = new Date()
+
+  expiryDate.setDate(expiryDate.getDate() + expiryDays)
+  
+  document.cookie = `user_authenticated=true; expires=${expiryDate.toUTCString()}; path=/`
+  
+  // Redirect to home page or last intended destination
+  router.push('/game-store')
+}
 </script>
 
 <template>
@@ -60,7 +78,7 @@ const isPasswordVisible = ref(false)
         </VCardText>
 
         <VCardText>
-          <VForm @submit.prevent="$router.push('/')">
+          <VForm @submit.prevent="handleLogin">
             <VRow>
               <!-- email -->
               <VCol cols="12">
@@ -124,8 +142,6 @@ const isPasswordVisible = ref(false)
                   Create an account
                 </RouterLink>
               </VCol>
-
-
             </VRow>
           </VForm>
         </VCardText>

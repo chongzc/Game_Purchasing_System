@@ -33,6 +33,17 @@
       }
     }
   }
+  
+  // Hide vertical navigation bar
+  &.hide-vertical-nav {
+    .layout-vertical-nav {
+      display: none;
+    }
+    
+    .layout-content-wrapper {
+      padding-inline-start: 0 !important;
+    }
+  }
 }
 
 // ℹ️ Let div/v-layout take full height. E.g. Email App
