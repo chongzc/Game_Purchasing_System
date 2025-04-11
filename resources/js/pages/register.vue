@@ -93,7 +93,22 @@ const isPasswordVisible = ref(false)
                   :append-inner-icon="isPasswordVisible ? 'bx-hide' : 'bx-show'"
                   @click:append-inner="isPasswordVisible = !isPasswordVisible"
                 />
+              </VCol>
 
+              <!-- confirm password -->
+              <VCol cols="12">
+                <VTextField
+                  v-model="form.confirmPassword"
+                  label="Confirm Password"
+                  autocomplete="password"
+                  placeholder="············"
+                  :type="isConfirmPasswordVisible ? 'text' : 'password'"
+                  :append-inner-icon="isConfirmPasswordVisible ? 'bx-hide' : 'bx-show'"
+                  @click:append-inner="isConfirmPasswordVisible = !isConfirmPasswordVisible"
+                />
+              </VCol>
+
+              <VCol cols="12">
                 <div class="d-flex align-center my-6">
                   <VCheckbox
                     id="privacy-policy"
@@ -133,7 +148,6 @@ const isPasswordVisible = ref(false)
                   Sign in instead
                 </RouterLink>
               </VCol>
-
             </VRow>
           </VForm>
         </VCardText>

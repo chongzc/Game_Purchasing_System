@@ -4,9 +4,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 
-
-
-// Public routes - No authentication required
 Route::get('/', function () {
     return view('application');
 })->name('home');
@@ -37,7 +34,6 @@ Route::middleware(['auth'])->group(function () {
     })->name('checkout');
 });
 
-// Catch-all route for Vue Router
 Route::get('/{any}', function () {
     return view('application');
 })->where('any', '.*');
