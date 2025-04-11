@@ -18,7 +18,7 @@ class Game extends Model
         'g_discount',
         'g_developerId',
         'g_status',
-        'g_owned',
+        'g_downloadCount',
         'g_mainImage',
         'g_exImg1',
         'g_exImg2',
@@ -40,7 +40,7 @@ class Game extends Model
 
     public function purchasedUsers()
     {
-        return $this->belongsToMany(User::class, 'purchases', 'p_gameId', 'p_user_id')
+        return $this->belongsToMany(User::class, 'purchases', 'p_gameId', 'p_userId')
                     ->withTimestamps()
                     ->withPivot('p_gameName', 'p_purchaseDate', 'p_receiptNumber');
     }
@@ -61,11 +61,11 @@ class Game extends Model
 
     public function reviews()
     {
-        return $this->hasMany(Review::class, 'r_game_id');
+        return $this->hasMany(Review::class, 'r_gameId');
     }
 
     public function categories()
     {
-        return $this->belongsToMany(GameCategory::class, 'game_category', 'gc_game_id', 'gc_category_id');
+        return $this->belongsToMany(GameCategory::class, 'game_category', 'gc_gameId', 'gc_category');
     }
 }

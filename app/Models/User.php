@@ -17,7 +17,7 @@ class User extends Authenticatable
         'u_name',
         'u_email',
         'u_password',
-        'u_age',
+        'u_birthdate',
         'u_role',
         'u_profilePic',
     ];
@@ -27,7 +27,7 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    protected function casts(): array
+    protected function casts(): array   //what is these for
     {
         return [
             'email_verified_at' => 'datetime',
@@ -66,7 +66,7 @@ class User extends Authenticatable
      */
     public function purchasedGames()
     {
-        return $this->belongsToMany(Game::class, 'purchases', 'p_user_id', 'p_gameId')
+        return $this->belongsToMany(Game::class, 'purchases', 'p_userId', 'p_gameId')
                     ->withPivot('p_purchaseDate', 'p_price')
                     ->withTimestamps();
     }
@@ -78,7 +78,7 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Game::class, 'wishlists', 'wl_userId', 'wl_gameId')
                     ->withTimestamps()
-                    ->withPivot('aaa');
+                    ->withPivot('aaa'); //apa tu 'aaa'
     }
 
     /**
@@ -96,15 +96,15 @@ class User extends Authenticatable
      */
     public function reviews()
     {
-        return $this->hasMany(Review::class, 'r_user_id', 'id');
+        return $this->hasMany(Review::class, 'r_userId', 'r_id');
     }
 
     /**
-     * Check if the user is a customer.
+     * Check if the user is a normal user.
      */
     public function isCustomer(): bool
     {
-        return $this->u_role === 'customer';
+        return $this->u_role === 'user';
     }
 
     /**

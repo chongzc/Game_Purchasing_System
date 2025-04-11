@@ -41,13 +41,13 @@ class GameLibrary extends Model
     }
 
     /**
-     * Scope a query to only include active games in the library.
+     * Scope a query to only scope with status of games in the library.
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function scopeActive($query)
+    public function scopeStatus($query, enum $status)
     {
-        return $query->where('gl_status', 'active');
+        return $query->where('gl_status', $status);
     }
 }

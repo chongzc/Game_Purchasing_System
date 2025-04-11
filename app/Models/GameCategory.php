@@ -12,8 +12,8 @@ class GameCategory extends Model
     protected $table = 'game_category';
 
     protected $fillable = [
-        'gc_game_id',
-        'gc_category_id',
+        'gc_gameId',
+        'gc_category',
     ];
 
     public function games()
