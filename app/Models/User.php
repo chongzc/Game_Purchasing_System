@@ -6,43 +6,122 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
-        'name',
-        'email',
-        'password',
+        'u_name',
+        'u_email',
+        'u_password',
+        'u_age',
+        'u_role',
+        'u_profilePic',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'date_of_birth' => 'date',
+            'age' => 'integer',
         ];
     }
+
+    /**
+     * Get the name of the email field for authentication.
+     */
+    public function getAuthIdentifierName()
+    {
+        return 'u_email';
+    }
+
+    /**
+     * Get the password for the user.
+     */
+    public function getAuthPassword()
+    {
+        return $this->u_password;
+    }
+
+    /**
+     * Get the games published by the user (for developers).
+     */
+    public function publishedGames()
+    {
+        return $this->hasMany(Game::class, 'g_developerId');
+    }
+
+    /**
+     * Get the games purchased by the user.
+     */
+    public function purchasedGames()
+    {
+        return $this->belongsToMany(Game::class, 'purchases', 'p_user_id', 'p_gameId')
+                    ->withPivot('p_purchaseDate', 'p_price')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Get user's wishlist.
+     */
+    public function wishlist()
+    {
+        return $this->belongsToMany(Game::class, 'wishlists', 'wl_userId', 'wl_gameId')
+                    ->withTimestamps()
+                    ->withPivot('aaa');
+    }
+
+    /**
+     * Get the user's game library.
+     */
+    public function gameLibrary()
+    {
+        return $this->belongsToMany(Game::class, 'game_lib', 'gl_userId', 'gl_gameId')
+                    ->withTimestamps()
+                    ->withPivot('gl_name', 'gl_status');
+    }
+
+    /**
+     * Get the reviews written by the user.
+     */
+    public function reviews()
+    {
+        return $this->hasMany(Review::class, 'r_user_id', 'id');
+    }
+
+    /**
+     * Check if the user is a customer.
+     */
+    public function isCustomer(): bool
+    {
+        return $this->u_role === 'customer';
+    }
+
+    /**
+     * Check if the user is a developer.
+     */
+    public function isDeveloper(): bool
+    {
+        return $this->u_role === 'developer';
+    }
+
+    /**
+     * Check if the user is an admin.
+     */
+    public function isAdmin(): bool
+    {
+        return $this->u_role === 'admin';
+    }
+
+    
 }
