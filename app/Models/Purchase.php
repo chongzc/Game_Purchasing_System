@@ -11,8 +11,8 @@ class Purchase extends Model
 
     protected $table = 'purchases';
 
-    protected $fillable = [
-        'p_user_id',
+    protected $fillable = [     //not sure can fillable or not sincce userId and Game should use the session
+        'p_userId',
         'p_gameName',
         'p_gameId',
         'p_purchaseDate',
@@ -21,7 +21,7 @@ class Purchase extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class, 'p_user_id');
+        return $this->belongsTo(User::class, 'p_userId');
     }
 
     public function game()
