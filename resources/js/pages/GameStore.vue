@@ -55,7 +55,7 @@
     <!-- Flash Sales Section -->
     <section class="mb-8">
       <div class="d-flex align-center mb-4">
-        <div class="bg-error py-1 px-2 mr-4">
+        <div class="bg-primary py-1 px-2 mr-4">
           <span class="text-white font-weight-bold">Flash Sales</span>
         </div>
         <div class="ml-auto d-flex align-center">
@@ -90,7 +90,7 @@
                   height="180"
                   cover
                 />
-                <div class="position-absolute top-0 start-0 bg-error px-1">
+                <div class="position-absolute bottom-0 start-0 bg-primary px-1">
                   <span class="text-white text-caption">-{{ item.discount }}%</span>
                 </div>
                 <VBtn
@@ -124,6 +124,7 @@
                 <div class="ms-auto">
                   <VRating
                     :model-value="item.rating"
+                    color
                     size="x-small"
                     readonly
                     dense
@@ -135,7 +136,7 @@
             <VCardActions>
               <VBtn
                 block
-                color="error"
+                color="primary"
                 variant="flat"
                 :to="`/games/${item.id}`"
               >
@@ -150,7 +151,7 @@
     <!-- Browse By Category -->
     <section class="mb-8">
       <div class="d-flex align-center mb-4">
-        <div class="bg-error py-1 px-2">
+        <div class="bg-primary py-1 px-2">
           <span class="text-white font-weight-bold">Browse By Category</span>
         </div>
         <div class="ml-auto">
@@ -199,12 +200,12 @@
     <!-- Best Selling Products -->
     <section class="mb-8">
       <div class="d-flex align-center mb-4">
-        <div class="bg-error py-1 px-2">
+        <div class="bg-primary py-1 px-2">
           <span class="text-white font-weight-bold">Best Selling Products</span>
         </div>
         <div class="ml-auto">
           <VBtn
-            color="error"
+            color="primary"
             variant="outlined"
             size="small"
           >
@@ -306,7 +307,7 @@
               />
             </div>
             <VBtn
-              color="success"
+              color="primary"
               class="rounded-0"
             >
               SHOP GAMING GEAR
@@ -329,7 +330,7 @@
     <!-- Explore Our Products -->
     <section class="mb-8">
       <div class="d-flex align-center mb-4">
-        <div class="bg-error py-1 px-2">
+        <div class="bg-primary py-1 px-2">
           <span class="text-white font-weight-bold">Explore Our Products</span>
         </div>
         <div class="ml-auto">
@@ -404,7 +405,7 @@
 
       <div class="text-center">
         <VBtn
-          color="error"
+          color="primary"
           variant="flat"
           class="mt-4"
         >
@@ -416,7 +417,7 @@
     <!-- New Arrivals -->
     <section class="mb-8">
       <div class="d-flex align-center mb-4">
-        <div class="bg-error py-1 px-2">
+        <div class="bg-primary py-1 px-2">
           <span class="text-white font-weight-bold">New Arrival</span>
         </div>
       </div>
