@@ -38,11 +38,11 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the name of the email field for authentication.
+     * Get the username for authentication.
      */
     public function getAuthIdentifierName()
     {
-        return 'u_email';
+        return 'u_name';
     }
 
     /**
@@ -123,5 +123,15 @@ class User extends Authenticatable
         return $this->u_role === 'admin';
     }
 
-    
+    /**
+     * Scope a query to only include users of a specific role.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $role
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeRole($query, string $role)
+    {
+        return $query->where('u_role', $role);
+    }
 }
