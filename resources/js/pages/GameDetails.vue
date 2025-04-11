@@ -301,7 +301,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
@@ -374,21 +374,21 @@ const game = ref({
       userAvatar: '/images/placeholder.jpg',
       rating: 5,
       date: 'March 2, 2022',
-      comment: 'This game is a masterpiece. The open world design is breathtaking, and the combat is challenging but rewarding. I've spent over 100 hours exploring and still finding new areas and secrets.'
+      comment: 'This game is a masterpiece. The open world design is breathtaking, and the combat is challenging but rewarding. I have spent over 100 hours exploring and still finding new areas and secrets.'
     },
     {
       userName: 'Jane Smith',
       userAvatar: '/images/placeholder.jpg',
       rating: 4,
       date: 'April 15, 2022',
-      comment: 'Incredible game with amazing atmosphere and world design. The only reason I'm not giving it 5 stars is because some of the boss fights feel a bit unfair at times.'
+      comment: 'Incredible game with amazing atmosphere and world design. The only reason I am not giving it 5 stars is because some of the boss fights feel a bit unfair at times.'
     },
     {
       userName: 'Mike Johnson',
       userAvatar: '/images/placeholder.jpg',
       rating: 5,
       date: 'May 7, 2022',
-      comment: 'One of the best games I've ever played. The freedom to explore and tackle challenges in any order makes for a truly unique experience each playthrough.'
+      comment: 'One of the best games I have ever played. The freedom to explore and tackle challenges in any order makes for a truly unique experience each playthrough.'
     }
   ]
 })
