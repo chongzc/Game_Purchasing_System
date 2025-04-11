@@ -8,10 +8,38 @@ const form = ref({
   username: '',
   email: '',
   password: '',
+  confirmPassword: '',
+  birthDate: null,
+  formattedBirthDate: '',
   privacyPolicies: false,
 })
 
 const isPasswordVisible = ref(false)
+const isConfirmPasswordVisible = ref(false)
+const birthDateMenu = ref(false)
+
+// Password match validation
+const passwordsMatch = computed(() => {
+  return !form.value.confirmPassword || form.value.password === form.value.confirmPassword
+})
+
+// Format the date to show only YYYY-MM-DD
+function formatDate(date) {
+  if (!date) return ''
+  
+  // Convert date object to YYYY-MM-DD format
+  const d = new Date(date)
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  
+  return `${year}-${month}-${day}`
+}
+
+// Update formatted date when birthDate changes
+watch(() => form.value.birthDate, newDate => {
+  form.value.formattedBirthDate = formatDate(newDate)
+})
 </script>
 
 <template>
@@ -87,13 +115,55 @@ const isPasswordVisible = ref(false)
                 <VTextField
                   v-model="form.password"
                   label="Password"
-                  autocomplete="password"
+                  autocomplete="new-password"
                   placeholder="············"
                   :type="isPasswordVisible ? 'text' : 'password'"
                   :append-inner-icon="isPasswordVisible ? 'bx-hide' : 'bx-show'"
                   @click:append-inner="isPasswordVisible = !isPasswordVisible"
                 />
+              </VCol>
+              
+              <!-- confirm password -->
+              <VCol cols="12">
+                <VTextField
+                  v-model="form.confirmPassword"
+                  label="Confirm Password"
+                  autocomplete="new-password"
+                  placeholder="············"
+                  :type="isConfirmPasswordVisible ? 'text' : 'password'"
+                  :append-inner-icon="isConfirmPasswordVisible ? 'bx-hide' : 'bx-show'"
+                  :error-messages="passwordsMatch ? undefined : 'Passwords do not match'"
+                  @click:append-inner="isConfirmPasswordVisible = !isConfirmPasswordVisible"
+                />
+              </VCol>
+              
+              <!-- Birth Date Picker with formatted date -->
+              <VCol cols="12">
+                <VMenu
+                  v-model="birthDateMenu"
+                  :close-on-content-click="false"
+                  transition="scale-transition"
+                  max-width="290px"
+                  min-width="auto"
+                >
+                  <template #activator="{ props }">
+                    <VTextField
+                      v-model="form.formattedBirthDate"
+                      label="Birth Date"
+                      readonly
+                      v-bind="props"
+                      placeholder="YYYY-MM-DD"
+                      prepend-inner-icon="bx-calendar"
+                    />
+                  </template>
+                  <VDatePicker
+                    v-model="form.birthDate"
+                    @update:model-value="birthDateMenu = false"
+                  />
+                </VMenu>
+              </VCol>
 
+              <VCol cols="12">
                 <div class="d-flex align-center my-6">
                   <VCheckbox
                     id="privacy-policy"
@@ -133,7 +203,6 @@ const isPasswordVisible = ref(false)
                   Sign in instead
                 </RouterLink>
               </VCol>
-
             </VRow>
           </VForm>
         </VCardText>
