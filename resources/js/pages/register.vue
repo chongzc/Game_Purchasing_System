@@ -1,10 +1,10 @@
 <script setup>
-import { useAuthStore } from '@/stores/auth'
 import { formatDate } from '@core/utils/formatters'
 import logo from '@images/logo.svg?raw'
 import authV1BottomShape from '@images/svg/auth-v1-bottom-shape.svg?url'
 import authV1TopShape from '@images/svg/auth-v1-top-shape.svg?url'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 const form = ref({
   username: '',
@@ -312,6 +312,7 @@ const handleRegister = async () => {
   width: 100%;
   position: relative;
   padding: 1rem;
+  overflow: hidden;
 }
 
 .auth-v1-top-shape,

@@ -183,6 +183,7 @@ const handleLogin = async () => {
   width: 100%;
   position: relative;
   padding: 1rem;
+  overflow: hidden;
 }
 
 .auth-v1-top-shape,
@@ -214,5 +215,13 @@ const handleLogin = async () => {
   max-width: 460px;
   position: relative;
   z-index: 10;
+}
+
+// Reset any margins or padding that might cause shift
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
 }
 </style>
