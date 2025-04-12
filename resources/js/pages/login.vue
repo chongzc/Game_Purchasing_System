@@ -32,21 +32,19 @@ const handleLogin = () => {
 </script>
 
 <template>
-  <div class="auth-wrapper d-flex align-center justify-center pa-4">
-    <div class="position-relative my-sm-16">
-      <!-- 👉 Top shape -->
-      <VImg
-        :src="authV1TopShape"
-        class="text-primary auth-v1-top-shape d-none d-sm-block"
-      />
-
-      <!-- 👉 Bottom shape -->
-      <VImg
-        :src="authV1BottomShape"
-        class="text-primary auth-v1-bottom-shape d-none d-sm-block"
-      />
-
-      <!-- 👉 Auth Card -->
+  <div class="auth-page">
+    <!-- 👉 Background shapes -->
+    <VImg
+      :src="authV1TopShape"
+      class="text-primary auth-v1-top-shape d-none d-sm-block"
+    />
+    <VImg
+      :src="authV1BottomShape"
+      class="text-primary auth-v1-bottom-shape d-none d-sm-block"
+    />
+    
+    <!-- 👉 Auth Card -->
+    <div class="auth-card-container">
       <VCard
         class="auth-card"
         max-width="460"
@@ -62,8 +60,8 @@ const handleLogin = () => {
               class="d-flex"
               v-html="logo"
             />
-            <h1 class="app-logo-title">
-              sneat
+            <h1>
+              Game Store
             </h1>
           </RouterLink>
         </VCardItem>
@@ -152,4 +150,55 @@ const handleLogin = () => {
 
 <style lang="scss">
 @use "@core-scss/template/pages/page-auth";
+
+// Complete styling overhaul for positioning
+.auth-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+  padding: 1rem;
+  overflow: hidden;
+}
+
+.auth-v1-top-shape,
+.auth-v1-bottom-shape {
+  position: fixed !important; // Use !important to override any possible conflicting styles
+  z-index: 0;
+}
+
+.auth-v1-top-shape {
+  top: 0;
+  left: 0;
+}
+
+.auth-v1-bottom-shape {
+  bottom: 0;
+  right: 0;
+}
+
+.auth-card-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  z-index: 10;
+  position: relative;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 460px;
+  position: relative;
+  z-index: 10;
+}
+
+// Reset any margins or padding that might cause shift
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
 </style>

@@ -1,4 +1,5 @@
 <script setup>
+import { formatDate } from '@core/utils/formatters'
 import logo from '@images/logo.svg?raw'
 import authV1BottomShape from '@images/svg/auth-v1-bottom-shape.svg?url'
 import authV1TopShape from '@images/svg/auth-v1-top-shape.svg?url'
@@ -10,8 +11,11 @@ const form = ref({
   confirmPassword: '',
   birthDate: null,
   formattedBirthDate: '',
+  role: 'User', // default role
   privacyPolicies: false,
 })
+
+const roles = ['User', 'Developer']
 
 const isPasswordVisible = ref(false)
 const isConfirmPasswordVisible = ref(false)
@@ -22,19 +26,6 @@ const passwordsMatch = computed(() => {
   return !form.value.confirmPassword || form.value.password === form.value.confirmPassword
 })
 
-// Format the date to show only YYYY-MM-DD
-function formatDate(date) {
-  if (!date) return ''
-  
-  // Convert date object to YYYY-MM-DD format
-  const d = new Date(date)
-  const year = d.getFullYear()
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  
-  return `${year}-${month}-${day}`
-}
-
 // Update formatted date when birthDate changes
 watch(() => form.value.birthDate, newDate => {
   form.value.formattedBirthDate = formatDate(newDate)
@@ -42,21 +33,19 @@ watch(() => form.value.birthDate, newDate => {
 </script>
 
 <template>
-  <div class="auth-wrapper d-flex align-center justify-center pa-4">
-    <div class="position-relative my-sm-16">
-      <!-- 👉 Top shape -->
-      <VImg
-        :src="authV1TopShape"
-        class="text-primary auth-v1-top-shape d-none d-sm-block"
-      />
-
-      <!-- 👉 Bottom shape -->
-      <VImg
-        :src="authV1BottomShape"
-        class="text-primary auth-v1-bottom-shape d-none d-sm-block"
-      />
-
-      <!-- 👉 Auth card -->
+  <div class="auth-page">
+    <!-- 👉 Background shapes -->
+    <VImg
+      :src="authV1TopShape"
+      class="text-primary auth-v1-top-shape d-none d-sm-block"
+    />
+    <VImg
+      :src="authV1BottomShape"
+      class="text-primary auth-v1-bottom-shape d-none d-sm-block"
+    />
+    
+    <!-- 👉 Auth Card -->
+    <div class="auth-card-container">
       <VCard
         class="auth-card"
         max-width="460"
@@ -72,8 +61,8 @@ watch(() => form.value.birthDate, newDate => {
               class="d-flex"
               v-html="logo"
             />
-            <h1 class="app-logo-title">
-              sneat
+            <h1>
+              Game Store
             </h1>
           </RouterLink>
         </VCardItem>
@@ -151,8 +140,7 @@ watch(() => form.value.birthDate, newDate => {
                       label="Birth Date"
                       readonly
                       v-bind="props"
-                      placeholder="YYYY-MM-DD"
-                      prepend-inner-icon="bx-calendar"
+                      placeholder="Your Birth Date"
                     />
                   </template>
                   <VDatePicker
@@ -160,6 +148,15 @@ watch(() => form.value.birthDate, newDate => {
                     @update:model-value="birthDateMenu = false"
                   />
                 </VMenu>
+              </VCol>
+
+              <!-- Role -->
+              <VCol cols="12">
+                <VSelect
+                  v-model="form.role"
+                  :items="roles"
+                  placeholder="Select Role"
+                />
               </VCol>
 
               <VCol cols="12">
@@ -212,4 +209,53 @@ watch(() => form.value.birthDate, newDate => {
 
 <style lang="scss">
 @use "@core-scss/template/pages/page-auth";
+
+.auth-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+  padding: 1rem;
+  overflow: hidden;
+}
+
+.auth-v1-top-shape,
+.auth-v1-bottom-shape {
+  position: fixed !important;
+  z-index: 0;
+}
+
+.auth-v1-top-shape {
+  top: 0;
+  left: 0;
+}
+
+.auth-v1-bottom-shape {
+  bottom: 0;
+  right: 0;
+}
+
+.auth-card-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  z-index: 10;
+  position: relative;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 460px;
+  position: relative;
+  z-index: 10;
+}
+
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
 </style>

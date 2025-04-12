@@ -74,7 +74,7 @@ export const routes = [
       },
       {
         path: 'register',
-        component: () => import('@/pages/register.vue'),
+        component: () => import('@/pages/Register.vue'),
       },
       {
         path: '/:pathMatch(.*)*',
