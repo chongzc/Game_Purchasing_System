@@ -9,22 +9,28 @@ class Review extends Model
 {
     use HasFactory;
 
+    protected $primaryKey = 'r_id';
+
     protected $table = 'reviews';
 
     protected $fillable = [
-        'r_user_id',
-        'r_game_id',
-        'r_review_text',
-        'r_rating',
+        'r_userId',
+        'r_gameId',
+        'r_reviewText',
+        'r_rating'
+    ];
+
+    protected $casts = [
+        'r_rating' => 'integer'
     ];
 
     public function user()
     {
-        return $this->belongsTo(User::class, 'r_user_id');
+        return $this->belongsTo(User::class, 'r_userId', 'u_id');
     }
 
     public function game()
     {
-        return $this->belongsTo(Game::class, 'r_game_id');
+        return $this->belongsTo(Game::class, 'r_gameId', 'g_id');
     }
 }

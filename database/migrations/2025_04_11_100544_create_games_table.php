@@ -28,8 +28,8 @@ return new class extends Migration
             $table->string('g_language')->nullable();
             $table->timestamps();
             
-            // Add foreign key constraint if needed
-            $table->foreign('g_developerId')->references('id')->on('developers')->onDelete('cascade');
+            // Update foreign key to reference users table instead of developers
+            $table->foreign('g_developerId')->references('u_id')->on('users')->onDelete('cascade');
         });
     }
 

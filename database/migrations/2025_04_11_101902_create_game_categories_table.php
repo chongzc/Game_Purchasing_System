@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('game_categories', function (Blueprint $table) {
@@ -18,14 +15,10 @@ return new class extends Migration
             $table->string('gc_category');
             $table->timestamps();
 
-            // Foreign keys
             $table->foreign('gc_gameId')->references('g_id')->on('games')->onDelete('cascade');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('game_categories');
