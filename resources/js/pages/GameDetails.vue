@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="game-details">
     <VBreadcrumbs
       :items="breadcrumbs"
       class="pa-0 mb-4"
@@ -636,4 +636,9 @@ const viewGame = id => {
 .cursor-pointer {
   cursor: pointer;
 }
-</style> 
+
+.game-details {
+  max-width: 1920px;
+  margin: 0 auto;
+}
+</style>

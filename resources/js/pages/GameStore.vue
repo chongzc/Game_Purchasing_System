@@ -739,4 +739,9 @@ const flashSales = ref([
   text-align: center;
   min-width: 40px;
 }
+
+.game-store {
+  max-width: 1920px;
+  margin: 0 auto;
+}
 </style>
