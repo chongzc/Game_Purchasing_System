@@ -1,5 +1,5 @@
 <template>
-  <div class="game-store">
+  <div>
     <!-- Header Banner with Game Promotion -->
     <VCard class="mb-6">
       <VCarousel
@@ -739,4 +739,4 @@ const flashSales = ref([
   text-align: center;
   min-width: 40px;
 }
-</style> 
+</style>

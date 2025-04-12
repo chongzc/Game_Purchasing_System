@@ -4,38 +4,26 @@
     <span class="d-flex align-center">
       &copy;
       {{ new Date().getFullYear() }}
-      Made With
-      <VIcon
-        icon="bx-heart"
-        color="error"
-        size="1.25rem"
-        class="mx-1"
-      />
-      By <a
-        href="https://themeselection.com"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="text-primary ms-1"
-      >ThemeSelection</a>
+      Game Store. All rights reserved.
     </span>
     <!-- 👉 Footer: right content -->
     <span class="d-md-flex gap-x-4 text-primary d-none">
       <a
-        href="https://themeselection.com/license/"
-        target="noopener noreferrer"
-      >License</a>
+        href="/terms"
+        target="_self"
+      >Terms of Service</a>
       <a
-        href="https://themeselection.com/"
-        target="noopener noreferrer"
-      >More Themes</a>
+        href="/privacy"
+        target="_self"
+      >Privacy Policy</a>
       <a
-        href="https://demos.themeselection.com/sneat-vuetify-vuejs-admin-template/documentation/guide/laravel-integration/folder-structure.html"
-        target="noopener noreferrer"
-      >Documentation</a>
+        href="/about"
+        target="_self"
+      >About Us</a>
       <a
-        href="https://themeselection.com/support/"
-        target="noopener noreferrer"
-      >Support</a>
+        href="/contact"
+        target="_self"
+      >Contact Support</a>
     </span>
   </div>
 </template>
