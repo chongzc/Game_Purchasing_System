@@ -1,10 +1,10 @@
 <script setup>
+import { useAuthStore } from '@/stores/auth'
 import { formatDate } from '@core/utils/formatters'
 import logo from '@images/logo.svg?raw'
 import authV1BottomShape from '@images/svg/auth-v1-bottom-shape.svg?url'
 import authV1TopShape from '@images/svg/auth-v1-top-shape.svg?url'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
 
 const form = ref({
   username: '',
@@ -346,10 +346,5 @@ const handleRegister = async () => {
   z-index: 10;
 }
 
-body, html {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  overflow: hidden;
-}
+// Remove the global body/html styles that were causing scrolling issues
 </style>

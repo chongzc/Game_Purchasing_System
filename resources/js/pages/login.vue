@@ -216,12 +216,4 @@ const handleLogin = async () => {
   position: relative;
   z-index: 10;
 }
-
-// Reset any margins or padding that might cause shift
-body, html {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  overflow: hidden;
-}
 </style>
