@@ -66,5 +66,4 @@ public/mockServiceWorker.js
 !.env.example
 auto-imports.d.ts
 auto-imports.d.ts
-components.d.ts
 .eslintrc-auto-import.json
