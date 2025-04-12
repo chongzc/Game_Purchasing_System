@@ -23,19 +23,6 @@ watch(() => display, () => {
       ]"
     >
       <div class="navbar-content">
-        <!-- Mobile menu toggle -->
-        <IconBtn
-          id="vertical-nav-toggle-btn"
-          class="ms-n3 me-2 d-inline-block d-md-none"
-          @click="sidebar = !sidebar"
-        >
-          <VIcon
-            size="26"
-            icon="mdi-menu"
-            color="rgba(var(--v-theme-on-surface))"
-          />
-        </IconBtn>
-
         <!-- Logo and nav items -->
         <div class="d-flex align-center">
           <VAppBarTitle class="me-6">
@@ -48,7 +35,7 @@ watch(() => display, () => {
           </VAppBarTitle>
 
           <!-- Desktop navigation -->
-          <div class="text-base align-center d-none d-md-flex">
+          <div class="text-base align-center d-flex">
             <RouterLink
               v-for="(item, index) in headerNavigationItems"
               :key="index"
@@ -68,37 +55,6 @@ watch(() => display, () => {
         </div>
       </div>
     </VAppBar>
-
-    <!-- Mobile Navigation Drawer -->
-    <VNavigationDrawer
-      v-model="sidebar"
-      temporary
-      location="left"
-      class="ps-0 pb-0"
-    >
-      <!-- Close button -->
-      <IconBtn
-        id="navigation-drawer-close-btn"
-        @click="sidebar = false"
-      >
-        <VIcon icon="mdi-close" />
-      </IconBtn>
-
-      <!-- Mobile Links -->
-      <VList>
-        <VListItem
-          v-for="(item, index) in navigationItems"
-          :key="index"
-          :to="item.to"
-          :value="item.title"
-          @click="sidebar = false"
-        >
-          <template #title>
-            {{ item.title }}
-          </template>
-        </VListItem>
-      </VList>
-    </VNavigationDrawer>
   </div>
 </template>
 
@@ -148,12 +104,5 @@ watch(() => display, () => {
   background-color: rgb(var(--v-theme-surface)) !important;
   border-color: transparent;
   transition: all 0.2s ease-in-out;
-}
-
-#navigation-drawer-close-btn {
-  position: absolute;
-  cursor: pointer;
-  inset-block-start: 0.5rem;
-  inset-inline-end: 1rem;
 }
 </style>

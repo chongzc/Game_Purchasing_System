@@ -1,8 +1,9 @@
 <script setup>
+import { useAuthStore } from '@/stores/auth'
 import logo from '@images/logo.svg?raw'
 import authV1BottomShape from '@images/svg/auth-v1-bottom-shape.svg?url'
 import authV1TopShape from '@images/svg/auth-v1-top-shape.svg?url'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 const form = ref({
   email: '',
@@ -12,22 +13,27 @@ const form = ref({
 
 const isPasswordVisible = ref(false)
 const router = useRouter()
+const route = useRoute()
+const authStore = useAuthStore()
 
 // Function to handle login
-const handleLogin = () => {
-  // In a real application, you would make an API call to validate credentials
-  // For demo purposes, we'll just set a cookie and redirect
-  
-  // Set authentication cookie that expires in 1 day (or longer if "remember me" is checked)
-  const expiryDays = form.value.remember ? 30 : 1
-  const expiryDate = new Date()
-
-  expiryDate.setDate(expiryDate.getDate() + expiryDays)
-  
-  document.cookie = `user_authenticated=true; expires=${expiryDate.toUTCString()}; path=/`
-  
-  // Redirect to home page or last intended destination
-  router.push('/game-store')
+const handleLogin = async () => {
+  try {
+    await authStore.login(form.value.email, form.value.password, form.value.remember)
+    
+    // Redirect based on user role or previous intended route
+    const redirectPath = route.query.redirect 
+      ? route.query.redirect 
+      : authStore.isAdmin 
+        ? '/admin-dashboard' 
+        : authStore.isDeveloper 
+          ? '/developer-dashboard' 
+          : '/game-store'
+    
+    router.push(redirectPath)
+  } catch (error) {
+    console.error('Login error:', error)
+  }
 }
 </script>
 
@@ -78,12 +84,28 @@ const handleLogin = () => {
         <VCardText>
           <VForm @submit.prevent="handleLogin">
             <VRow>
+              <!-- Error message alert -->
+              <VCol
+                v-if="authStore.error"
+                cols="12"
+              >
+                <VAlert
+                  density="compact"
+                  type="error"
+                  variant="tonal"
+                  closable
+                  @click:close="authStore.error = null"
+                >
+                  {{ authStore.error }}
+                </VAlert>
+              </VCol>
+              
               <!-- email -->
               <VCol cols="12">
                 <VTextField
                   v-model="form.email"
                   autofocus
-                  label="Email or Username"
+                  label="Email"
                   type="email"
                   placeholder="johndoe@email.com"
                 />
@@ -96,7 +118,7 @@ const handleLogin = () => {
                   label="Password"
                   placeholder="············"
                   :type="isPasswordVisible ? 'text' : 'password'"
-                  autocomplete="password"
+                  autocomplete="current-password"
                   :append-inner-icon="isPasswordVisible ? 'bx-hide' : 'bx-show'"
                   @click:append-inner="isPasswordVisible = !isPasswordVisible"
                 />
@@ -120,6 +142,7 @@ const handleLogin = () => {
                 <VBtn
                   block
                   type="submit"
+                  :loading="authStore.loading"
                 >
                   Login
                 </VBtn>
@@ -192,13 +215,5 @@ const handleLogin = () => {
   max-width: 460px;
   position: relative;
   z-index: 10;
-}
-
-// Reset any margins or padding that might cause shift
-body, html {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  overflow: hidden;
 }
 </style>

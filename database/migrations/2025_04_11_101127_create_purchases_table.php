@@ -19,6 +19,7 @@ return new class extends Migration
             $table->decimal('p_purchasePrice', 8, 2);
             $table->timestamp('p_purchaseDate')->useCurrent();
             $table->string('p_receiptNumber',191)->unique();
+            $table->timestamps();
             
             // Foreign keys
             $table->foreign('p_userId')->references('u_id')->on('users')->onDelete('cascade');

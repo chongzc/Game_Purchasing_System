@@ -13,36 +13,49 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
+    protected $primaryKey = 'u_id';
+
     protected $fillable = [
         'u_name',
         'u_email',
         'u_password',
-        'u_age',
+        'u_birthdate',
         'u_role',
         'u_profilePic',
     ];
 
     protected $hidden = [
-        'password',
+        'u_password',
         'remember_token',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'date_of_birth' => 'date',
-            'age' => 'integer',
-        ];
-    }
+    protected $casts = [
+        'u_birthdate' => 'date',
+        'u_password' => 'hashed',
+    ];
 
     /**
-     * Get the username for authentication.
+     * Get the email column for authentication.
      */
     public function getAuthIdentifierName()
     {
-        return 'u_name';
+        return 'u_id';
+    }
+
+    /**
+     * Get the username for login.
+     */
+    public function getUsernameAttribute()
+    {
+        return $this->u_name;
+    }
+
+    /**
+     * Get the email for login.
+     */
+    public function getEmailAttribute()
+    {
+        return $this->u_email;
     }
 
     /**
@@ -58,7 +71,7 @@ class User extends Authenticatable
      */
     public function publishedGames()
     {
-        return $this->hasMany(Game::class, 'g_developerId');
+        return $this->hasMany(Game::class, 'g_developerId', 'u_id');
     }
 
     /**
@@ -66,8 +79,8 @@ class User extends Authenticatable
      */
     public function purchasedGames()
     {
-        return $this->belongsToMany(Game::class, 'purchases', 'p_user_id', 'p_gameId')
-                    ->withPivot('p_purchaseDate', 'p_price')
+        return $this->belongsToMany(Game::class, 'purchases', 'p_userId', 'p_gameId')
+                    ->withPivot(['p_purchaseDate', 'p_purchasePrice', 'p_receiptNumber'])
                     ->withTimestamps();
     }
 
@@ -76,9 +89,9 @@ class User extends Authenticatable
      */
     public function wishlist()
     {
-        return $this->belongsToMany(Game::class, 'wishlists', 'wl_userId', 'wl_gameId')
-                    ->withTimestamps()
-                    ->withPivot('aaa');
+        return $this->belongsToMany(Game::class, 'wishlist', 'wl_userId', 'wl_gameId')
+                    ->withPivot('wl_name')
+                    ->withTimestamps();
     }
 
     /**
@@ -86,9 +99,9 @@ class User extends Authenticatable
      */
     public function gameLibrary()
     {
-        return $this->belongsToMany(Game::class, 'game_lib', 'gl_userId', 'gl_gameId')
-                    ->withTimestamps()
-                    ->withPivot('gl_name', 'gl_status');
+        return $this->belongsToMany(Game::class, 'user_lib', 'ul_userId', 'ul_gameId')
+                    ->withPivot(['ul_name', 'ul_status'])
+                    ->withTimestamps();
     }
 
     /**
@@ -96,7 +109,7 @@ class User extends Authenticatable
      */
     public function reviews()
     {
-        return $this->hasMany(Review::class, 'r_user_id', 'id');
+        return $this->hasMany(Review::class, 'r_userId', 'u_id');
     }
 
     /**
@@ -104,7 +117,7 @@ class User extends Authenticatable
      */
     public function isCustomer(): bool
     {
-        return $this->u_role === 'customer';
+        return $this->u_role === 'user';
     }
 
     /**

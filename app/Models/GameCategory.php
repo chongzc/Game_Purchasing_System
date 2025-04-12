@@ -9,15 +9,16 @@ class GameCategory extends Model
 {
     use HasFactory;
 
-    protected $table = 'game_category';
+    protected $table = 'game_categories';
 
     protected $fillable = [
-        'gc_game_id',
-        'gc_category_id',
+        'gc_gameName',
+        'gc_gameId',
+        'gc_category'
     ];
 
     public function games()
     {
-        return $this->belongsToMany(Game::class, 'game_category', 'gc_category_id', 'gc_game_id');
+        return $this->belongsToMany(Game::class, 'game_categories', 'gc_category', 'gc_gameId');
     }
 }

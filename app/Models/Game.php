@@ -40,7 +40,7 @@ class Game extends Model
 
     public function purchasedUsers()
     {
-        return $this->belongsToMany(User::class, 'purchases', 'p_gameId', 'p_user_id')
+        return $this->belongsToMany(User::class, 'purchases', 'p_gameId', 'p_userId')
                     ->withTimestamps()
                     ->withPivot('p_gameName', 'p_purchaseDate', 'p_receiptNumber');
     }
@@ -54,9 +54,9 @@ class Game extends Model
 
     public function libraryUsers()
     {
-        return $this->belongsToMany(User::class, 'game_lib', 'gl_gameId', 'gl_userId')
+        return $this->belongsToMany(User::class, 'user_lib', 'ul_gameId', 'ul_userId')
                     ->withTimestamps()
-                    ->withPivot('gl_name', 'gl_status');
+                    ->withPivot(['ul_name', 'ul_status']);
     }
 
     public function reviews()
@@ -66,6 +66,6 @@ class Game extends Model
 
     public function categories()
     {
-        return $this->belongsToMany(GameCategory::class, 'game_category', 'gc_game_id', 'gc_category_id');
+        return $this->hasMany(GameCategory::class, 'gc_gameId');
     }
 }

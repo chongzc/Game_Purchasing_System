@@ -1,8 +1,10 @@
 <script setup>
+import { useAuthStore } from '@/stores/auth'
 import { formatDate } from '@core/utils/formatters'
 import logo from '@images/logo.svg?raw'
 import authV1BottomShape from '@images/svg/auth-v1-bottom-shape.svg?url'
 import authV1TopShape from '@images/svg/auth-v1-top-shape.svg?url'
+import { useRouter } from 'vue-router'
 
 const form = ref({
   username: '',
@@ -11,15 +13,22 @@ const form = ref({
   confirmPassword: '',
   birthDate: null,
   formattedBirthDate: '',
-  role: 'User', // default role
+  role: 'user', // default role
   privacyPolicies: false,
 })
 
-const roles = ['User', 'Developer']
+const roles = [
+  { title: 'User', value: 'user' },
+  { title: 'Developer', value: 'developer' },
+]
 
 const isPasswordVisible = ref(false)
 const isConfirmPasswordVisible = ref(false)
 const birthDateMenu = ref(false)
+const errorMessages = ref({})
+
+const router = useRouter()
+const authStore = useAuthStore()
 
 // Password match validation
 const passwordsMatch = computed(() => {
@@ -30,6 +39,64 @@ const passwordsMatch = computed(() => {
 watch(() => form.value.birthDate, newDate => {
   form.value.formattedBirthDate = formatDate(newDate)
 })
+
+// Form validation
+const isFormValid = computed(() => {
+  return (
+    form.value.username &&
+    form.value.email &&
+    form.value.password &&
+    form.value.confirmPassword &&
+    passwordsMatch.value &&
+    form.value.birthDate &&
+    form.value.privacyPolicies
+  )
+})
+
+// Handle registration
+const handleRegister = async () => {
+  if (!isFormValid.value) {
+    errorMessages.value = {
+      form: 'Please fill in all required fields',
+    }
+    
+    return
+  }
+  
+  try {
+    errorMessages.value = {}
+    
+    const userData = {
+      username: form.value.username,
+      email: form.value.email,
+      password: form.value.password,
+      birthDate: form.value.birthDate,
+      role: form.value.role,
+    }
+    
+    await authStore.register(userData)
+    
+    // Redirect based on role
+    if (authStore.isAdmin) {
+      router.push('/admin-dashboard')
+    } else if (authStore.isDeveloper) {
+      router.push('/developer-dashboard')
+    } else {
+      router.push('/game-store')
+    }
+    
+  } catch (error) {
+    console.error('Registration error:', error)
+    
+    if (error.response?.data?.errors) {
+      errorMessages.value = error.response.data.errors
+    } else {
+      errorMessages.value = {
+        form: authStore.error || 'An error occurred during registration',
+      }
+    }
+  }
+}
 </script>
 
 <template>
@@ -72,13 +139,29 @@ watch(() => form.value.birthDate, newDate => {
             Adventure starts here 🚀
           </h4>
           <p class="mb-0">
-            Make your app management easy and fun!
+            Create your account and start gaming!
           </p>
         </VCardText>
 
         <VCardText>
-          <VForm @submit.prevent="$router.push('/')">
+          <VForm @submit.prevent="handleRegister">
             <VRow>
+              <!-- General error message -->
+              <VCol
+                v-if="errorMessages.form"
+                cols="12"
+              >
+                <VAlert
+                  density="compact"
+                  type="error"
+                  variant="tonal"
+                  closable
+                  @click:close="errorMessages.form = ''"
+                >
+                  {{ errorMessages.form }}
+                </VAlert>
+              </VCol>
+              
               <!-- Username -->
               <VCol cols="12">
                 <VTextField
@@ -86,6 +169,7 @@ watch(() => form.value.birthDate, newDate => {
                   autofocus
                   label="Username"
                   placeholder="Johndoe"
+                  :error-messages="errorMessages.username"
                 />
               </VCol>
               <!-- email -->
@@ -95,6 +179,7 @@ watch(() => form.value.birthDate, newDate => {
                   label="Email"
                   type="email"
                   placeholder="johndoe@email.com"
+                  :error-messages="errorMessages.email"
                 />
               </VCol>
 
@@ -107,6 +192,7 @@ watch(() => form.value.birthDate, newDate => {
                   placeholder="············"
                   :type="isPasswordVisible ? 'text' : 'password'"
                   :append-inner-icon="isPasswordVisible ? 'bx-hide' : 'bx-show'"
+                  :error-messages="errorMessages.password"
                   @click:append-inner="isPasswordVisible = !isPasswordVisible"
                 />
               </VCol>
@@ -141,6 +227,7 @@ watch(() => form.value.birthDate, newDate => {
                       readonly
                       v-bind="props"
                       placeholder="Your Birth Date"
+                      :error-messages="errorMessages.birthDate"
                     />
                   </template>
                   <VDatePicker
@@ -155,7 +242,11 @@ watch(() => form.value.birthDate, newDate => {
                 <VSelect
                   v-model="form.role"
                   :items="roles"
+                  label="Role"
+                  item-title="title"
+                  item-value="value"
                   placeholder="Select Role"
+                  :error-messages="errorMessages.role"
                 />
               </VCol>
 
@@ -165,6 +256,7 @@ watch(() => form.value.birthDate, newDate => {
                     id="privacy-policy"
                     v-model="form.privacyPolicies"
                     inline
+                    :error="!form.privacyPolicies && errorMessages.form"
                   />
                   <VLabel
                     for="privacy-policy"
@@ -181,6 +273,8 @@ watch(() => form.value.birthDate, newDate => {
                 <VBtn
                   block
                   type="submit"
+                  :loading="authStore.loading"
+                  :disabled="!isFormValid"
                 >
                   Sign up
                 </VBtn>
@@ -252,10 +346,5 @@ watch(() => form.value.birthDate, newDate => {
   z-index: 10;
 }
 
-body, html {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  overflow: hidden;
-}
+// Remove the global body/html styles that were causing scrolling issues
 </style>

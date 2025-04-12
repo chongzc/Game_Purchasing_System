@@ -10,22 +10,29 @@ class Purchase extends Model
     use HasFactory;
 
     protected $table = 'purchases';
+    protected $primaryKey = 'p_id';
 
     protected $fillable = [
-        'p_user_id',
+        'p_userId',
         'p_gameName',
         'p_gameId',
         'p_purchaseDate',
+        'p_purchasePrice',
         'p_receiptNumber',
+    ];
+
+    protected $casts = [
+        'p_purchaseDate' => 'datetime',
+        'p_purchasePrice' => 'float'
     ];
 
     public function user()
     {
-        return $this->belongsTo(User::class, 'p_user_id');
+        return $this->belongsTo(User::class, 'p_userId', 'u_id');
     }
 
     public function game()
     {
-        return $this->belongsTo(Game::class, 'p_gameId');
+        return $this->belongsTo(Game::class, 'p_gameId', 'g_id');
     }
 }
