@@ -739,4 +739,4 @@ const flashSales = ref([
   text-align: center;
   min-width: 40px;
 }
-</style> 
+</style>
