@@ -35,11 +35,27 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the username for authentication.
+     * Get the email column for authentication.
      */
     public function getAuthIdentifierName()
     {
-        return 'u_name';
+        return 'u_id';
+    }
+
+    /**
+     * Get the username for login.
+     */
+    public function getUsernameAttribute()
+    {
+        return $this->u_name;
+    }
+
+    /**
+     * Get the email for login.
+     */
+    public function getEmailAttribute()
+    {
+        return $this->u_email;
     }
 
     /**

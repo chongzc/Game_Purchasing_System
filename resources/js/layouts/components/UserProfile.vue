@@ -1,9 +1,39 @@
 <script setup>
+import { useAuthStore } from '@/stores/auth'
 import avatar1 from '@images/avatars/avatar-1.png'
+import { useRouter } from 'vue-router'
+
+const authStore = useAuthStore()
+const router = useRouter()
+
+const logout = async () => {
+  await authStore.logout()
+  router.push('/game-store')
+}
+
+const getUserRoleText = role => {
+  if (role === 'admin') return 'Administrator'
+  if (role === 'developer') return 'Developer'
+  
+  return 'User'
+}
 </script>
 
 <template>
+  <!-- Not logged in: Show sign in button -->
+  <div v-if="!authStore.isLoggedIn">
+    <VBtn
+      to="/login"
+      color="primary"
+      variant="flat"
+    >
+      Sign In
+    </VBtn>
+  </div>
+  
+  <!-- Logged in: Show user profile -->
   <VBadge
+    v-else
     dot
     location="bottom right"
     offset-x="3"
@@ -16,7 +46,14 @@ import avatar1 from '@images/avatars/avatar-1.png'
       color="primary"
       variant="tonal"
     >
-      <VImg :src="avatar1" />
+      <VImg
+        v-if="authStore.user?.u_profilePic"
+        :src="authStore.user.u_profilePic"
+      />
+      <VImg
+        v-else
+        :src="avatar1"
+      />
 
       <!-- SECTION Menu -->
       <VMenu
@@ -41,21 +78,31 @@ import avatar1 from '@images/avatars/avatar-1.png'
                     color="primary"
                     variant="tonal"
                   >
-                    <VImg :src="avatar1" />
+                    <VImg
+                      v-if="authStore.user?.u_profilePic"
+                      :src="authStore.user.u_profilePic"
+                    />
+                    <VImg
+                      v-else
+                      :src="avatar1"
+                    />
                   </VAvatar>
                 </VBadge>
               </VListItemAction>
             </template>
 
             <VListItemTitle class="font-weight-semibold">
-              John Doe
+              {{ authStore.user?.u_name || 'User' }}
             </VListItemTitle>
-            <VListItemSubtitle>Admin</VListItemSubtitle>
+            <VListItemSubtitle>{{ getUserRoleText(authStore.userRole) }}</VListItemSubtitle>
           </VListItem>
           <VDivider class="my-2" />
 
           <!-- 👉 Profile -->
-          <VListItem link>
+          <VListItem
+            to="/account-settings"
+            link
+          >
             <template #prepend>
               <VIcon
                 class="me-2"
@@ -67,8 +114,48 @@ import avatar1 from '@images/avatars/avatar-1.png'
             <VListItemTitle>Profile</VListItemTitle>
           </VListItem>
 
+          <!-- 👉 Role-specific items -->
+          <!-- Admin items -->
+          <template v-if="authStore.isAdmin">
+            <VListItem
+              to="/admin-dashboard"
+              link
+            >
+              <template #prepend>
+                <VIcon
+                  class="me-2"
+                  icon="bx-dashboard"
+                  size="22"
+                />
+              </template>
+
+              <VListItemTitle>Admin Dashboard</VListItemTitle>
+            </VListItem>
+          </template>
+
+          <!-- Developer items -->
+          <template v-if="authStore.isDeveloper">
+            <VListItem
+              to="/developer-dashboard"
+              link
+            >
+              <template #prepend>
+                <VIcon
+                  class="me-2"
+                  icon="bx-code-alt"
+                  size="22"
+                />
+              </template>
+
+              <VListItemTitle>Developer Dashboard</VListItemTitle>
+            </VListItem>
+          </template>
+
           <!-- 👉 Settings -->
-          <VListItem link>
+          <VListItem
+            to="/account-settings"
+            link
+          >
             <template #prepend>
               <VIcon
                 class="me-2"
@@ -80,37 +167,14 @@ import avatar1 from '@images/avatars/avatar-1.png'
             <VListItemTitle>Settings</VListItemTitle>
           </VListItem>
 
-          <!-- 👉 Pricing -->
-          <VListItem link>
-            <template #prepend>
-              <VIcon
-                class="me-2"
-                icon="bx-dollar"
-                size="22"
-              />
-            </template>
-
-            <VListItemTitle>Pricing</VListItemTitle>
-          </VListItem>
-
-          <!-- 👉 FAQ -->
-          <VListItem link>
-            <template #prepend>
-              <VIcon
-                class="me-2"
-                icon="bx-help-circle"
-                size="22"
-              />
-            </template>
-
-            <VListItemTitle>FAQ</VListItemTitle>
-          </VListItem>
-
           <!-- Divider -->
           <VDivider class="my-2" />
 
           <!-- 👉 Logout -->
-          <VListItem to="/login">
+          <VListItem
+            link
+            @click="logout"
+          >
             <template #prepend>
               <VIcon
                 class="me-2"
