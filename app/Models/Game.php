@@ -11,6 +11,13 @@ class Game extends Model
 
     protected $table = 'games';
 
+    /**
+     * The primary key associated with the table.
+     *
+     * @var string
+     */
+    protected $primaryKey = 'g_id';
+
     protected $fillable = [
         'g_title',
         'g_description',
@@ -33,30 +40,38 @@ class Game extends Model
         'g_overallRate' => 'float',
     ];
 
+    /**
+     * Get the developer that publish this game.
+     */
     public function developer()
     {
         return $this->belongsTo(User::class, 'g_developerId');
     }
 
-    public function purchasedUsers()
+    /**
+     * Get the user that owns this game.
+     */
+    public function purchasedByUsers()
     {
         return $this->belongsToMany(User::class, 'purchases', 'p_gameId', 'p_userId')
                     ->withTimestamps()
                     ->withPivot('p_gameName', 'p_purchaseDate', 'p_receiptNumber');
     }
 
-    public function wishlistedUsers()
+    /**
+     * Get users who have wishlisted this game.
+     */
+    public function wishlistedByUsers()
     {
-        return $this->belongsToMany(User::class, 'wishlist', 'wl_gameId', 'wl_userId')
-                    ->withTimestamps()
-                    ->withPivot('wl_name');
+        return $this->belongsToMany(User::class, 'wishlists', 'wl_gameId', 'wl_userId')
+                    ->withTimestamps();
     }
 
     public function libraryUsers()
     {
-        return $this->belongsToMany(User::class, 'game_lib', 'gl_gameId', 'gl_userId')
+        return $this->belongsToMany(User::class, 'user_lib', 'ul_gameId', 'ul_userId')
                     ->withTimestamps()
-                    ->withPivot('gl_name', 'gl_status');
+                    ->withPivot('ul_status');
     }
 
     public function reviews()
@@ -66,6 +81,6 @@ class Game extends Model
 
     public function categories()
     {
-        return $this->belongsToMany(GameCategory::class, 'game_category', 'gc_gameId', 'gc_category');
+        return $this->belongsToMany(GameCategory::class, 'game_category', 'gc_gameId', 'gc_id');
     }
 }

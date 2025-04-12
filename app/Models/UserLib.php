@@ -15,6 +15,13 @@ class UserLibrary extends Model
     protected $table = 'user_lib';
 
     /**
+     * The primary key associated with the table.
+     *
+     * @var string
+     */
+    protected $primaryKey = 'ul_id';
+
+    /**
      * The attributes that are mass assignable.
      */
     protected $fillable = [
@@ -27,7 +34,7 @@ class UserLibrary extends Model
     /**
      * Get the user that owns this game library entry.
      */
-    public function user()
+    public function userGameLibrary()
     {
         return $this->belongsTo(User::class, 'ul_userId');
     }
@@ -35,9 +42,9 @@ class UserLibrary extends Model
     /**
      * Get the game associated with this game library entry.
      */
-    public function game()
+    public function gameInLibrary()
     {
-        return $this->belongsTo(Game::class, 'ul_gameId', 'ul_id');
+        return $this->belongsTo(Game::class, 'ul_gameId', 'g_id');
     }
 
     /**
@@ -46,7 +53,7 @@ class UserLibrary extends Model
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function scopeStatus($query, enum $status)
+    public function scopeStatus($query, string $status)
     {
         return $query->where('ul_status', $status);
     }

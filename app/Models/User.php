@@ -13,6 +13,11 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
+    /**
+     * Primary key associated with the table.
+     */
+    protected $primaryKey = 'u_id';
+
     protected $fillable = [
         'u_name',
         'u_email',
@@ -42,7 +47,7 @@ class User extends Authenticatable
      */
     public function getAuthIdentifierName()
     {
-        return 'u_name';
+        return $this->u_email;
     }
 
     /**
@@ -66,7 +71,7 @@ class User extends Authenticatable
      */
     public function purchasedGames()
     {
-        return $this->belongsToMany(Game::class, 'purchases', 'p_userId', 'p_gameId')
+        return $this->belongsToMany(Purchase::class, 'purchases', 'p_userId', 'p_gameId')
                     ->withPivot('p_purchaseDate', 'p_price')
                     ->withTimestamps();
     }
@@ -77,8 +82,7 @@ class User extends Authenticatable
     public function wishlist()
     {
         return $this->belongsToMany(Game::class, 'wishlists', 'wl_userId', 'wl_gameId')
-                    ->withTimestamps()
-                    ->withPivot('aaa'); //apa tu 'aaa'
+                    ->withTimestamps();
     }
 
     /**
@@ -96,7 +100,7 @@ class User extends Authenticatable
      */
     public function reviews()
     {
-        return $this->hasMany(Review::class, 'r_userId', 'r_id');
+        return $this->hasMany(Review::class, 'r_userId', 'u_id');
     }
 
     /**

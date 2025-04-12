@@ -11,7 +11,9 @@ class Purchase extends Model
 
     protected $table = 'purchases';
 
-    protected $fillable = [     //not sure can fillable or not sincce userId and Game should use the session
+    protected $primaryKey = 'p_id';
+
+    protected $fillable = [
         'p_userId',
         'p_gameName',
         'p_gameId',

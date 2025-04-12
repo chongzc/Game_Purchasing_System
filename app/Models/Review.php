@@ -11,6 +11,8 @@ class Review extends Model
 
     protected $table = 'reviews';
 
+    protected $primaryKey = 'r_id';
+
     protected $fillable = [
         'r_userId',
         'r_gameId',
@@ -18,13 +20,20 @@ class Review extends Model
         'r_rating',
     ];
 
-    public function user()
+    /**
+     * Get the user that owns this review.
+     */
+    public function userReview()
     {
-        return $this->belongsTo(User::class, 'r_userId');
+        return $this->belongsTo(User::class, 'r_userId', 'u_id');
     }
 
-    public function game()
+    /**
+     * Get the game associated with this review.
+     *
+     */
+    public function gameReviewed()
     {
-        return $this->belongsTo(Game::class, 'r_gameId');
+        return $this->belongsTo(Game::class, 'r_gameId', 'g_id');
     }
 }
