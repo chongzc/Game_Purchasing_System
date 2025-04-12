@@ -18,6 +18,6 @@ class GameCategory extends Model
 
     public function games()
     {
-        return $this->belongsToMany(Game::class, 'game_category', 'gc_category', 'gc_gameId');
+        return $this->belongsToMany(Game::class, 'game_category', 'gc_category_id', 'gc_game_id');
     }
 }
