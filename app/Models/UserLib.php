@@ -5,23 +5,23 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class GameLibrary extends Model
+class UserLibrary extends Model
 {
     use HasFactory;
 
     /**
      * The table associated with the model.
      */
-    protected $table = 'game_lib';
+    protected $table = 'user_lib';
 
     /**
      * The attributes that are mass assignable.
      */
     protected $fillable = [
-        'gl_name',
-        'gl_gameId',
-        'gl_userId',
-        'gl_status',
+        'ul_name',
+        'ul_gameId',
+        'ul_userId',
+        'ul_status',
     ];
 
     /**
@@ -29,7 +29,7 @@ class GameLibrary extends Model
      */
     public function user()
     {
-        return $this->belongsTo(User::class, 'gl_userId');
+        return $this->belongsTo(User::class, 'ul_userId');
     }
 
     /**
@@ -37,7 +37,7 @@ class GameLibrary extends Model
      */
     public function game()
     {
-        return $this->belongsTo(Game::class, 'gl_gameId', 'g_id');
+        return $this->belongsTo(Game::class, 'ul_gameId', 'ul_id');
     }
 
     /**
@@ -48,6 +48,6 @@ class GameLibrary extends Model
      */
     public function scopeStatus($query, enum $status)
     {
-        return $query->where('gl_status', $status);
+        return $query->where('ul_status', $status);
     }
 }
