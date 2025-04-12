@@ -1,5 +1,5 @@
 <template>
-  <div class="game-store">
+  <div>
     <!-- Header Banner with Game Promotion -->
     <VCard class="mb-6">
       <VCarousel
@@ -738,10 +738,5 @@ const flashSales = ref([
 .countdown-item {
   text-align: center;
   min-width: 40px;
-}
-
-.game-store {
-  max-width: 1920px;
-  margin: 0 auto;
 }
 </style>
