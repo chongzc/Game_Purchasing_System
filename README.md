@@ -1,7 +1,12 @@
 
 1. npm install
 2. composer install
-3. composer run dev
+3. cp .env.example .env
+4. php artisan key:generate
+5. php artisan migrate
+6. php artisan migrate:fresh
+7. php artisan db:seed
+8. npm run dev
+9. php artisan serve
 
 
-php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"
