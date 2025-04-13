@@ -1,26 +1,23 @@
 <script setup>
 import UserProfile from '@/layouts/components/UserProfile.vue'
-import { headerNavigationItems } from '@/utils/header-navigation'
+import { useAuthStore } from '@/stores/auth'
+import { getHeaderNavigationItems } from '@/utils/header-navigation'
 import { useWindowScroll } from '@vueuse/core'
+import { computed } from 'vue'
 import { useDisplay } from 'vuetify'
 
 const display = useDisplay()
 const { y } = useWindowScroll()
-const sidebar = ref(false)
-
-watch(() => display, () => {
-  return display.mdAndUp ? sidebar.value = false : sidebar.value
-}, { deep: true })
+const auth = useAuthStore()
+const headerNavigationItems = computed(() => getHeaderNavigationItems(auth.user))
 </script>
 
 <template>
   <div class="front-page-navbar">
     <VAppBar
-      :color="$vuetify.theme.current.dark ? 'rgba(var(--v-theme-surface),0.85)' : 'rgba(var(--v-theme-surface), 0.85)'"
+      color="rgba(var(--v-theme-surface),0.85)"
       class="elevation-0"
-      :class="[ 
-        y > 10 ? 'app-bar-scrolled' : [$vuetify.theme.current.dark ? 'app-bar-dark' : 'app-bar-light']
-      ]"
+      :class="[y > 10 ? 'app-bar-scrolled' : 'app-bar-dark']"
     >
       <div class="navbar-content">
         <!-- Logo and nav items -->
@@ -86,12 +83,6 @@ watch(() => display, () => {
   padding: 0 16px;
   display: flex;
   align-items: center;
-}
-
-.app-bar-light {
-  border: 2px solid rgba(var(--v-theme-surface), 0.1);
-  background-color: rgba(var(--v-theme-surface), 0.85);
-  transition: all 0.2s ease-in-out;
 }
 
 .app-bar-dark {
