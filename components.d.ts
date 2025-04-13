@@ -16,7 +16,6 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     ThemeSwitcher: typeof import('./resources/js/@core/components/ThemeSwitcher.vue')['default']
-    VueApexCharts: typeof import('vue3-apexcharts')['default']
     WelcomeMessage: typeof import('./resources/js/components/WelcomeMessage.vue')['default']
   }
 }
