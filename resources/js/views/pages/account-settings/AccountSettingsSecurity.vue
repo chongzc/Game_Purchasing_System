@@ -1,10 +1,14 @@
 <script setup>
+import { useUserProfileStore } from '@/stores/userProfile'
+
+const userProfileStore = useUserProfileStore()
+
 const isCurrentPasswordVisible = ref(false)
 const isNewPasswordVisible = ref(false)
 const isConfirmPasswordVisible = ref(false)
-const currentPassword = ref('12345678')
-const newPassword = ref('87654321')
-const confirmPassword = ref('87654321')
+const currentPassword = ref('')
+const newPassword = ref('')
+const confirmPassword = ref('')
 
 const passwordRequirements = [
   'Minimum 8 characters long - the more, the better',
@@ -114,6 +118,27 @@ const recentDevices = [
     },
   },
 ]
+
+const handlePasswordChange = async () => {
+  if (newPassword.value !== confirmPassword.value) {
+    userProfileStore.error = 'New password and confirm password do not match'
+    return
+  }
+
+  try {
+    await userProfileStore.updatePassword({
+      currentPassword: currentPassword.value,
+      newPassword: newPassword.value
+    })
+
+    // Clear form on success
+    currentPassword.value = ''
+    newPassword.value = ''
+    confirmPassword.value = ''
+  } catch (error) {
+    console.error('Error updating password:', error)
+  }
+}
 </script>
 
 <template>
@@ -121,7 +146,7 @@ const recentDevices = [
     <!-- SECTION: Change Password -->
     <VCol cols="12">
       <VCard title="Change Password">
-        <VForm>
+        <VForm @submit.prevent="handlePasswordChange">
           <VCardText>
             <!-- 👉 Current Password -->
             <VRow>
@@ -202,15 +227,48 @@ const recentDevices = [
 
           <!-- 👉 Action Buttons -->
           <VCardText class="d-flex flex-wrap gap-4">
-            <VBtn>Save changes</VBtn>
+            <VBtn 
+              type="submit"
+              :loading="userProfileStore.loading"
+            >
+              Save changes
+            </VBtn>
 
             <VBtn
               type="reset"
               color="secondary"
               variant="tonal"
+              @click="() => {
+                currentPassword = ''
+                newPassword = ''
+                confirmPassword = ''
+              }"
             >
               Reset
             </VBtn>
+          </VCardText>
+
+          <!-- Success/Error Messages -->
+          <VCardText v-if="userProfileStore.success || userProfileStore.error">
+            <VAlert
+              v-if="userProfileStore.success"
+              type="success"
+              variant="tonal"
+              closable
+              class="mt-4"
+            >
+              {{ userProfileStore.success }}
+            </VAlert>
+
+            <VAlert
+              v-if="userProfileStore.error"
+              type="error"
+              variant="tonal"
+              closable
+              class="mt-4"
+            >
+              {{ userProfileStore.error }}
+            </VAlert>
           </VCardText>
         </VForm>
       </VCard>
