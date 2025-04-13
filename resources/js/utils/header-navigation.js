@@ -4,6 +4,10 @@ export const getHeaderNavigationItems = user => {
       title: 'Game Store',
       to: '/game-store',
     },
+    {
+      title: 'Browse',
+      to: '/browse-games',
+    },
   ]
 
   if (user) {

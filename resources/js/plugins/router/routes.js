@@ -9,6 +9,10 @@ export const routes = [
         component: () => import('@/pages/GameStore.vue'),
       },
       {
+        path: 'browse-games',
+        component: () => import('@/pages/browse-games.vue'),
+      },
+      {
         path: 'games/:id',
         component: () => import('@/pages/GameDetails.vue'),
       },
