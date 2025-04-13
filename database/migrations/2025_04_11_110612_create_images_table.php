@@ -13,12 +13,15 @@ return new class extends Migration
     {
         Schema::create('images', function (Blueprint $table) {
             $table->id('img_id'); // Primary key
-            $table->binary('img_file'); // Column to store the file (binary data)
             $table->string('img_filename'); // Name of the file (e.g., 'profile-picture.png')
             $table->string('img_filetype'); // Type of the file (e.g., 'jpg', 'png', etc.)
+            $table->binary('img_file')->nullable(); // File content as MEDIUMBLOB - now as fourth column
             $table->unsignedBigInteger('img_filesize')->nullable(); // Size of the file in bytes
             $table->timestamps(); // For created_at and updated_at timestamps
         });
+        
+        // Modify the binary column to be MEDIUMBLOB since Laravel's binary() defaults to BLOB
+        DB::statement("ALTER TABLE images MODIFY img_file MEDIUMBLOB");
     }
 
     /**

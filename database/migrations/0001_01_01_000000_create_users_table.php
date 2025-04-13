@@ -18,7 +18,12 @@ return new class extends Migration
             $table->string('u_password');
             $table->date('u_birthdate')->nullable();
             $table->enum('u_role', ['admin', 'developer', 'user'])->default('user');
-            $table->string('u_profilePic')->nullable();
+            // Using the foreign key instead of string column
+            $table->unsignedBigInteger('u_profileImageId')->nullable();
+            $table->foreign('u_profileImageId')
+                  ->references('img_id')
+                  ->on('images')
+                  ->onDelete('set null');
             $table->rememberToken();
             $table->timestamps();
         });
