@@ -5,7 +5,7 @@ export const getHeaderNavigationItems = user => {
       to: '/game-store',
     },
     {
-      title: 'Game Store',
+      title: 'Browse',
       to: '/browse-games',
     },
   ]
