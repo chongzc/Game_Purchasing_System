@@ -15,6 +15,7 @@ const accountDataLocal = ref({
 
 const refInputEl = ref()
 const isAccountDeactivated = ref(false)
+const birthDateMenu = ref(false)
 
 const resetForm = () => {
   accountDataLocal.value = {
@@ -25,10 +26,17 @@ const resetForm = () => {
   }
 }
 
+const formatBirthDate = date => {
+  if (!date) return ''
+
+  return new Date(date).toISOString().split('T')[0]
+}
+
 const changeAvatar = event => {
   const file = event.target.files[0]
   if (file) {
     const fileReader = new FileReader()
+
     fileReader.onload = () => {
       if (typeof fileReader.result === 'string')
         accountDataLocal.value.avatarImg = fileReader.result
@@ -46,7 +54,7 @@ const handleSubmit = async () => {
     }
 
     if (refInputEl.value?.files?.[0]) {
-      formData.profile_picture = refInputEl.value.files[0]
+      formData.profilePicture = refInputEl.value.files[0]
     }
 
     await userProfileStore.updateProfile(formData)
@@ -123,7 +131,10 @@ const handleSubmit = async () => {
 
         <VCardText>
           <!-- Form -->
-          <VForm @submit.prevent="handleSubmit" class="mt-6">
+          <VForm
+            class="mt-6"
+            @submit.prevent="handleSubmit"
+          >
             <VRow>
               <!-- Name -->
               <VCol
@@ -155,11 +166,28 @@ const handleSubmit = async () => {
                 cols="12"
                 md="6"
               >
-                <VTextField
-                  v-model="accountDataLocal.birthdate"
-                  label="Birth Date"
-                  type="date"
-                />
+                <VMenu
+                  v-model="birthDateMenu"
+                  :close-on-content-click="false"
+                  transition="scale-transition"
+                  max-width="290px"
+                  min-width="auto"
+                >
+                  <template #activator="{ props }">
+                    <VTextField
+                      v-model="accountDataLocal.birthdate"
+                      label="Birth Date"
+                      prepend-inner-icon="bx-calendar"
+                      readonly
+                      v-bind="props"
+                      :model-value="formatBirthDate(accountDataLocal.birthdate)"
+                    />
+                  </template>
+                  <VDatePicker
+                    v-model="accountDataLocal.birthdate"
+                    @update:model-value="birthDateMenu = false"
+                  />
+                </VMenu>
               </VCol>
             </VRow>
 
