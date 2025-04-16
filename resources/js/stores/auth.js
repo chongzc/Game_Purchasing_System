@@ -100,32 +100,5 @@ export const useAuthStore = defineStore('auth', {
         localStorage.removeItem('user')
       }
     },
-    
-    async getUserData() {
-      this.loading = true
-      this.error = null
-      
-      try {
-        const response = await axios.get('/api/user/profile')
-        
-        // Log the response
-        console.log('getUserData response:', response.data)
-        
-        // Update the user data in the store and localStorage
-        if (response.data) {
-          this.user = response.data
-          this.isLoggedIn = true
-          localStorage.setItem('user', JSON.stringify(response.data))
-        }
-        
-        return response.data
-      } catch (error) {
-        this.error = error.response?.data?.message || 'Failed to fetch user data'
-        console.error('Error fetching user data:', error)
-        throw error
-      } finally {
-        this.loading = false
-      }
-    },
   },
 }) 
