@@ -10,7 +10,6 @@ declare module 'vue' {
     CardStatisticsHorizontal: typeof import('./resources/js/@core/components/cards/CardStatisticsHorizontal.vue')['default']
     CardStatisticsVertical: typeof import('./resources/js/@core/components/cards/CardStatisticsVertical.vue')['default']
     CardStatisticsWithImages: typeof import('./resources/js/@core/components/cards/CardStatisticsWithImages.vue')['default']
-    DisplayPicture: typeof import('./resources/js/components/DisplayPicture.vue')['default']
     ErrorHeader: typeof import('./resources/js/components/ErrorHeader.vue')['default']
     Header: typeof import('./resources/js/components/Header.vue')['default']
     MoreBtn: typeof import('./resources/js/@core/components/MoreBtn.vue')['default']
@@ -18,7 +17,7 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     ThemeSwitcher: typeof import('./resources/js/@core/components/ThemeSwitcher.vue')['default']
-    UserPhoto: typeof import('./resources/js/components/UserPhoto.vue')['default']
+    VueApexCharts: typeof import('vue3-apexcharts')['default']
     WelcomeMessage: typeof import('./resources/js/components/WelcomeMessage.vue')['default']
   }
 }

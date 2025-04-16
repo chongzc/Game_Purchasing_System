@@ -23,10 +23,8 @@ class UserController extends Controller
      */
     public function profile()
     {
-        // Try to get authenticated user
         $user = Auth::user();
         
-        // For demo/assignment - if user not authenticated, get the first user
         if (!$user) {
             $user = User::first();
             if (!$user) {
@@ -35,11 +33,14 @@ class UserController extends Controller
         }
 
         return response()->json([
-            'name' => $user->u_name,
-            'email' => $user->u_email,
-            'birthdate' => $user->u_birthdate,
-            'role' => $user->u_role,
-            'profilePic' => $user->u_profileImagePath ? asset($user->u_profileImagePath) : null
+            'u_id' => $user->u_id,
+            'u_name' => $user->u_name,
+            'u_email' => $user->u_email,
+            'u_birthdate' => $user->u_birthdate,
+            'u_role' => $user->u_role,
+            'u_profileImagePath' => $user->u_profileImagePath,
+            'created_at' => $user->created_at,
+            'updated_at' => $user->updated_at
         ]);
     }
 
@@ -92,6 +93,15 @@ class UserController extends Controller
                     if (!File::exists($uploadPath)) {
                         File::makeDirectory($uploadPath, 0777, true);
                         \Log::info('Created directory: ' . $uploadPath);
+                    }
+                    
+                    // Delete previous profile picture if it exists
+                    if ($user->u_profileImagePath) {
+                        $previousImagePath = public_path($user->u_profileImagePath);
+                        if (File::exists($previousImagePath)) {
+                            File::delete($previousImagePath);
+                            \Log::info('Deleted previous profile picture: ' . $previousImagePath);
+                        }
                     }
                     
                     // Generate unique filename
@@ -277,5 +287,26 @@ class UserController extends Controller
             });
 
         return response()->json($purchases);
+    }
+
+    /**
+     * Get all users from the database
+     */
+    public function getUsers()
+    {
+        $users = User::select('u_id', 'u_name', 'u_email', 'u_role', 'u_profileImagePath', 'created_at')
+            ->get()
+            ->map(function ($user) {
+                return [
+                    'id' => $user->u_id,
+                    'name' => $user->u_name,
+                    'email' => $user->u_email,
+                    'role' => $user->u_role,
+                    'profilePic' => $user->u_profileImagePath ? asset($user->u_profileImagePath) : null,
+                    'created_at' => $user->created_at
+                ];
+            });
+
+        return response()->json($users);
     }
 }

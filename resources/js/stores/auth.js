@@ -40,7 +40,7 @@ export const useAuthStore = defineStore('auth', {
         this.error = error.response?.data?.message || 'Login failed'
         throw error
       } finally {
-        this.loading = false
+        this.loading = false  
       }
     },
     
@@ -101,30 +101,27 @@ export const useAuthStore = defineStore('auth', {
       }
     },
     
-    async getUser() {
+    async getUserData() {
       this.loading = true
+      this.error = null
       
       try {
-        // Get user profile data with profile image
-        const response = await axios.get('/api/profile')
+        const response = await axios.get('/api/user/profile')
         
-        // Update user data
-        if (this.user) {
-          this.user = {
-            ...this.user,
-            u_name: response.data.name,
-            u_email: response.data.email,
-            u_birthdate: response.data.birthdate,
-            u_role: response.data.role,
-            profilePic: response.data.profilePic,
-          }
-          
-          localStorage.setItem('user', JSON.stringify(this.user))
+        // Log the response
+        console.log('getUserData response:', response.data)
+        
+        // Update the user data in the store and localStorage
+        if (response.data) {
+          this.user = response.data
+          this.isLoggedIn = true
+          localStorage.setItem('user', JSON.stringify(response.data))
         }
         
-        return this.user
+        return response.data
       } catch (error) {
-        console.error('Get user error:', error)
+        this.error = error.response?.data?.message || 'Failed to fetch user data'
+        console.error('Error fetching user data:', error)
         throw error
       } finally {
         this.loading = false

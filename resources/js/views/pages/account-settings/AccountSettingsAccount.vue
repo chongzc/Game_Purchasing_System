@@ -37,6 +37,9 @@ const birthDateMenu = ref(false)
 const isSubmitting = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
+const users = ref([])
+const isLoadingUsers = ref(false)
+const usersFetchError = ref('')
 
 const resetForm = () => {
   accountDataLocal.value = {
@@ -75,6 +78,42 @@ const getCsrfToken = () => {
     ?.split('=')[1]
   
   return csrfToken ? decodeURIComponent(csrfToken) : null
+}
+
+// Function to fetch all users
+const fetchUsers = async () => {
+  isLoadingUsers.value = true
+  usersFetchError.value = ''
+  users.value = []
+  
+  try {
+    // Get CSRF token
+    const csrfToken = getCsrfToken()
+    
+    const response = await fetch('/api/users', {
+      method: 'GET',
+      credentials: 'same-origin',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'application/json',
+        ...(csrfToken ? { 'X-XSRF-TOKEN': csrfToken } : {}),
+      },
+    })
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch users: ${response.status} ${response.statusText}`)
+    }
+    
+    const data = await response.json()
+
+    users.value = data
+    successMessage.value = 'Users fetched successfully'
+  } catch (error) {
+    console.error('Error fetching users:', error)
+    usersFetchError.value = error.message || 'Failed to fetch users'
+  } finally {
+    isLoadingUsers.value = false
+  }
 }
 
 const handleSubmit = async () => {
@@ -314,6 +353,78 @@ const handleSubmit = async () => {
               </VAlert>
             </VCol>
           </VForm>
+        </VCardText>
+      </VCard>
+    </VCol>
+
+    <!-- Users section -->
+    <VCol cols="12">
+      <VCard title="Users List">
+        <VCardText>
+          <VBtn
+            color="info"
+            :loading="isLoadingUsers"
+            class="mb-4"
+            @click="fetchUsers"
+          >
+            <VIcon
+              icon="bx-user"
+              class="me-2"
+            />
+            Fetch Users
+          </VBtn>
+
+          <VAlert
+            v-if="usersFetchError"
+            type="error"
+            variant="tonal"
+            closable
+            class="mb-4"
+          >
+            {{ usersFetchError }}
+          </VAlert>
+
+          <VTable v-if="users.length > 0">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Profile Picture</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="user in users"
+                :key="user.id"
+              >
+                <td>{{ user.id }}</td>
+                <td>{{ user.name }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.role }}</td>
+                <td>
+                  <VAvatar size="40">
+                    <VImg
+                      :src="user.profilePic || avatar1"
+                      alt="User Avatar"
+                    />
+                  </VAvatar>
+                </td>
+              </tr>
+            </tbody>
+          </VTable>
+          <div
+            v-else-if="!isLoadingUsers"
+            class="text-center py-4"
+          >
+            <p class="text-subtitle-1">
+              No users data available
+            </p>
+            <p class="text-body-2">
+              Click the button above to fetch users
+            </p>
+          </div>
         </VCardText>
       </VCard>
     </VCol>

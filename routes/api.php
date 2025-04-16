@@ -26,6 +26,7 @@ Route::get('/user', [LoginController::class, 'getUser']);
 // Profile routes - no authentication required for assignment/demo
 Route::get('/profile', [UserController::class, 'profile']);
 Route::post('/profile', [UserController::class, 'updateProfile']);
+Route::get('/users', [UserController::class, 'getUsers']);
 
 // Get authenticated user
 Route::middleware('auth:sanctum')->get('/auth/user', function (Request $request) {

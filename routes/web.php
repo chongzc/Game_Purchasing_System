@@ -58,7 +58,7 @@ Route::middleware(['auth'])->group(function () {
     });
 });
 
-// Catch-all route for Vue Router
+// This is the main entry point for the SPA
 Route::get('/{any}', function () {
     return view('application');
-})->where('any', '.*');
+})->where('any', '^(?!api).*$');

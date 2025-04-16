@@ -1,11 +1,20 @@
 <template>
   <div>
-    <VBreadcrumbs :items="breadcrumbs" class="pa-0 mb-6"></VBreadcrumbs>
+    <VBreadcrumbs
+      :items="breadcrumbs"
+      class="pa-0 mb-6"
+    />
     
     <div class="d-flex align-center mb-6">
-      <h1 class="text-h3 font-weight-bold">Game Management</h1>
+      <h1 class="text-h3 font-weight-bold">
+        Game Management
+      </h1>
       <VSpacer />
-      <VBtn color="primary" prepend-icon="bx-plus" @click="openAddGameDialog">
+      <VBtn
+        color="primary"
+        prepend-icon="bx-plus"
+        @click="openAddGameDialog"
+      >
         Add New Game
       </VBtn>
     </div>
@@ -14,7 +23,10 @@
     <VCard class="mb-6">
       <VCardText>
         <VRow>
-          <VCol cols="12" md="4">
+          <VCol
+            cols="12"
+            md="4"
+          >
             <VTextField
               v-model="filters.search"
               label="Search games"
@@ -26,7 +38,10 @@
               @update:model-value="applyFilters"
             />
           </VCol>
-          <VCol cols="12" md="2">
+          <VCol
+            cols="12"
+            md="2"
+          >
             <VSelect
               v-model="filters.category"
               label="Category"
@@ -37,7 +52,10 @@
               @update:model-value="applyFilters"
             />
           </VCol>
-          <VCol cols="12" md="2">
+          <VCol
+            cols="12"
+            md="2"
+          >
             <VSelect
               v-model="filters.status"
               label="Status"
@@ -48,7 +66,10 @@
               @update:model-value="applyFilters"
             />
           </VCol>
-          <VCol cols="12" md="2">
+          <VCol
+            cols="12"
+            md="2"
+          >
             <VSelect
               v-model="filters.priceRange"
               label="Price Range"
@@ -59,7 +80,10 @@
               @update:model-value="applyFilters"
             />
           </VCol>
-          <VCol cols="12" md="2">
+          <VCol
+            cols="12"
+            md="2"
+          >
             <VBtn 
               color="primary" 
               variant="outlined" 
@@ -100,14 +124,21 @@
           
           <!-- Title Column -->
           <template #item.title="{ item }">
-            <div class="font-weight-medium">{{ item.title }}</div>
-            <div class="text-caption text-disabled">ID: {{ item.id }}</div>
+            <div class="font-weight-medium">
+              {{ item.title }}
+            </div>
+            <div class="text-caption text-disabled">
+              ID: {{ item.id }}
+            </div>
           </template>
           
           <!-- Price Column -->
           <template #item.price="{ item }">
             <div>${{ item.price.toFixed(2) }}</div>
-            <div v-if="item.originalPrice" class="text-caption text-decoration-line-through text-disabled">
+            <div
+              v-if="item.originalPrice"
+              class="text-caption text-decoration-line-through text-disabled"
+            >
               ${{ item.originalPrice.toFixed(2) }}
             </div>
           </template>
@@ -176,12 +207,21 @@
     </VCard>
     
     <!-- Add/Edit Game Dialog -->
-    <VDialog v-model="gameDialog.show" max-width="800">
+    <VDialog
+      v-model="gameDialog.show"
+      max-width="800"
+    >
       <VCard>
         <VCardTitle class="d-flex align-center pa-4">
-          <h3 class="text-h5 font-weight-bold">{{ gameDialog.isEdit ? 'Edit Game' : 'Add New Game' }}</h3>
+          <h3 class="text-h5 font-weight-bold">
+            {{ gameDialog.isEdit ? 'Edit Game' : 'Add New Game' }}
+          </h3>
           <VSpacer />
-          <VBtn icon variant="text" @click="gameDialog.show = false">
+          <VBtn
+            icon
+            variant="text"
+            @click="gameDialog.show = false"
+          >
             <VIcon icon="bx-x" />
           </VBtn>
         </VCardTitle>
@@ -191,7 +231,10 @@
         <VCardText class="pa-4">
           <VForm @submit.prevent="saveGame">
             <VRow>
-              <VCol cols="12" md="8">
+              <VCol
+                cols="12"
+                md="8"
+              >
                 <VTextField
                   v-model="gameDialog.form.title"
                   label="Game Title"
@@ -199,7 +242,10 @@
                   required
                 />
               </VCol>
-              <VCol cols="12" md="4">
+              <VCol
+                cols="12"
+                md="4"
+              >
                 <VSelect
                   v-model="gameDialog.form.status"
                   label="Status"
@@ -211,7 +257,10 @@
             </VRow>
             
             <VRow>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VSelect
                   v-model="gameDialog.form.category"
                   label="Category"
@@ -220,7 +269,10 @@
                   required
                 />
               </VCol>
-              <VCol cols="12" md="3">
+              <VCol
+                cols="12"
+                md="3"
+              >
                 <VTextField
                   v-model="gameDialog.form.price"
                   label="Price ($)"
@@ -229,7 +281,10 @@
                   required
                 />
               </VCol>
-              <VCol cols="12" md="3">
+              <VCol
+                cols="12"
+                md="3"
+              >
                 <VTextField
                   v-model="gameDialog.form.originalPrice"
                   label="Original Price ($)"
@@ -240,7 +295,10 @@
             </VRow>
             
             <VRow>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField
                   v-model="gameDialog.form.developer"
                   label="Developer"
@@ -248,7 +306,10 @@
                   required
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField
                   v-model="gameDialog.form.releaseDate"
                   label="Release Date"
@@ -298,9 +359,14 @@
     </VDialog>
     
     <!-- Delete Confirmation Dialog -->
-    <VDialog v-model="deleteDialog.show" max-width="500">
+    <VDialog
+      v-model="deleteDialog.show"
+      max-width="500"
+    >
       <VCard>
-        <VCardTitle class="text-h5 pa-4">Delete Game</VCardTitle>
+        <VCardTitle class="text-h5 pa-4">
+          Delete Game
+        </VCardTitle>
         
         <VCardText>
           Are you sure you want to delete <strong>{{ deleteDialog.game?.title }}</strong>? This action cannot be undone.
@@ -330,7 +396,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -340,17 +406,17 @@ const breadcrumbs = ref([
   {
     title: 'Home',
     disabled: false,
-    to: '/'
+    to: '/',
   },
   {
     title: 'Admin',
     disabled: false,
-    to: '/admin'
+    to: '/admin',
   },
   {
     title: 'Game Management',
-    disabled: true
-  }
+    disabled: true,
+  },
 ])
 
 // Table headers
@@ -362,7 +428,7 @@ const headers = [
   { title: 'Developer', key: 'developer' },
   { title: 'Status', key: 'status' },
   { title: 'Release Date', key: 'releaseDate' },
-  { title: 'Actions', key: 'actions', sortable: false, align: 'center' }
+  { title: 'Actions', key: 'actions', sortable: false, align: 'center' },
 ]
 
 // Pagination
@@ -371,12 +437,13 @@ const itemsPerPage = ref(10)
 // Filter options
 const categoryOptions = ['All', 'Action', 'Adventure', 'RPG', 'Strategy', 'Sports', 'Simulation']
 const statusOptions = ['All', 'Active', 'Upcoming', 'On Sale', 'Inactive']
+
 const priceRangeOptions = [
   { title: 'All Prices', value: 'all' },
   { title: 'Under $20', value: 'under-20' },
   { title: '$20 - $40', value: '20-40' },
   { title: '$40 - $60', value: '40-60' },
-  { title: 'Over $60', value: 'over-60' }
+  { title: 'Over $60', value: 'over-60' },
 ]
 
 // Filters
@@ -384,7 +451,7 @@ const filters = ref({
   search: '',
   category: 'All',
   status: 'All',
-  priceRange: 'all'
+  priceRange: 'all',
 })
 
 // Games data (in a real app, this would be fetched from an API)
@@ -399,7 +466,7 @@ const games = ref([
     developer: 'FromSoftware Inc.',
     releaseDate: '2022-02-25',
     status: 'Active',
-    image: '/images/placeholder.jpg'
+    image: '/images/placeholder.jpg',
   },
   {
     id: 2,
@@ -411,19 +478,19 @@ const games = ref([
     developer: 'Santa Monica Studio',
     releaseDate: '2022-11-09',
     status: 'On Sale',
-    image: '/images/placeholder.jpg'
+    image: '/images/placeholder.jpg',
   },
   {
     id: 3,
     title: 'FIFA 23',
-    description: 'Experience the excitement of the biggest tournament in soccer with EA SPORTS FIFA 23 and the men's FIFA World Cup.',
+    description: 'Experience the excitement of the biggest tournament in soccer with EA SPORTS FIFA 23 and the men\'s FIFA World Cup.',
     price: 44.99,
     originalPrice: 59.99,
     category: 'Sports',
     developer: 'EA Vancouver',
     releaseDate: '2022-09-30',
     status: 'Active',
-    image: '/images/placeholder.jpg'
+    image: '/images/placeholder.jpg',
   },
   {
     id: 4,
@@ -435,7 +502,7 @@ const games = ref([
     developer: 'CD Projekt Red',
     releaseDate: '2020-12-10',
     status: 'Active',
-    image: '/images/placeholder.jpg'
+    image: '/images/placeholder.jpg',
   },
   {
     id: 5,
@@ -447,7 +514,7 @@ const games = ref([
     developer: 'Bethesda Game Studios',
     releaseDate: '2023-09-06',
     status: 'Active',
-    image: '/images/placeholder.jpg'
+    image: '/images/placeholder.jpg',
   },
   {
     id: 6,
@@ -459,7 +526,7 @@ const games = ref([
     developer: 'Naughty Dog',
     releaseDate: '2020-06-19',
     status: 'Active',
-    image: '/images/placeholder.jpg'
+    image: '/images/placeholder.jpg',
   },
   {
     id: 7,
@@ -471,7 +538,7 @@ const games = ref([
     developer: 'Infinity Ward',
     releaseDate: '2023-11-10',
     status: 'Upcoming',
-    image: '/images/placeholder.jpg'
+    image: '/images/placeholder.jpg',
   },
   {
     id: 8,
@@ -483,8 +550,8 @@ const games = ref([
     developer: 'Rockstar Games',
     releaseDate: '2018-10-26',
     status: 'Active',
-    image: '/images/placeholder.jpg'
-  }
+    image: '/images/placeholder.jpg',
+  },
 ])
 
 // Game dialog
@@ -502,15 +569,15 @@ const gameDialog = ref({
     developer: '',
     releaseDate: '',
     status: 'Active',
-    imageUrl: ''
-  }
+    imageUrl: '',
+  },
 })
 
 // Delete dialog
 const deleteDialog = ref({
   show: false,
   game: null,
-  loading: false
+  loading: false,
 })
 
 // Filtered games
@@ -530,18 +597,18 @@ const filteredGames = computed(() => {
   // Filter by price range
   if (filters.value.priceRange !== 'all') {
     switch (filters.value.priceRange) {
-      case 'under-20':
-        result = result.filter(game => game.price < 20)
-        break
-      case '20-40':
-        result = result.filter(game => game.price >= 20 && game.price <= 40)
-        break
-      case '40-60':
-        result = result.filter(game => game.price > 40 && game.price <= 60)
-        break
-      case 'over-60':
-        result = result.filter(game => game.price > 60)
-        break
+    case 'under-20':
+      result = result.filter(game => game.price < 20)
+      break
+    case '20-40':
+      result = result.filter(game => game.price >= 20 && game.price <= 40)
+      break
+    case '40-60':
+      result = result.filter(game => game.price > 40 && game.price <= 60)
+      break
+    case 'over-60':
+      result = result.filter(game => game.price > 60)
+      break
     }
   }
   
@@ -559,7 +626,7 @@ const resetFilters = () => {
     search: '',
     category: 'All',
     status: 'All',
-    priceRange: 'all'
+    priceRange: 'all',
   }
 }
 
@@ -575,18 +642,18 @@ const openAddGameDialog = () => {
     developer: '',
     releaseDate: new Date().toISOString().slice(0, 10),
     status: 'Active',
-    imageUrl: ''
+    imageUrl: '',
   }
   gameDialog.value.show = true
 }
 
-const editGame = (game) => {
+const editGame = game => {
   gameDialog.value.isEdit = true
   gameDialog.value.form = { ...game }
   gameDialog.value.show = true
 }
 
-const viewGame = (game) => {
+const viewGame = game => {
   router.push(`/games/${game.id}`)
 }
 
@@ -604,10 +671,11 @@ const saveGame = () => {
     } else {
       // Add new game with a new ID
       const newId = Math.max(...games.value.map(g => g.id)) + 1
+
       games.value.push({
         ...gameDialog.value.form,
         id: newId,
-        image: gameDialog.value.form.imageUrl || '/images/placeholder.jpg'
+        image: gameDialog.value.form.imageUrl || '/images/placeholder.jpg',
       })
     }
     
@@ -616,7 +684,7 @@ const saveGame = () => {
   }, 1000)
 }
 
-const confirmDeleteGame = (game) => {
+const confirmDeleteGame = game => {
   deleteDialog.value.game = game
   deleteDialog.value.show = true
 }
@@ -641,36 +709,37 @@ const deleteGame = () => {
 }
 
 // Utility functions
-const formatDate = (dateString) => {
+const formatDate = dateString => {
   if (!dateString) return ''
   
   const date = new Date(dateString)
+  
   return date.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
-    day: 'numeric'
+    day: 'numeric',
   })
 }
 
-const getCategoryColor = (category) => {
+const getCategoryColor = category => {
   const colors = {
     'Action': 'error',
     'Adventure': 'success',
     'RPG': 'primary',
     'Strategy': 'warning',
     'Sports': 'info',
-    'Simulation': 'grey'
+    'Simulation': 'grey',
   }
   
   return colors[category] || 'default'
 }
 
-const getStatusColor = (status) => {
+const getStatusColor = status => {
   const colors = {
     'Active': 'success',
     'Upcoming': 'info',
     'On Sale': 'error',
-    'Inactive': 'grey'
+    'Inactive': 'grey',
   }
   
   return colors[status] || 'default'
