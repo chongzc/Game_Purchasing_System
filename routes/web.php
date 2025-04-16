@@ -44,6 +44,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/developer-dashboard', function () {
             return view('application');
         })->name('developer-dashboard');
+
+        Route::get('/create-game', function () {
+            return view('application');
+        })->name('create-game');
     });
     
     // Admin routes

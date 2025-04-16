@@ -37,6 +37,11 @@ export const routes = [
         meta: { requiresAuth: true, roles: ['developer'] },
       },
       {
+        path: 'create-game',
+        component: () => import('@/pages/create-game.vue'),
+        meta: { requiresAuth: true, roles: ['developer'] },
+      },
+      {
         path: 'admin-dashboard',
         component: () => import('@/pages/admin-dashboard.vue'),
         meta: { requiresAuth: true, roles: ['admin'] },
@@ -96,7 +101,7 @@ export const routes = [
       },
       {
         path: 'register',
-        component: () => import('@/pages/Register.vue'),
+        component: () => import('@/pages/register.vue'),
         meta: { guestOnly: true },
       },
       {
