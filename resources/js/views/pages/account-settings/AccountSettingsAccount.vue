@@ -6,8 +6,26 @@ import avatar1 from '@images/avatars/avatar-1.png'
 const authStore = useAuthStore()
 const userProfileStore = useUserProfileStore()
 
+// Function to get profile image source with proper URL handling
+const getUserProfileImage = imageSource => {
+  if (!imageSource) return avatar1
+  
+  // If it's already a complete URL, return it
+  if (imageSource.startsWith('http://') || imageSource.startsWith('https://')) {
+    return imageSource
+  }
+  
+  // If it's a relative path, convert it to absolute URL
+  if (imageSource.startsWith('/')) {
+    return window.location.origin + imageSource
+  }
+  
+  // For paths without leading slash
+  return window.location.origin + '/' + imageSource
+}
+
 const accountDataLocal = ref({
-  avatarImg: authStore.user?.u_profilePic || avatar1,
+  avatarImg: getUserProfileImage(authStore.user?.profilePic),
   name: authStore.user?.u_name || '',
   email: authStore.user?.u_email || '',
   birthdate: authStore.user?.u_birthdate || null,
@@ -16,10 +34,13 @@ const accountDataLocal = ref({
 const refInputEl = ref()
 const isAccountDeactivated = ref(false)
 const birthDateMenu = ref(false)
+const isSubmitting = ref(false)
+const errorMessage = ref('')
+const successMessage = ref('')
 
 const resetForm = () => {
   accountDataLocal.value = {
-    avatarImg: authStore.user?.u_profilePic || avatar1,
+    avatarImg: getUserProfileImage(authStore.user?.profilePic),
     name: authStore.user?.u_name || '',
     email: authStore.user?.u_email || '',
     birthdate: authStore.user?.u_birthdate || null,
@@ -45,24 +66,82 @@ const changeAvatar = event => {
   }
 }
 
+// Function to get CSRF token from cookie
+const getCsrfToken = () => {
+  const cookies = document.cookie.split(';')
+
+  const csrfToken = cookies
+    .find(cookie => cookie.trim().startsWith('XSRF-TOKEN='))
+    ?.split('=')[1]
+  
+  return csrfToken ? decodeURIComponent(csrfToken) : null
+}
+
 const handleSubmit = async () => {
+  isSubmitting.value = true
+  errorMessage.value = ''
+  successMessage.value = ''
+  
   try {
-    const formData = {
-      name: accountDataLocal.value.name,
-      email: accountDataLocal.value.email,
-      birthdate: accountDataLocal.value.birthdate,
-    }
-
-    if (refInputEl.value?.files?.[0]) {
-      formData.profilePicture = refInputEl.value.files[0]
-    }
-
-    await userProfileStore.updateProfile(formData)
+    // Create form data
+    const formData = new FormData()
     
-    // Update auth store with new user data
-    await authStore.getUser()
+    if (refInputEl.value?.files?.[0]) {
+      formData.append('profile_picture', refInputEl.value.files[0])
+    }
+    
+    formData.append('name', accountDataLocal.value.name)
+    formData.append('email', accountDataLocal.value.email)
+    if (accountDataLocal.value.birthdate) {
+      formData.append('birthdate', accountDataLocal.value.birthdate)
+    }
+    
+    // Get CSRF token
+    const csrfToken = getCsrfToken()
+    
+    // Use fetch API for simplicity
+    const response = await fetch('/api/profile', {
+      method: 'POST',
+      body: formData,
+      credentials: 'same-origin', // Include cookies
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'application/json',
+        ...(csrfToken ? { 'X-XSRF-TOKEN': csrfToken } : {}),
+      },
+    })
+    
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unknown error')
+
+      console.error('Server response:', errorText)
+      throw new Error(`Upload failed with status ${response.status}: ${response.statusText}`)
+    }
+    
+    const data = await response.json()
+    
+    // Update UI with success
+    successMessage.value = data.message || 'Profile updated successfully'
+    
+    // Update auth store manually
+    if (data.user?.profilePic) {
+      // Update the user object with the new profile picture
+      authStore.user = {
+        ...authStore.user,
+        profilePic: data.user.profilePic,
+      }
+      
+      // Important: Update localStorage to persist the profile picture
+      localStorage.setItem('user', JSON.stringify(authStore.user))
+      
+      // Update the display image with proper URL formatting
+      accountDataLocal.value.avatarImg = getUserProfileImage(data.user.profilePic)
+    }
   } catch (error) {
     console.error('Error updating profile:', error)
+    errorMessage.value = error.message || 'Failed to update profile'
+  } finally {
+    isSubmitting.value = false
   }
 }
 </script>
@@ -198,7 +277,7 @@ const handleSubmit = async () => {
             >
               <VBtn 
                 type="submit"
-                :loading="userProfileStore.loading"
+                :loading="isSubmitting"
               >
                 Save changes
               </VBtn>
@@ -215,26 +294,51 @@ const handleSubmit = async () => {
             <!-- Success/Error Messages -->
             <VCol cols="12">
               <VAlert
-                v-if="userProfileStore.success"
+                v-if="successMessage"
                 type="success"
                 variant="tonal"
                 closable
                 class="mt-4"
               >
-                {{ userProfileStore.success }}
+                {{ successMessage }}
               </VAlert>
 
               <VAlert
-                v-if="userProfileStore.error"
+                v-if="errorMessage"
                 type="error"
                 variant="tonal"
                 closable
                 class="mt-4"
               >
-                {{ userProfileStore.error }}
+                {{ errorMessage }}
               </VAlert>
             </VCol>
           </VForm>
+        </VCardText>
+      </VCard>
+    </VCol>
+
+    <!-- Profile Picture Display -->
+    <VCol cols="12">
+      <VCard title="Profile Picture Preview">
+        <VCardText class="text-center">
+          <VAvatar
+            size="150"
+            rounded="lg"
+            class="mb-4"
+          >
+            <VImg
+              :src="getUserProfileImage(authStore.user?.profilePic)"
+              alt="Current Profile Picture"
+            />
+          </VAvatar>
+          
+          <div class="text-h6 mt-2">
+            {{ authStore.user?.u_name || 'User' }}
+          </div>
+          <div class="text-subtitle-1 text-medium-emphasis">
+            {{ authStore.user?.u_email || 'user@example.com' }}
+          </div>
         </VCardText>
       </VCard>
     </VCol>

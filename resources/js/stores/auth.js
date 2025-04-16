@@ -100,5 +100,35 @@ export const useAuthStore = defineStore('auth', {
         localStorage.removeItem('user')
       }
     },
+    
+    async getUser() {
+      this.loading = true
+      
+      try {
+        // Get user profile data with profile image
+        const response = await axios.get('/api/profile')
+        
+        // Update user data
+        if (this.user) {
+          this.user = {
+            ...this.user,
+            u_name: response.data.name,
+            u_email: response.data.email,
+            u_birthdate: response.data.birthdate,
+            u_role: response.data.role,
+            u_profilePic: response.data.profilePic,
+          }
+          
+          localStorage.setItem('user', JSON.stringify(this.user))
+        }
+        
+        return this.user
+      } catch (error) {
+        console.error('Get user error:', error)
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
   },
 }) 
