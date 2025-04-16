@@ -1,33 +1,23 @@
 <script setup>
+import axios from 'axios'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
+// At the beginning of your script section, configure axios globally
+axios.defaults.withCredentials = true
+
 const gameData = ref({
   title: '',
   description: '',
   price: '',
+  discount: '',
   genre: '',
+  language: '',
   releaseDate: '',
   platform: [],
   features: '',
-  systemRequirements: {
-    minimum: {
-      os: '',
-      processor: '',
-      memory: '',
-      graphics: '',
-      storage: '',
-    },
-    recommended: {
-      os: '',
-      processor: '',
-      memory: '',
-      graphics: '',
-      storage: '',
-    },
-  },
   coverImage: null,
   screenshots: [],
 })
@@ -46,12 +36,17 @@ const genres = [
   'Shooter',
 ]
 
-const platforms = [
-  'Windows',
-  'macOS',
-  'Linux',
-  'Android',
-  'iOS',
+const languages = [
+  'English',
+  'Spanish',
+  'French',
+  'German',
+  'Chinese',
+  'Japanese',
+  'Korean',
+  'Portuguese',
+  'Russian',
+  'Multiple Languages',
 ]
 
 const handleImageUpload = (event, type) => {
@@ -65,12 +60,80 @@ const handleImageUpload = (event, type) => {
 
 const handleSubmit = async () => {
   try {
-    // TODO: Implement API call to save game
     console.log('Game data:', gameData.value)
-    router.push('/developer-dashboard')
+    
+    // Get a fresh CSRF token before submitting
+    await axios.get('/sanctum/csrf-cookie')
+    
+    // Create FormData object to handle file uploads
+    const formData = new FormData()
+    
+    // Use the correct field names that match the backend expectations
+    formData.append('g_title', gameData.value.title)
+    formData.append('g_description', gameData.value.description)
+    formData.append('g_price', gameData.value.price)
+    formData.append('g_discount', gameData.value.discount || 0)
+    formData.append('g_language', gameData.value.language)
+    formData.append('g_releaseDate', gameData.value.releaseDate)
+    formData.append('g_status', 'pending')
+    formData.append('g_category', gameData.value.genre)
+    
+    // Get the authenticated user's ID from the session/auth system
+    // Since we're using a hardcoded value for now, make sure it's sent as a number, not null
+    const developerId = 1  // In a real app, this would come from the auth system
+
+    formData.append('g_developerId', developerId)
+    
+    // Category for the relationship table
+    const categoryId = genres.indexOf(gameData.value.genre) + 1
+
+    formData.append('categories[]', categoryId)
+    
+    // Add cover image
+    if (gameData.value.coverImage) {
+      formData.append('g_mainImage', gameData.value.coverImage)
+    }
+    
+    // Add screenshots as extra images
+    if (gameData.value.screenshots.length > 0) {
+      if (gameData.value.screenshots[0]) {
+        formData.append('g_exImg1', gameData.value.screenshots[0])
+      }
+      if (gameData.value.screenshots[1]) {
+        formData.append('g_exImg2', gameData.value.screenshots[1])
+      }
+      if (gameData.value.screenshots[2]) {
+        formData.append('g_exImg3', gameData.value.screenshots[2])
+      }
+    }
+    
+    console.log('Game data ready for submission:', Object.fromEntries(formData.entries()))
+    
+    try {
+      const response = await axios.post('/api/games', formData)
+      
+      console.log('Game created successfully:', response.data)
+      alert('Game submitted successfully! It will be reviewed by an admin.')
+      
+      // Redirect to developer dashboard
+      router.push('/developer-dashboard')
+    } catch (axiosError) {
+      console.error('Server response:', axiosError.response?.data)
+      
+      const errorMessage = axiosError.response?.data?.error || 
+                          axiosError.response?.data?.message || 
+                          axiosError.message
+      
+      alert(`Failed to create game: ${errorMessage}`)
+    }
   } catch (error) {
-    console.error('Error creating game:', error)
+    console.error('General error:', error)
+    alert(`Error: ${error.message}`)
   }
+}
+
+const navigateToDashboard = () => {
+  router.push('/developer-dashboard')
 }
 </script>
 
@@ -117,12 +180,40 @@ const handleSubmit = async () => {
                   cols="12"
                   md="6"
                 >
+                  <VTextField
+                    v-model="gameData.discount"
+                    label="Discount"
+                    type="number"
+                    suffix="%"
+                    min="0"
+                    max="100"
+                    hint="Enter a discount percentage (0-100)"
+                  />
+                </VCol>
+                
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VSelect
                     v-model="gameData.genre"
                     :items="genres"
                     label="Genre"
                     required
                     :rules="[v => !!v || 'Genre is required']"
+                  />
+                </VCol>
+                
+                <VCol
+                  cols="12"
+                  md="6"
+                >
+                  <VSelect
+                    v-model="gameData.language"
+                    :items="languages"
+                    label="Language"
+                    required
+                    :rules="[v => !!v || 'Language is required']"
                   />
                 </VCol>
                 
@@ -138,19 +229,7 @@ const handleSubmit = async () => {
                     :rules="[v => !!v || 'Release date is required']"
                   />
                 </VCol>
-                
-                <VCol cols="12">
-                  <VSelect
-                    v-model="gameData.platform"
-                    :items="platforms"
-                    label="Platforms"
-                    multiple
-                    chips
-                    required
-                    :rules="[v => v.length > 0 || 'At least one platform is required']"
-                  />
-                </VCol>
-                
+                             
                 <VCol cols="12">
                   <VTextarea
                     v-model="gameData.description"
@@ -159,102 +238,6 @@ const handleSubmit = async () => {
                     :rules="[v => !!v || 'Description is required']"
                     rows="4"
                   />
-                </VCol>
-                
-                <VCol cols="12">
-                  <VTextarea
-                    v-model="gameData.features"
-                    label="Key Features"
-                    required
-                    :rules="[v => !!v || 'Features are required']"
-                    rows="4"
-                  />
-                </VCol>
-                
-                <!-- System Requirements -->
-                <VCol cols="12">
-                  <VCard variant="outlined">
-                    <VCardTitle>System Requirements</VCardTitle>
-                    <VCardText>
-                      <VRow>
-                        <VCol
-                          cols="12"
-                          md="6"
-                        >
-                          <VCard variant="outlined">
-                            <VCardTitle class="text-subtitle-1">
-                              Minimum Requirements
-                            </VCardTitle>
-                            <VCardText>
-                              <VTextField
-                                v-model="gameData.systemRequirements.minimum.os"
-                                label="Operating System"
-                                required
-                              />
-                              <VTextField
-                                v-model="gameData.systemRequirements.minimum.processor"
-                                label="Processor"
-                                required
-                              />
-                              <VTextField
-                                v-model="gameData.systemRequirements.minimum.memory"
-                                label="Memory"
-                                required
-                              />
-                              <VTextField
-                                v-model="gameData.systemRequirements.minimum.graphics"
-                                label="Graphics"
-                                required
-                              />
-                              <VTextField
-                                v-model="gameData.systemRequirements.minimum.storage"
-                                label="Storage"
-                                required
-                              />
-                            </VCardText>
-                          </VCard>
-                        </VCol>
-                        
-                        <VCol
-                          cols="12"
-                          md="6"
-                        >
-                          <VCard variant="outlined">
-                            <VCardTitle class="text-subtitle-1">
-                              Recommended Requirements
-                            </VCardTitle>
-                            <VCardText>
-                              <VTextField
-                                v-model="gameData.systemRequirements.recommended.os"
-                                label="Operating System"
-                                required
-                              />
-                              <VTextField
-                                v-model="gameData.systemRequirements.recommended.processor"
-                                label="Processor"
-                                required
-                              />
-                              <VTextField
-                                v-model="gameData.systemRequirements.recommended.memory"
-                                label="Memory"
-                                required
-                              />
-                              <VTextField
-                                v-model="gameData.systemRequirements.recommended.graphics"
-                                label="Graphics"
-                                required
-                              />
-                              <VTextField
-                                v-model="gameData.systemRequirements.recommended.storage"
-                                label="Storage"
-                                required
-                              />
-                            </VCardText>
-                          </VCard>
-                        </VCol>
-                      </VRow>
-                    </VCardText>
-                  </VCard>
                 </VCol>
                 
                 <!-- Media Upload -->
@@ -290,8 +273,15 @@ const handleSubmit = async () => {
                 <!-- Submit Button -->
                 <VCol
                   cols="12"
-                  class="d-flex justify-end"
+                  class="d-flex justify-end gap-3"
                 >
+                  <VBtn
+                    color="secondary"
+                    size="large"
+                    @click="navigateToDashboard"
+                  >
+                    Cancel
+                  </VBtn>
                   <VBtn
                     color="primary"
                     type="submit"
@@ -308,3 +298,4 @@ const handleSubmit = async () => {
     </VRow>
   </VContainer>
 </template> 
+

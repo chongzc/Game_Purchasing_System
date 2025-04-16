@@ -26,6 +26,7 @@ return new class extends Migration
             $table->string('g_exImg3')->nullable();
             $table->decimal('g_overallRate', 3, 2)->default(0.00);
             $table->string('g_language')->nullable();
+            $table->string('g_category')->nullable();
             $table->timestamps();
             
             // Update foreign key to reference users table instead of developers

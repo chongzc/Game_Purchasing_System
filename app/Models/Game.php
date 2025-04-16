@@ -10,6 +10,9 @@ class Game extends Model
     use HasFactory;
 
     protected $table = 'games';
+    
+    // Add primary key configuration
+    protected $primaryKey = 'g_id';
 
     protected $fillable = [
         'g_title',

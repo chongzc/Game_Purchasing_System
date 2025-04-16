@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\GameController;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,6 +28,9 @@ Route::get('/user', [LoginController::class, 'getUser']);
 Route::get('/profile', [UserController::class, 'profile']);
 Route::post('/profile', [UserController::class, 'updateProfile']);
 Route::get('/users', [UserController::class, 'getUsers']);
+
+// Game routes
+Route::post('/games', [GameController::class, 'store']);
 
 // Get authenticated user
 Route::middleware('auth:sanctum')->get('/auth/user', function (Request $request) {
