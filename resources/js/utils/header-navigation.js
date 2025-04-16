@@ -1,55 +1,52 @@
 export const getHeaderNavigationItems = user => {
-  let items = []
-  
-  // If user is not logged in or has user role, show Game Store and Browse
-  if (!user || user.u_role === 'user') {
-    items = [
+  const navigationConfig = {
+    public: [
       {
         title: 'Game Store',
         to: '/game-store',
       },
       {
-        title: 'Browse',
+        title: 'Browse', 
         to: '/browse-games',
       },
-    ]
-  }
-
-  // Additional items for logged in users based on role
-  if (user) {
-    if (user.u_role === 'user') {
-      items.push({
+    ],
+    user: [
+      {
         title: 'My Library',
         to: '/game-library',
-      })
-    }
-
-    if (user.u_role === 'developer') {
-      items = [
-        {
-          title: 'Developer Dashboard',
-          to: '/developer-dashboard',
-        },
-        {
-          title: 'Coming Soon',
-          to: '#',
-        },
-      ]
-    }
-
-    if (user.u_role === 'admin') {
-      items = [
-        {
-          title: 'Admin Dashboard',
-          to: '/admin-dashboard',
-        },
-        {
-          title: 'Coming Soon',
-          to: '#',
-        },
-      ]
-    }
+      },
+    ],
+    developer: [
+      {
+        title: 'Developer Dashboard',
+        to: '/developer-dashboard', 
+      },
+      {
+        title: 'Coming Soon',
+        to: '#',
+      },
+    ],
+    admin: [
+      {
+        title: 'Admin Dashboard',
+        to: '/admin-dashboard',
+      },
+      {
+        title: 'Coming Soon',
+        to: '#',
+      },
+    ],
   }
 
-  return items
+  if (!user) {
+    return navigationConfig.public
+  }
+
+  const role = user.u_role
+  
+  if (role === 'user') {
+    return [...navigationConfig.public, ...navigationConfig.user]
+  }
+
+  return navigationConfig[role] || []
 }
