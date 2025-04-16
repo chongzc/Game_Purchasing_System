@@ -22,6 +22,10 @@ export const getHeaderNavigationItems = user => {
         to: '/developer-dashboard', 
       },
       {
+        title: 'Developer Create Game',
+        to: '/create-game', 
+      },
+      {
         title: 'Coming Soon',
         to: '#',
       },

@@ -1,7 +1,13 @@
 <script setup>
 import { useAuthStore } from '@/stores/auth'
+import { useRouter } from 'vue-router'
 
 const authStore = useAuthStore()
+const router = useRouter()
+
+const handleAddNewGame = () => {
+  router.push('/create-game')
+}
 </script>
 
 <template>
@@ -32,6 +38,7 @@ const authStore = useAuthStore()
               color="primary"
               variant="flat"
               size="small"
+              @click="handleAddNewGame"
             >
               Add New Game
             </VBtn>
