@@ -72,4 +72,12 @@ export default defineConfig({
       './resources/js/**/*.vue',
     ],
   },
+  server: {
+    hmr: {
+      host: 'localhost',
+    },
+    watch: {
+      usePolling: true,
+    },
+  },
 })
