@@ -317,30 +317,5 @@ const handleSubmit = async () => {
         </VCardText>
       </VCard>
     </VCol>
-
-    <!-- Profile Picture Display -->
-    <VCol cols="12">
-      <VCard title="Profile Picture Preview">
-        <VCardText class="text-center">
-          <VAvatar
-            size="150"
-            rounded="lg"
-            class="mb-4"
-          >
-            <VImg
-              :src="getUserProfileImage(authStore.user?.profilePic)"
-              alt="Current Profile Picture"
-            />
-          </VAvatar>
-          
-          <div class="text-h6 mt-2">
-            {{ authStore.user?.u_name || 'User' }}
-          </div>
-          <div class="text-subtitle-1 text-medium-emphasis">
-            {{ authStore.user?.u_email || 'user@example.com' }}
-          </div>
-        </VCardText>
-      </VCard>
-    </VCol>
   </VRow>
 </template>

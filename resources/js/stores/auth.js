@@ -116,7 +116,7 @@ export const useAuthStore = defineStore('auth', {
             u_email: response.data.email,
             u_birthdate: response.data.birthdate,
             u_role: response.data.role,
-            u_profilePic: response.data.profilePic,
+            profilePic: response.data.profilePic,
           }
           
           localStorage.setItem('user', JSON.stringify(this.user))
