@@ -410,10 +410,11 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { setCookie, getCookie } from '@/utils/cookie';
 
-const router = useRouter()
+const router = useRouter();
 
 // Breadcrumbs
 const breadcrumbs = ref([
@@ -431,7 +432,7 @@ const breadcrumbs = ref([
     title: 'Checkout',
     disabled: true,
   },
-])
+]);
 
 // Cart items (in a real app, this would be fetched from a store or API)
 const cartItems = ref([
@@ -451,30 +452,30 @@ const cartItems = ref([
     platform: 'PS5 Digital Download',
     image: '/images/placeholder.jpg',
   },
-])
+]);
 
 // Payment method
-const paymentMethod = ref('credit_card')
+const paymentMethod = ref(getCookie('paymentMethod') || 'credit_card');
 
 // Credit card form
 const creditCardForm = ref({
-  number: '',
-  name: '',
-  expiry: '',
-  cvv: '',
-})
+  number: getCookie('cardNumber') || '',
+  name: getCookie('cardName') || '',
+  expiry: getCookie('cardExpiry') || '',
+  cvv: getCookie('cardCVV') || '',
+});
 
 // Billing information
 const billingInfo = ref({
-  firstName: '',
-  lastName: '',
-  email: '',
-  address: '',
-  city: '',
-  state: '',
-  zip: '',
-  country: 'United States',
-})
+  firstName: getCookie('billingFirstName') || '',
+  lastName: getCookie('billingLastName') || '',
+  email: getCookie('billingEmail') || '',
+  address: getCookie('billingAddress') || '',
+  city: getCookie('billingCity') || '',
+  state: getCookie('billingState') || '',
+  zip: getCookie('billingZip') || '',
+  country: getCookie('billingCountry') || 'United States',
+});
 
 // Countries list (shortened for brevity)
 const countries = [
@@ -487,72 +488,95 @@ const countries = [
   'Japan',
 
   // Add more countries as needed
-]
+];
 
 // Additional information
-const additionalInfo = ref('')
+const additionalInfo = ref('');
 
 // Terms acceptance
-const termsAccepted = ref(false)
+const termsAccepted = ref(false);
 
 // Order processing state
-const isProcessing = ref(false)
-const orderDialog = ref(false)
-const orderNumber = ref('')
+const isProcessing = ref(false);
+const orderDialog = ref(false);
+const orderNumber = ref('');
+
+// Save checkout data to cookies
+const saveCheckoutDataToCookies = () => {
+  setCookie('paymentMethod', paymentMethod.value, 30);
+  setCookie('cardNumber', creditCardForm.value.number, 30);
+  setCookie('cardName', creditCardForm.value.name, 30);
+  setCookie('cardExpiry', creditCardForm.value.expiry, 30);
+  setCookie('cardCVV', creditCardForm.value.cvv, 30);
+  setCookie('billingFirstName', billingInfo.value.firstName, 30);
+  setCookie('billingLastName', billingInfo.value.lastName, 30);
+  setCookie('billingEmail', billingInfo.value.email, 30);
+  setCookie('billingAddress', billingInfo.value.address, 30);
+  setCookie('billingCity', billingInfo.value.city, 30);
+  setCookie('billingState', billingInfo.value.state, 30);
+  setCookie('billingZip', billingInfo.value.zip, 30);
+  setCookie('billingCountry', billingInfo.value.country, 30);
+};
 
 // Order calculations
 const cartTotal = computed(() => {
   return cartItems.value.reduce((total, item) => {
-    return total + (item.price * item.quantity)
-  }, 0)
-})
+    return total + (item.price * item.quantity);
+  }, 0);
+});
 
-const discount = ref(10) // Example discount amount
-const tax = computed(() => cartTotal.value * 0.08) // Example 8% tax
-const orderTotal = computed(() => cartTotal.value - discount.value + tax.value)
+const discount = ref(10); // Example discount amount
+const tax = computed(() => cartTotal.value * 0.08); // Example 8% tax
+const orderTotal = computed(() => cartTotal.value - discount.value + tax.value);
 
 // Form validation
 const formValid = computed(() => {
-  if (!termsAccepted.value) return false
-  
+  if (!termsAccepted.value) return false;
+
   // Basic validation for required fields
-  const { firstName, lastName, email, address, city, state, zip, country } = billingInfo.value
-  if (!firstName || !lastName || !email || !address || !city || !state || !zip || !country) {
-    return false
-  }
-  
-  // If credit card is selected, validate credit card info
-  if (paymentMethod.value === 'credit_card') {
-    const { number, name, expiry, cvv } = creditCardForm.value
-    if (!number || !name || !expiry || !cvv) {
-      return false
-    }
-  }
-  
-  return true
-})
+  const { number, name, expiry, cvv } = creditCardForm.value;
+  const { firstName, lastName, email, address, city, state, zip, country } = billingInfo.value;
+
+  return (
+    paymentMethod.value &&
+    number &&
+    name &&
+    expiry &&
+    cvv &&
+    firstName &&
+    lastName &&
+    email &&
+    address &&
+    city &&
+    state &&
+    zip &&
+    country
+  );
+});
 
 // Place order method
 const placeOrder = () => {
   if (!formValid.value) {
-    alert('Please fill out all required fields.')
-    
-    return
+    alert('Please fill out all required fields.');
+    return;
   }
-  
-  isProcessing.value = true
-  
+
+  isProcessing.value = true;
+
   // Simulate API call with a timeout
   setTimeout(() => {
+    // Save data to cookies
+    saveCheckoutDataToCookies();
+
     // Generate random order number
-    orderNumber.value = 'ORD-' + Date.now().toString().substring(3) + '-' + Math.floor(Math.random() * 1000)
-    
-    isProcessing.value = false
-    orderDialog.value = true
-    
+    orderNumber.value = 'ORD-' + Date.now().toString().substring(3) + '-' + Math.floor(Math.random() * 1000);
+
+    isProcessing.value = false;
+    orderDialog.value = true;
+
     // In a real app, you would clear the cart here or redirect to a confirmation page
-  }, 2000)
-}
+  }, 2000);
+};
 </script>
 
 <style scoped>
@@ -560,4 +584,4 @@ const placeOrder = () => {
   position: sticky;
   top: 20px;
 }
-</style> 
+</style>
