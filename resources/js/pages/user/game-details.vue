@@ -84,8 +84,8 @@ const fetchGameDetails = async () => {
     if (response.data.success) {
       game.value = response.data.game
       similarGames.value = response.data.similarGames
-      // ul_status will be one of: null (not owned), 'owned', or 'installed'
-      game.value.ul_status = response.data.game.ul_status || null
+      // Make sure libraryStatus is set from the API response
+      game.value.libraryStatus = response.data.game.libraryStatus || null
     }
   } catch (error) {
     console.error('Error fetching game details:', error)
@@ -184,11 +184,39 @@ const formatDate = (dateString) => {
 // Add install game method
 const installGame = async () => {
   try {
-    await axios.post(`/api/library/${gameId.value}/install`)
-    // Refresh game details to update status
-    await fetchGameDetails()
+    const response = await axios.put(`/api/library/${gameId.value}/status`, {
+      status: 'installed'
+    })
+    
+    if (response.data.success) {
+      // Update the local game status
+      game.value.libraryStatus = 'installed'
+      // Show success message or handle UI updates
+    } else {
+      throw new Error(response.data.message || 'Failed to install game')
+    }
   } catch (error) {
     console.error('Error installing game:', error)
+  }
+}
+
+// Add uninstall game method
+const uninstallGame = async () => {
+  try {
+    const response = await axios.put(`/api/library/${gameId.value}/status`, {
+      status: 'owned'
+    })
+    
+    if (response.data.success) {
+      // Update the local game status
+      game.value.libraryStatus = 'owned'
+      // Refresh the game details to ensure sync with server
+      await fetchGameDetails()
+    } else {
+      console.error('Failed to uninstall game:', response.data.message)
+    }
+  } catch (error) {
+    console.error('Error uninstalling game:', error.response?.data || error)
   }
 }
 
@@ -389,12 +417,20 @@ watch(
                         </VChip>
                       </div>
                       
-                      <div class="d-flex align-center">
+                      <div class="d-flex align-center gap-2">
                         <VBtn
                           :color="game.libraryStatus === 'installed' ? 'success' : 'primary'"
                           @click="game.libraryStatus === 'installed' ? playGame() : installGame()"
                         >
                           {{ game.libraryStatus === 'installed' ? 'Play Now' : 'Install Game' }}
+                        </VBtn>
+                        <VBtn
+                          v-if="game.libraryStatus === 'installed'"
+                          color="error"
+                          variant="outlined"
+                          @click="uninstallGame"
+                        >
+                          Uninstall
                         </VBtn>
                       </div>
                     </div>

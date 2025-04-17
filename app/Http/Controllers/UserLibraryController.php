@@ -88,7 +88,7 @@ class UserLibraryController extends Controller
     public function updateLibraryStatus(Request $request, Game $game)
     {
         $validated = $request->validate([
-            'status' => ['required', Rule::in(['owned', 'installed', 'removed'])]
+            'status' => ['required', Rule::in(['owned', 'installed'])]
         ]);
 
         $user = Auth::user();
@@ -98,15 +98,31 @@ class UserLibraryController extends Controller
             ->first();
 
         if (!$userLib) {
-            return response()->json(['message' => 'Game not found in library'], 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Game not found in library'
+            ], 404);
         }
 
-        $userLib->ul_status = $validated['status'];
-        $userLib->save();
+        // Allow changing between owned and installed in both directions
+        if (
+            ($userLib->ul_status === 'owned' && $validated['status'] === 'installed') ||
+            ($userLib->ul_status === 'installed' && $validated['status'] === 'owned')
+        ) {
+            $userLib->ul_status = $validated['status'];
+            $userLib->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => $validated['status'] === 'installed' ? 'Game installed successfully' : 'Game uninstalled successfully',
+                'status' => $validated['status']
+            ]);
+        }
 
         return response()->json([
-            'message' => 'Game status updated successfully',
-            'status' => $validated['status']
-        ]);
+            'success' => false,
+            'message' => 'Invalid status change',
+            'current_status' => $userLib->ul_status
+        ], 400);
     }
 } 
