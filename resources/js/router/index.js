@@ -4,21 +4,21 @@ import { createRouter, createWebHistory } from 'vue-router'
 const routes = [
   {
     path: '/game-store',
-    component: () => import('@/pages/GameStore.vue'),
+    component: () => import('@/pages/game-store.vue'),
   },
   {
     path: '/game-library',
-    component: () => import('@/pages/GameLibrary.vue'),
+    component: () => import('@/pages/user/user-library.vue'),
     meta: { requiresAuth: true },
   },
   {
     path: '/developer-dashboard',
-    component: () => import('@/pages/developer-dashboard.vue'),
+    component: () => import('@/pages/developer/developer-dashboard.vue'),
     meta: { requiresAuth: true, role: 'developer' },
   },
   {
     path: '/create-game',
-    component: () => import('@/pages/create-game.vue'),
+    component: () => import('@/pages/developer/create-game.vue'),
     meta: { requiresAuth: true, role: 'developer' },
   },
   {

@@ -6,7 +6,7 @@ export const routes = [
     children: [
       {
         path: 'game-store',
-        component: () => import('@/pages/GameStore.vue'),
+        component: () => import('@/pages/game-store.vue'),
       },
       {
         path: 'browse-games',
@@ -14,36 +14,36 @@ export const routes = [
       },
       {
         path: 'games/:id',
-        component: () => import('@/pages/GameDetails.vue'),
+        component: () => import('@/pages/user/game-details.vue'),
       },
       {
         path: 'cart',
-        component: () => import('@/pages/ShoppingCart.vue'),
+        component: () => import('@/pages/user/shopping-cart.vue'),
         meta: { requiresAuth: true, roles: ['user', 'developer', 'admin'] },
       },
       {
         path: 'checkout',
-        component: () => import('@/pages/Checkout.vue'),
-        meta: { requiresAuth: true, roles: ['user', 'developer', 'admin'] },
+        component: () => import('@/pages/user/checkout.vue'),
+        meta: { requiresAuth: true, roles: ['user'] },
       },
       {
         path: 'game-library',
-        component: () => import('@/pages/GameLibrary.vue'),
+        component: () => import('@/pages/user/user-library.vue'),
         meta: { requiresAuth: true, roles: ['user', 'developer', 'admin'] },
       },
       {
         path: 'developer-dashboard',
-        component: () => import('@/pages/developer-dashboard.vue'),
+        component: () => import('@/pages/developer/developer-dashboard.vue'),
         meta: { requiresAuth: true, roles: ['developer'] },
       },
       {
         path: 'create-game',
-        component: () => import('@/pages/create-game.vue'),
+        component: () => import('@/pages/developer/create-game.vue'),
         meta: { requiresAuth: true, roles: ['developer'] },
       },
       {
         path: 'admin-dashboard',
-        component: () => import('@/pages/admin-dashboard.vue'),
+        component: () => import('@/pages/admin/admin-dashboard.vue'),
         meta: { requiresAuth: true, roles: ['admin'] },
       },
       {
@@ -65,7 +65,7 @@ export const routes = [
       },
       {
         path: 'account-settings',
-        component: () => import('@/pages/account-settings.vue'),
+        component: () => import('@/pages/profile/account-settings.vue'),
         meta: { requiresAuth: true },
       },
       {
@@ -96,12 +96,12 @@ export const routes = [
     children: [
       {
         path: 'login',
-        component: () => import('@/pages/login.vue'),
+        component: () => import('@/pages/session/login.vue'),
         meta: { guestOnly: true },
       },
       {
         path: 'register',
-        component: () => import('@/pages/register.vue'),
+        component: () => import('@/pages/session/register.vue'),
         meta: { guestOnly: true },
       },
       {
