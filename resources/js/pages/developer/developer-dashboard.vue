@@ -18,7 +18,9 @@ const handleAddNewGame = () => {
 const fetchGames = async () => {
   try {
     loading.value = true
+
     const response = await axios.get('/api/developer/games')
+
     games.value = response.data.games
   } catch (error) {
     console.error('Error fetching games:', error)
@@ -28,16 +30,16 @@ const fetchGames = async () => {
 }
 
 // Get status color for chip
-const getStatusColor = (status) => {
+const getStatusColor = status => {
   switch (status.toLowerCase()) {
-    case 'pending':
-      return 'warning'
-    case 'approved':
-      return 'success'
-    case 'rejected':
-      return 'error'
-    default:
-      return 'grey'
+  case 'pending':
+    return 'warning'
+  case 'approved':
+    return 'success'
+  case 'rejected':
+    return 'error'
+  default:
+    return 'grey'
   }
 }
 
@@ -96,7 +98,10 @@ onMounted(() => {
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="game in games" :key="game.id">
+                <tr
+                  v-for="game in games"
+                  :key="game.id"
+                >
                   <td>
                     <VImg
                       :src="game.mainImage"
@@ -124,7 +129,7 @@ onMounted(() => {
                       variant="text"
                       color="primary"
                       size="small"
-                      :to="'/games/' + game.id + '/view'"
+                      :to="'/games/' + game.id"
                     >
                       <VIcon icon="bx-show" />
                     </VBtn>
@@ -133,7 +138,7 @@ onMounted(() => {
                       variant="text"
                       color="primary"
                       size="small"
-                      :to="'/games/' + game.id + '/edit'"
+                      :to="'/game-edit/' + game.id"
                     >
                       <VIcon icon="bx-edit" />
                     </VBtn>
@@ -145,19 +150,21 @@ onMounted(() => {
         </VCard>
       </VCol>
       
-      <!-- <VCol
+      <!--
+        <VCol
         cols="12"
         md="6"
-      >
+        >
         <VCard height="100%">
-          <VCardTitle>
-            Sales Overview
-          </VCardTitle>
-          <VCardText>
-            <p>No sales data available.</p>
-          </VCardText>
+        <VCardTitle>
+        Sales Overview
+        </VCardTitle>
+        <VCardText>
+        <p>No sales data available.</p>
+        </VCardText>
         </VCard>
-      </VCol> -->
+        </VCol> 
+      -->
       
       <VCol
         cols="12"
@@ -187,10 +194,12 @@ onMounted(() => {
               title="Create New Game"
               prepend-icon="mdi-plus"
             />
-            <!-- <VListItem
+            <!--
+              <VListItem
               title="View Sales Reports"
               prepend-icon="mdi-chart-line"
-            /> -->
+              /> 
+            -->
             <VListItem
               title="Update Profile"
               prepend-icon="mdi-account-edit"
