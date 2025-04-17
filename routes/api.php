@@ -9,7 +9,7 @@ use App\Http\Controllers\GameController;
 use App\Http\Controllers\UserLibraryController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\WishlistController;
-use App\Http\Controllers\AdminGameController;
+use App\Http\Controllers\AdminController;
 
 /*
 |--------------------------------------------------------------------------
@@ -87,11 +87,21 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // Admin routes
 Route::middleware(['auth:sanctum'])->group(function () {
-    Route::get('/admin/games', [AdminGameController::class, 'index']);
-    Route::get('/admin/games/{id}', [AdminGameController::class, 'show']);
-    Route::patch('/admin/games/{id}/status', [AdminGameController::class, 'updateStatus']);
-    Route::delete('/admin/games/{id}', [AdminGameController::class, 'destroy']);
-    Route::get('/admin/statistics', [AdminGameController::class, 'statistics']);
+    // Game management routes
+    Route::get('/admin/games', [AdminController::class, 'getAllGames']);
+    Route::get('/admin/games/{id}', [AdminController::class, 'getGame']);
+    Route::patch('/admin/games/{id}/status', [AdminController::class, 'updateGameStatus']);
+    Route::delete('/admin/games/{id}', [AdminController::class, 'deleteGame']);
+    
+    // User management routes
+    Route::get('/admin/users', [AdminController::class, 'getAllUsers']);
+    Route::get('/admin/users/{id}', [AdminController::class, 'getUser']);
+    Route::patch('/admin/users/{id}/ban-status', [AdminController::class, 'updateUserBanStatus']);
+    Route::post('/admin/users/find-by-name', [AdminController::class, 'findUserByName']);
+    
+    // Statistics routes
+    Route::get('/admin/statistics/games', [AdminController::class, 'getGameStatistics']);
+    Route::get('/admin/statistics', [AdminController::class, 'getAllStatistics']);
 });
 
 // User Library Routes

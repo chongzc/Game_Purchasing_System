@@ -12,12 +12,16 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-class AdminGameController extends Controller
+class AdminController extends Controller
 {
+    /****************************
+     * GAME MANAGEMENT METHODS *
+     ****************************/
+    
     /**
      * Display a listing of all games for admin
      */
-    public function index()
+    public function getAllGames()
     {
         $games = Game::with(['developer', 'categories'])
             ->orderBy('created_at', 'desc')
@@ -32,7 +36,7 @@ class AdminGameController extends Controller
     /**
      * Get a specific game for admin
      */
-    public function show($id)
+    public function getGame($id)
     {
         $game = Game::with(['developer', 'categories', 'reviews'])
             ->findOrFail($id);
@@ -46,7 +50,7 @@ class AdminGameController extends Controller
     /**
      * Update game status
      */
-    public function updateStatus(Request $request, $id)
+    public function updateGameStatus(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
             'status' => 'required|in:pending,verified,reported,removed',
@@ -74,7 +78,7 @@ class AdminGameController extends Controller
     /**
      * Remove a game
      */
-    public function destroy($id)
+    public function deleteGame($id)
     {
         $game = Game::findOrFail($id);
         
@@ -106,10 +110,142 @@ class AdminGameController extends Controller
         ]);
     }
     
+    /****************************
+     * USER MANAGEMENT METHODS *
+     ****************************/
+    
+    /**
+     * Get all users for admin
+     */
+    public function getAllUsers()
+    {
+        $users = User::select('u_id', 'u_name', 'u_email', 'u_role', 'u_profileImagePath', 'u_isBanned', 'created_at')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($user) {
+                return [
+                    'id' => $user->u_id,
+                    'name' => $user->u_name,
+                    'email' => $user->u_email,
+                    'role' => $user->u_role,
+                    'isBanned' => $user->u_isBanned,
+                    'profilePic' => $user->u_profileImagePath,
+                    'createdAt' => $user->created_at,
+                ];
+            });
+            
+        return response()->json([
+            'success' => true,
+            'users' => $users
+        ]);
+    }
+    
+    /**
+     * Get a specific user for admin
+     */
+    public function getUser($id)
+    {
+        $user = User::findOrFail($id);
+        
+        $userData = [
+            'id' => $user->u_id,
+            'name' => $user->u_name,
+            'email' => $user->u_email,
+            'role' => $user->u_role,
+            'isBanned' => $user->u_isBanned,
+            'profilePic' => $user->u_profileImagePath,
+            'createdAt' => $user->created_at,
+        ];
+        
+        return response()->json([
+            'success' => true,
+            'user' => $userData
+        ]);
+    }
+    
+    /**
+     * Update user ban status
+     */
+    public function updateUserBanStatus(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'isBanned' => 'required|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = User::findOrFail($id);
+        $user->u_isBanned = $request->isBanned ? 'true' : 'false';
+        $user->save();
+        
+        $status = $request->isBanned ? 'banned' : 'unbanned';
+        
+        return response()->json([
+            'success' => true,
+            'message' => "User {$user->u_name} has been {$status} successfully",
+            'user' => [
+                'id' => $user->u_id,
+                'name' => $user->u_name,
+                'email' => $user->u_email,
+                'role' => $user->u_role,
+                'isBanned' => $user->u_isBanned,
+            ]
+        ]);
+    }
+    
+    /**
+     * Find a user by name for admin
+     */
+    public function findUserByName(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|min:2',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $name = $request->name;
+        
+        $users = User::where('u_name', 'like', "%{$name}%")
+            ->select('u_id', 'u_name', 'u_email', 'u_role', 'u_profileImagePath', 'u_isBanned')
+            ->get()
+            ->map(function ($user) {
+                return [
+                    'id' => $user->u_id,
+                    'name' => $user->u_name,
+                    'email' => $user->u_email,
+                    'role' => $user->u_role,
+                    'isBanned' => $user->u_isBanned,
+                    'profilePic' => $user->u_profileImagePath,
+                ];
+            });
+            
+        return response()->json([
+            'success' => true,
+            'users' => $users
+        ]);
+    }
+    
+    /****************************
+     * DASHBOARD STATISTICS METHODS *
+     ****************************/
+    
     /**
      * Get games statistics for admin dashboard
      */
-    public function statistics()
+    public function getGameStatistics()
     {
         $totalGames = Game::count();
         $pendingGames = Game::where('g_status', 'pending')->count();
@@ -142,11 +278,11 @@ class AdminGameController extends Controller
     }
 
     /**
-     * Get statistics for admin dashboard.
-     *
+     * Get all statistics for admin dashboard.
+     * 
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getStatistics()
+    public function getAllStatistics()
     {
         try {
             $statistics = [
@@ -158,6 +294,7 @@ class AdminGameController extends Controller
                 'totalDevelopers' => User::where('u_role', 'developer')->count(),
                 'totalUsers' => User::where('u_role', 'user')->count(),
                 'totalAdmins' => User::where('u_role', 'admin')->count(),
+                'bannedUsers' => User::where('u_isBanned', 'true')->count(),
             ];
 
             return response()->json([
