@@ -42,7 +42,7 @@ class GameController extends Controller
             });
 
         $bestSelling = Game::with('developer')
-            ->orderBy('g_downloadCount', 'desc')
+            ->orderBy('g_overallRate', 'desc')
             ->take(40)
             ->paginate(4)
             ->map(function ($game) {
@@ -130,6 +130,7 @@ class GameController extends Controller
                     'id' => $game->g_id,
                     'title' => $game->g_title,
                     'price' => $game->g_price,
+                    'discount' => $game->g_discount,
                     'rating' => $game->g_overallRate,
                     'image' => $game->g_mainImage
                 ];
@@ -277,7 +278,6 @@ class GameController extends Controller
                 'g_exImg2' => $exImg2Path,
                 'g_exImg3' => $exImg3Path,
                 'g_developerId' => $request->user()->u_id,
-                'g_downloadCount' => 0,
                 'g_overallRate' => 0,
             ]);
             
@@ -367,7 +367,6 @@ class GameController extends Controller
                         'discount' => $game->g_discount,
                         'status' => $game->g_status,
                         'mainImage' => $game->g_mainImage,
-                        'downloadCount' => $game->g_downloadCount,
                         'overallRate' => $game->g_overallRate,
                         'categories' => $game->categories->pluck('gc_category'),
                         'created_at' => $game->created_at
@@ -477,8 +476,9 @@ class GameController extends Controller
                 case 'trending':
                     $query->where('created_at', '>', now()->subDays(90))->orderBy("created_at", "desc");
                     break;
-                case 'top-sellers':
-                    $query->orderBy('g_downloadCount', 'desc');
+                case 'most-review':
+                    $query->withCount('reviews')
+                        ->orderBy('reviews_count', 'desc');
                     break;
                 case 'top-rated':
                     $query->where('g_overallRate', '>=', 4);
@@ -513,6 +513,7 @@ class GameController extends Controller
                 });
             }
 
+            // Get the games
             $games = $query->get()->map(function ($game) use ($userLibraryGameIds) {
                 return [
                     'id' => $game->g_id,
@@ -523,7 +524,7 @@ class GameController extends Controller
                     'discount' => $game->g_discount,
                     'onSale' => $game->g_discount > 0,
                     'reviewStatus' => ReviewController::getReviewStatus($game->g_overallRate),
-                    'reviewCount' => $game->g_downloadCount,
+                    'reviewCount' => Review::where('r_gameId', $game->g_id)->count(),
                     'releaseDate' => $game->created_at,
                     'multiPlayer' => true,
                     'openWorld' => false,

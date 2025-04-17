@@ -9,6 +9,7 @@ use App\Http\Controllers\GameController;
 use App\Http\Controllers\UserLibraryController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\WishlistController;
+use App\Http\Controllers\GameStoreController;
 
 /*
 |--------------------------------------------------------------------------
@@ -39,7 +40,7 @@ Route::get('/browseGames', [GameController::class, 'browseGames']);
 Route::get('/games/{id}', [GameController::class, 'show']);
 Route::post('/games', [GameController::class, 'store']);
 Route::get('/games/{id}/edit', [GameController::class, 'getGameForEdit'])->middleware('auth:sanctum');
- Route::put('/games/{id}', [GameController::class, 'update'])->middleware('auth:sanctum');
+Route::put('/games/{id}', [GameController::class, 'update'])->middleware('auth:sanctum');
 Route::get('/games/{id}/reviews', [ReviewController::class, 'getReviews']);
 
 // Wishlist routes
@@ -95,3 +96,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/games/{id}/user-review', [ReviewController::class, 'getUserReview']);
     Route::post('/games/{id}/reviews', [ReviewController::class, 'submitReview']);
 });
+
+// Game Store Routes
+Route::get('/store/featured', [GameStoreController::class, 'getRandomFeaturedGames']);
+Route::get('/store/flash-sales', [GameStoreController::class, 'getFlashSales']);
+Route::get('/store/categories', [GameStoreController::class, 'getCategories']);
+Route::get('/store/best-selling', [GameStoreController::class, 'getBestSelling']);
+Route::get('/store/explore', [GameStoreController::class, 'getExploreProducts']);

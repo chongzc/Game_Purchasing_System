@@ -92,14 +92,14 @@
                   </VListItemTitle>
                 </VListItem>
               </VList>
-            </div>
+              </div>
 
             <VDivider class="my-4" />
 
             <div class="text-subtitle-2 font-weight-bold mb-2">
               LANGUAGES
             </div>
-            
+
             <div class="filter-categories">
               <VList density="compact">
                 <VListItem
@@ -123,7 +123,7 @@
                   </VListItemTitle>
                 </VListItem>
               </VList>
-            </div>
+                  </div>
 
             <VDivider class="my-4" />
 
@@ -180,12 +180,12 @@
             >
               <template #prepend>
                 <div class="position-relative">
-                  <VImg
-                    :src="game.image || '/images/placeholder.jpg'"
-                    width="324"
-                    height="151"
-                    cover
-                    class="rounded"
+                <VImg
+                  :src="game.image || '/images/placeholder.jpg'"
+                  width="324"
+                  height="151"
+                  cover
+                  class="rounded"
                     style="margin-right: 20px;"
                   />
                   <WishlistButton
@@ -263,7 +263,7 @@
                       RM{{ game.originalPrice.toFixed(2) }}
                     </div>
                     <div class="text-primary font-weight-bold">
-                      RM{{ game.price.toFixed(2) }}
+                      RM{{ (game.originalPrice - (game.originalPrice * (game.discount / 100))).toFixed(2) }}
                     </div>
                   </div>
                   <div
@@ -276,7 +276,7 @@
                     v-else
                     class="font-weight-bold text-primary"
                   >
-                    RM{{ game.price.toFixed(2) }}
+                    RM{{ game.originalPrice.toFixed(2) }}
                   </div>
                 </div>
               </template>
@@ -316,7 +316,7 @@
 import WishlistButton from '@/components/WishlistButton.vue'
 import axios from 'axios'
 import { computed, onMounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 // Breadcrumbs
 const breadcrumbs = ref([
@@ -335,11 +335,15 @@ const breadcrumbs = ref([
 const tabs = [
   { title: 'ALL', value: 'all' },
   { title: 'NEW & TRENDING', value: 'trending' },
-  { title: 'TOP SELLERS', value: 'top-sellers' },
+  { title: 'MOST REVIEW', value: 'most-review' },
   { title: 'TOP RATED', value: 'top-rated' }
 ]
 
 const activeTab = ref('all')
+
+// Add route instance
+const route = useRoute()
+const router = useRouter()
 
 // Filter state
 const searchQuery = ref('')
@@ -401,16 +405,62 @@ const clearFilters = () => {
   activeTab.value = 'all'
   selectedCategory.value = null
   selectedLanguage.value = null
-  loadGames()
+  // Update URL when clearing filters
+  router.replace({ query: {} })
+}
+
+// Update URL when filters change
+const updateURL = () => {
+  const query = {}
+  if (activeTab.value !== 'all') query.tab = activeTab.value
+  if (searchQuery.value) query.search = searchQuery.value
+  if (selectedCategory.value) query.category = selectedCategory.value
+  if (selectedLanguage.value) query.language = selectedLanguage.value
+  if (priceRange.value !== 500) query.maxPrice = priceRange.value
+
+  router.replace({ query })
 }
 
 // Watch for filter changes
 watch([activeTab, searchQuery, priceRange, selectedCategory, selectedLanguage], () => {
   loadGames()
+  updateURL()
 }, { deep: true })
+
+// Watch for route changes
+watch(
+  () => route.query,
+  (newQuery) => {
+    // Only update if the change wasn't triggered by our own updateURL
+    if (newQuery.category !== selectedCategory.value) {
+      selectedCategory.value = newQuery.category || null
+    }
+    if (newQuery.language !== selectedLanguage.value) {
+      selectedLanguage.value = newQuery.language || null
+    }
+    if (newQuery.tab !== activeTab.value) {
+      activeTab.value = newQuery.tab || 'all'
+    }
+    if (newQuery.search !== searchQuery.value) {
+      searchQuery.value = newQuery.search || ''
+    }
+    if (newQuery.maxPrice !== priceRange.value?.toString()) {
+      priceRange.value = parseInt(newQuery.maxPrice) || 500
+    }
+  },
+  { immediate: true }
+)
 
 // Lifecycle hooks
 onMounted(() => {
+  // Initialize filters from URL parameters
+  const { category, language, tab, search, maxPrice } = route.query
+  if (category) selectedCategory.value = category
+  if (language) selectedLanguage.value = language
+  if (tab) activeTab.value = tab
+  if (search) searchQuery.value = search
+  if (maxPrice) priceRange.value = parseInt(maxPrice)
+
   loadCategories()
   loadLanguages()
   loadGames()
@@ -435,9 +485,6 @@ const navigateToGame = (gameId, event) => {
     router.push(`/games/${gameId}`)
   }
 }
-
-// Add router import at the top with other imports
-const router = useRouter()
 </script>
 
 <style lang="scss" scoped>
