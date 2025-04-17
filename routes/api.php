@@ -33,7 +33,18 @@ Route::get('/users', [UserController::class, 'getUsers']);
 Route::get('/languages', [GameController::class, 'getLanguages']);
 Route::get('/categories', [GameController::class, 'getCategories']);
 Route::get('/browseGames', [GameController::class, 'browseGames']);
+Route::get('/games/{id}', [GameController::class, 'show']);
 Route::post('/games', [GameController::class, 'store']);
+Route::get('/games/{id}/reviews', [GameController::class, 'getReviews']);
+Route::get('/games/{id}/user-review', [GameController::class, 'getUserReview'])->middleware('auth:sanctum');
+Route::get('/games/{id}/wishlist-status', [GameController::class, 'getUserWishlistStatus'])->middleware('auth:sanctum');
+
+// Wishlist routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/wishlist', [UserController::class, 'getWishlist']);
+    Route::post('/wishlist/{game}', [UserController::class, 'addToWishlist']);
+    Route::delete('/wishlist/{game}', [UserController::class, 'removeFromWishlist']);
+});
 
 // Get authenticated user
 Route::middleware('auth:sanctum')->get('/auth/user', function (Request $request) {

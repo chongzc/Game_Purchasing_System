@@ -65,7 +65,7 @@ class Game extends Model
 
     public function reviews()
     {
-        return $this->hasMany(Review::class, 'r_game_id');
+        return $this->hasMany(Review::class, 'r_gameId', 'g_id');
     }
 
     public function categories()

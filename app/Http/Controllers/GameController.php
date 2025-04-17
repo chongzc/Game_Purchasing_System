@@ -6,6 +6,8 @@ use App\Models\Game;
 use App\Models\GameCategory;
 use App\Models\UserLib;
 use App\Models\User;
+use App\Models\Review;
+use App\Models\Wishlist;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -68,16 +70,120 @@ class GameController extends Controller
      * Show the details for a specific game.
      *
      * @param  int  $id
-     * @return \Illuminate\View\View
+     * @return \Illuminate\Http\JsonResponse
      */
     public function show($id)
     {
-        // In a real application, this would come from a database query
-        $game = Game::with('developer', 'purchasedUsers', 'wishlistedUsers', 'libraryUsers')
-            ->where('g_id', $id)
-            ->firstOrFail();
+        try {
+            $game = Game::with(['developer', 'categories', 'reviews.user'])
+                ->where('g_id', $id)
+                ->firstOrFail();
 
-        return view('game-details', compact('game'));
+            // Get user's library status if authenticated
+            $libraryStatus = null;
+            $isWishlisted = false;
+            if (Auth::check()) {
+                $libraryGame = UserLib::where('ul_userId', Auth::user()->u_id)
+                    ->where('ul_gameId', $id)
+                    ->first();
+                $libraryStatus = $libraryGame ? $libraryGame->ul_status : null;
+                
+                // Check if game is in user's wishlist
+                $isWishlisted = Wishlist::where('wl_userId', Auth::id())
+                    ->where('wl_gameId', $id)
+                    ->exists();
+            }
+
+            // Calculate rating breakdown
+            $ratingBreakdown = [
+                5 => 0,
+                4 => 0,
+                3 => 0,
+                2 => 0,
+                1 => 0
+            ];
+
+            foreach ($game->reviews as $review) {
+                if (isset($ratingBreakdown[$review->r_rating])) {
+                    $ratingBreakdown[$review->r_rating]++;
+                }
+            }
+
+            // Calculate percentages for rating breakdown
+            $totalReviews = $game->reviews->count();
+            if ($totalReviews > 0) {
+                foreach ($ratingBreakdown as $rating => $count) {
+                    $ratingBreakdown[$rating] = round(($count / $totalReviews) * 100);
+                }
+            }
+
+            // Get similar games based on categories
+            $similarGames = Game::whereHas('categories', function($query) use ($game) {
+                $query->whereIn('gc_category', $game->categories->pluck('gc_category'));
+            })
+            ->where('g_id', '!=', $id)
+            ->where('g_status', 'verified')
+            ->take(4)
+            ->get()
+            ->map(function ($game) {
+                return [
+                    'id' => $game->g_id,
+                    'title' => $game->g_title,
+                    'price' => $game->g_price,
+                    'rating' => $game->g_overallRate,
+                    'image' => $game->g_mainImage
+                ];
+            });
+
+            // Transform the game data
+            $gameData = [
+                'id' => $game->g_id,
+                'title' => $game->g_title,
+                'description' => $game->g_description,
+                'fullDescription' => $game->g_description,
+                'price' => $game->g_price,
+                'originalPrice' => $game->g_price,
+                'discount' => $game->g_discount,
+                'rating' => $game->g_overallRate,
+                'reviewCount' => $totalReviews,
+                'category' => $game->g_category,
+                'developer' => $game->developer->u_name,
+                'releaseDate' => $game->created_at->format('M d, Y'),
+                'platform' => 'PC',
+                'mainImage' => $game->g_mainImage,
+                'gallery' => array_filter([
+                    $game->g_mainImage,
+                    $game->g_exImg1,
+                    $game->g_exImg2,
+                    $game->g_exImg3
+                ]),
+                'features' => $game->categories->pluck('gc_category')->toArray(),
+                'ratingBreakdown' => $ratingBreakdown,
+                'reviews' => $game->reviews->map(function ($review) {
+                    return [
+                        'userName' => $review->user->u_name,
+                        'userAvatar' => $review->user->u_profileImagePath,
+                        'rating' => $review->r_rating,
+                        'date' => $review->created_at->format('M d, Y'),
+                        'comment' => $review->r_reviewText
+                    ];
+                }),
+                'libraryStatus' => $libraryStatus,
+                'isWishlisted' => $isWishlisted
+            ];
+
+            return response()->json([
+                'success' => true,
+                'game' => $gameData,
+                'similarGames' => $similarGames
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch game details',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -518,5 +624,123 @@ class GameController extends Controller
         });
 
         return response()->json($libraryGames);
+    }
+
+    /**
+     * Get reviews for a specific game
+     *
+     * @param int $gameId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getReviews($gameId)
+    {
+        try {
+            $reviews = Review::where('r_gameId', $gameId)
+                ->with('user')
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->map(function ($review) {
+                    return [
+                        'id' => $review->r_id,
+                        'rating' => $review->r_rating,
+                        'comment' => $review->r_reviewText,
+                        'created_at' => $review->created_at,
+                        'user' => [
+                            'id' => $review->user->u_id,
+                            'name' => $review->user->u_name,
+                            'avatar' => $review->user->u_profileImagePath
+                        ]
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'reviews' => $reviews
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch reviews',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get user's review for a specific game
+     *
+     * @param int $gameId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getUserReview($gameId)
+    {
+        try {
+            if (!Auth::check()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not authenticated'
+                ], 401);
+            }
+
+            $review = Review::where('r_gameId', $gameId)
+                ->where('r_userId', Auth::user()->u_id)
+                ->first();
+
+            if (!$review) {
+                return response()->json([
+                    'success' => true,
+                    'review' => null
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'review' => [
+                    'id' => $review->r_id,
+                    'rating' => $review->r_rating,
+                    'comment' => $review->r_reviewText,
+                    'created_at' => $review->created_at
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch user review',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get user's wishlist status for a specific game
+     *
+     * @param int $gameId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getUserWishlistStatus($gameId)
+    {
+        try {
+            if (!Auth::check()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not authenticated'
+                ], 401);
+            }
+
+            $isWishlisted = Wishlist::where('wl_userId', Auth::id())
+                ->where('wl_gameId', $gameId)
+                ->exists();
+
+            return response()->json([
+                'success' => true,
+                'isWishlisted' => $isWishlisted
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to check wishlist status',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

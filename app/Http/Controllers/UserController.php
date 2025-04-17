@@ -217,7 +217,13 @@ class UserController extends Controller
      */
     public function getWishlist()
     {
-        $wishlist = Auth::user()->wishlist()
+        try {
+            // Get games in user's wishlist with their details
+            $wishlist = Game::whereIn('g_id', function($query) {
+                $query->select('wl_gameId')
+                    ->from('wishlist')
+                    ->where('wl_userId', Auth::id());
+            })
             ->with('developer')
             ->get()
             ->map(function ($game) {
@@ -226,12 +232,19 @@ class UserController extends Controller
                     'title' => $game->g_title,
                     'price' => $game->g_price,
                     'discount' => $game->g_discount,
-                    'mainImage' => $game->g_mainImage,
+                    'image_url' => $game->g_mainImage,
                     'developer' => $game->developer->u_name
                 ];
             });
 
-        return response()->json($wishlist);
+            return response()->json($wishlist);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch wishlist',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -239,17 +252,39 @@ class UserController extends Controller
      */
     public function addToWishlist(Game $game)
     {
-        $user = Auth::user();
-        
-        if ($user->wishlist()->where('g_id', $game->g_id)->exists()) {
-            return response()->json(['message' => 'Game already in wishlist'], 409);
+        try {
+            $user = Auth::user();
+            
+            // Check if game already exists in wishlist
+            $exists = Wishlist::where('wl_userId', $user->u_id)
+                ->where('wl_gameId', $game->g_id)
+                ->exists();
+
+            if ($exists) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Game already in wishlist'
+                ], 409);
+            }
+
+            // Add game to wishlist
+            Wishlist::create([
+                'wl_userId' => $user->u_id,
+                'wl_gameId' => $game->g_id,
+                'wl_name' => $game->g_title
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Game added to wishlist successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to add game to wishlist',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $user->wishlist()->attach($game->g_id, ['wl_name' => $game->g_title]);
-
-        return response()->json([
-            'message' => 'Game added to wishlist successfully'
-        ]);
     }
 
     /**
@@ -257,12 +292,32 @@ class UserController extends Controller
      */
     public function removeFromWishlist(Game $game)
     {
-        $user = Auth::user();
-        $user->wishlist()->detach($game->g_id);
+        try {
+            $user = Auth::user();
+            
+            // Remove game from wishlist
+            $deleted = Wishlist::where('wl_userId', $user->u_id)
+                ->where('wl_gameId', $game->g_id)
+                ->delete();
 
-        return response()->json([
-            'message' => 'Game removed from wishlist successfully'
-        ]);
+            if (!$deleted) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Game not found in wishlist'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Game removed from wishlist successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to remove game from wishlist',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
