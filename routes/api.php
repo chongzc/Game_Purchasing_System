@@ -66,4 +66,5 @@ Route::post('/test-upload', function (Request $request) {
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/developer/games', [GameController::class, 'getDeveloperGames']);
+    Route::get('/library-games', [GameController::class, 'getLibraryGames']);
 });
