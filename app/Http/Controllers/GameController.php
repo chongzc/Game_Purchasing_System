@@ -208,11 +208,20 @@ class GameController extends Controller
                             'gc_gameName' => $game->g_title,
                             'gc_category' => $categoryName
                         ]);
+                        
+                        // For the first category, update the game's main category if it's not already set
+                        if (!$game->g_category) {
+                            $game->g_category = $categoryName;
+                            $game->save();
+                        }
                     }
                 }
             } else {
                 throw new \Exception('Failed to create game or game ID is missing');
             }
+            
+            // Refresh the game to get the updated data including any changes made during category setup
+            $game = Game::find($game->g_id);
             
             return response()->json([
                 'success' => true,

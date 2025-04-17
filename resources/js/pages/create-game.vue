@@ -80,7 +80,7 @@ const handleSubmit = async () => {
     
     // Get the authenticated user's ID from the session/auth system
     // Since we're using a hardcoded value for now, make sure it's sent as a number, not null
-    const developerId = 1  // In a real app, this would come from the auth system
+    const developerId = 1 // In a real app, this would come from the auth system
 
     formData.append('g_developerId', developerId)
     

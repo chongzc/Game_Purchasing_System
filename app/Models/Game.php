@@ -28,6 +28,7 @@ class Game extends Model
         'g_exImg3',
         'g_overallRate',
         'g_language',
+        'g_category',
     ];
 
     protected $casts = [
