@@ -60,3 +60,7 @@ Route::post('/test-upload', function (Request $request) {
         'inputs' => $request->all()
     ]);
 });
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/developer/games', [GameController::class, 'getDeveloperGames']);
+});

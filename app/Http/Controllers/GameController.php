@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class GameController extends Controller
 {
@@ -87,7 +88,7 @@ class GameController extends Controller
     public function library(Request $request)
     {
         $userLibrary = UserLib::with('game')
-            ->where('ul_userId', auth()->id())
+            ->where('ul_userId', Auth::user()->user_id)
             ->get()
             ->map(function ($lib) {
                 return [
@@ -126,7 +127,6 @@ class GameController extends Controller
                 'g_status' => 'nullable|string',
                 'g_language' => 'required|string',
                 'g_category' => 'nullable|string',
-                'g_developerId' => 'required|numeric',
                 'categories' => 'required|array',
                 'g_mainImage' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
                 'g_exImg1' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -169,7 +169,7 @@ class GameController extends Controller
                 'g_exImg1' => $exImg1Path,
                 'g_exImg2' => $exImg2Path,
                 'g_exImg3' => $exImg3Path,
-                'g_developerId' => $request->g_developerId ?? auth()->id(),
+                'g_developerId' => $request->user()->u_id,
                 'g_downloadCount' => 0,
                 'g_overallRate' => 0,
             ]);
@@ -234,6 +234,48 @@ class GameController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create game',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get all games for the authenticated developer
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getDeveloperGames()
+    {
+        try {
+            $games = Game::where('g_developerId', Auth::user()->u_id)
+                ->with(['categories' => function($query) {
+                    $query->select('gc_gameId', 'gc_category');
+                }])
+                ->get()
+                ->map(function ($game) {
+                    return [
+                        'id' => $game->g_id,
+                        'title' => $game->g_title,
+                        'price' => $game->g_price,
+                        'discount' => $game->g_discount,
+                        'status' => $game->g_status,
+                        'mainImage' => $game->g_mainImage,
+                        'downloadCount' => $game->g_downloadCount,
+                        'overallRate' => $game->g_overallRate,
+                        'categories' => $game->categories->pluck('gc_category'),
+                        'created_at' => $game->created_at
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'games' => $games
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching developer games: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch games',
                 'error' => $e->getMessage()
             ], 500);
         }

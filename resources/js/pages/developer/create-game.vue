@@ -15,9 +15,6 @@ const gameData = ref({
   discount: '',
   genre: '',
   language: '',
-  releaseDate: '',
-  platform: [],
-  features: '',
   coverImage: null,
   screenshots: [],
 })
@@ -54,7 +51,7 @@ const handleImageUpload = (event, type) => {
   if (type === 'cover') {
     gameData.value.coverImage = file
   } else if (type === 'screenshots') {
-    gameData.value.screenshots.push(file)
+    gameData.value.screenshots.append(file)
   }
 }
 
@@ -74,7 +71,6 @@ const handleSubmit = async () => {
     formData.append('g_price', gameData.value.price)
     formData.append('g_discount', gameData.value.discount || 0)
     formData.append('g_language', gameData.value.language)
-    formData.append('g_releaseDate', gameData.value.releaseDate)
     formData.append('g_status', 'pending')
     formData.append('g_category', gameData.value.genre)
     
@@ -142,10 +138,13 @@ const navigateToDashboard = () => {
     <VRow>
       <VCol cols="12">
         <VCard>
-          <VCardTitle class="text-h5 mb-4">
+          <VCardTitle class="text-h5 mb-4" id="create-game-title">
             Create New Game
           </VCardTitle>
-          
+          <VCardTitle class="text-h5 mb-4 d-none" id="edit-game-title">
+            Edit Game
+          </VCardTitle>
+
           <VCardText>
             <VForm @submit.prevent="handleSubmit">
               <VRow>
@@ -170,7 +169,7 @@ const navigateToDashboard = () => {
                     v-model="gameData.price"
                     label="Price"
                     type="number"
-                    prefix="$"
+                    prefix="RM"
                     required
                     :rules="[v => !!v || 'Price is required']"
                   />
@@ -216,19 +215,6 @@ const navigateToDashboard = () => {
                     :rules="[v => !!v || 'Language is required']"
                   />
                 </VCol>
-                
-                <VCol
-                  cols="12"
-                  md="6"
-                >
-                  <VTextField
-                    v-model="gameData.releaseDate"
-                    label="Release Date"
-                    type="date"
-                    required
-                    :rules="[v => !!v || 'Release date is required']"
-                  />
-                </VCol>
                              
                 <VCol cols="12">
                   <VTextarea
@@ -265,7 +251,7 @@ const navigateToDashboard = () => {
                     accept="image/*"
                     multiple
                     required
-                    :rules="[v => v.length > 0 || 'At least one screenshot is required']"
+                    :rules="[v => v.length > 0 && v.length <= 3 || 'Min:1, Max:3']"
                     @change="handleImageUpload($event, 'screenshots')"
                   />
                 </VCol>
@@ -283,11 +269,21 @@ const navigateToDashboard = () => {
                     Cancel
                   </VBtn>
                   <VBtn
+                    id="create-game-btn"
                     color="primary"
                     type="submit"
                     size="large"
                   >
                     Create Game
+                  </VBtn>
+                  <VBtn
+                    id="edit-game-btn"
+                    color="primary"
+                    type="submit"
+                    size="large"
+                    class="d-none"
+                  >
+                    Edit Game
                   </VBtn>
                 </VCol>
               </VRow>
