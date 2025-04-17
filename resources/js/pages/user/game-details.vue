@@ -2,7 +2,7 @@
 import WishlistButton from '@/components/WishlistButton.vue'
 import { useAuthStore } from '@/stores/auth'
 import axios from 'axios'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
@@ -59,6 +59,23 @@ const discountedPrice = computed(() => {
   return game.value.price - (game.value.price * (game.value.discount / 100))
 })
 
+// Add computed properties for status text and color
+const getStatusText = computed(() => {
+  if (!game.value?.libraryStatus) return 'Not Owned'
+  if (game.value.libraryStatus === 'owned') {
+    return game.value.isInstalled ? 'Installed' : 'Not Installed'
+  }
+  return 'In Library'
+})
+
+const getStatusColor = computed(() => {
+  if (!game.value?.libraryStatus) return 'warning'
+  if (game.value.libraryStatus === 'owned') {
+    return game.value.isInstalled ? 'success' : 'info'
+  }
+  return 'primary'
+})
+
 // Methods
 const fetchGameDetails = async () => {
   try {
@@ -67,7 +84,8 @@ const fetchGameDetails = async () => {
     if (response.data.success) {
       game.value = response.data.game
       similarGames.value = response.data.similarGames
-      gameStatus.value = response.data.game.libraryStatus || ''
+      // ul_status will be one of: null (not owned), 'owned', or 'installed'
+      game.value.ul_status = response.data.game.ul_status || null
     }
   } catch (error) {
     console.error('Error fetching game details:', error)
@@ -149,8 +167,9 @@ const submitReview = async () => {
   }
 }
 
-const viewGame = (id) => {
-  router.push(`/games/${id}`)
+const viewGame = async (id) => {
+  await router.push(`/games/${id}`)
+  await fetchGameDetails()
 }
 
 // Format date helper
@@ -162,11 +181,32 @@ const formatDate = (dateString) => {
   })
 }
 
+// Add install game method
+const installGame = async () => {
+  try {
+    await axios.post(`/api/library/${gameId.value}/install`)
+    // Refresh game details to update status
+    await fetchGameDetails()
+  } catch (error) {
+    console.error('Error installing game:', error)
+  }
+}
+
 // Load data on mount
 onMounted(async () => {
   await authStore.checkAuth()
   await fetchGameDetails()
 })
+
+// Watch for route changes
+watch(
+  () => route.params.id,
+  async (newId) => {
+    if (newId) {
+      await fetchGameDetails()
+    }
+  }
+)
 </script>
 
 <template>
@@ -310,54 +350,57 @@ onMounted(async () => {
               </div>
               
               <!-- Game Status Section -->
-              <VCard v-if="game.libraryStatus" class="mb-4">
-                <VCardText>
-                  <div class="d-flex align-center justify-space-between">
-                    <div>
-                      <VChip
-                        :color="game.libraryStatus === 'owned' ? 'success' : 'warning'"
-                        class="me-2"
-                      >
-                        {{ game.libraryStatus === 'owned' ? 'Owned' : 'Not Owned' }}
-                      </VChip>
+              <template v-if="isLoggedIn">
+                <!-- Not in library - Show purchase buttons -->
+                <VRow v-if="!game.libraryStatus" class="mt-4">
+                  <VCol cols="12" md="6">
+                    <VBtn
+                      block
+                      size="large"
+                      color="primary"
+                      prepend-icon="mdi-cart"
+                      @click="addToCart"
+                    >
+                      Add to Cart
+                    </VBtn>
+                  </VCol>
+                  <VCol cols="12" md="6">
+                    <VBtn
+                      block
+                      size="large"
+                      color="success"
+                      @click="buyNow"
+                    >
+                      Buy Now
+                    </VBtn>
+                  </VCol>
+                </VRow>
+
+                <!-- Owned or Installed -->
+                <VCard v-else class="mb-4">
+                  <VCardText>
+                    <div class="d-flex align-center justify-space-between">
+                      <div>
+                        <VChip
+                          :color="game.libraryStatus === 'installed' ? 'success' : 'primary'"
+                          class="me-2"
+                        >
+                          {{ game.libraryStatus === 'installed' ? 'Installed' : 'Owned' }}
+                        </VChip>
+                      </div>
+                      
+                      <div class="d-flex align-center">
+                        <VBtn
+                          :color="game.libraryStatus === 'installed' ? 'success' : 'primary'"
+                          @click="game.libraryStatus === 'installed' ? playGame() : installGame()"
+                        >
+                          {{ game.libraryStatus === 'installed' ? 'Play Now' : 'Install Game' }}
+                        </VBtn>
+                      </div>
                     </div>
-                    
-                    <div class="d-flex align-center">
-                      <VBtn
-                        :color="game.libraryStatus === 'owned' ? 'success' : 'primary'"
-                        @click="game.libraryStatus === 'owned' ? playGame() : purchaseGame()"
-                      >
-                        {{ game.libraryStatus === 'owned' ? 'Play Now' : 'Purchase' }}
-                      </VBtn>
-                    </div>
-                  </div>
-                </VCardText>
-              </VCard>
-              
-              <!-- Purchase Buttons -->
-              <VRow v-else class="mt-4">
-                <VCol cols="12" md="6">
-                  <VBtn
-                    block
-                    size="large"
-                    color="primary"
-                    prepend-icon="mdi-cart"
-                    @click="addToCart"
-                  >
-                    Add to Cart
-                  </VBtn>
-                </VCol>
-                <VCol cols="12" md="6">
-                  <VBtn
-                    block
-                    size="large"
-                    color="success"
-                    @click="buyNow"
-                  >
-                    Buy Now
-                  </VBtn>
-                </VCol>
-              </VRow>
+                  </VCardText>
+                </VCard>
+              </template>
             </VCol>
           </VRow>
         </VCol>
@@ -617,15 +660,10 @@ onMounted(async () => {
                     height="180"
                     cover
                   />
-                  <VBtn
-                    icon
-                    variant="text"
-                    color="default"
-                    size="small"
-                    class="position-absolute top-0 end-0 mt-1 me-1"
-                  >
-                    <VIcon icon="bx-heart" />
-                  </VBtn>
+                  <WishlistButton
+                    :game-id="relatedGame.id"
+                    class="position-absolute top-0 end-0 ma-2"
+                  />
                 </div>
               </VCardItem>
               

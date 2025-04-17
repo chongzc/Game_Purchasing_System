@@ -174,18 +174,26 @@
             <VListItem
               v-for="game in filteredGames"
               :key="game.id"
-              :to="`/games/${game.id}`"
+              :to="null"
               class="game-list-item py-3"
+              @click="navigateToGame(game.id, $event)"
             >
               <template #prepend>
-                <VImg
-                  :src="game.image || '/images/placeholder.jpg'"
-                  width="324"
-                  height="151"
-                  cover
-                  class="rounded"
-                  style="margin-right: 20px;"
-                />
+                <div class="position-relative">
+                  <VImg
+                    :src="game.image || '/images/placeholder.jpg'"
+                    width="324"
+                    height="151"
+                    cover
+                    class="rounded"
+                    style="margin-right: 20px;"
+                  />
+                  <WishlistButton
+                    :game-id="game.id"
+                    class="position-absolute top-0 end-0 ma-2"
+                    @click.stop
+                  />
+                </div>
               </template>
               
               <VListItemTitle class="text-subtitle-1 font-weight-bold d-flex align-center mb-1">
@@ -305,8 +313,10 @@
 </template>
 
 <script setup>
+import WishlistButton from '@/components/WishlistButton.vue'
 import axios from 'axios'
 import { computed, onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 
 // Breadcrumbs
 const breadcrumbs = ref([
@@ -417,6 +427,17 @@ const filteredGames = computed(() => {
 
   return result
 })
+
+// Add this in the script section after the other methods
+const navigateToGame = (gameId, event) => {
+  // Check if the click was on the wishlist button or its children
+  if (!event.target.closest('.v-btn')) {
+    router.push(`/games/${gameId}`)
+  }
+}
+
+// Add router import at the top with other imports
+const router = useRouter()
 </script>
 
 <style lang="scss" scoped>
