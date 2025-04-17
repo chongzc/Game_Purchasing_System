@@ -31,6 +31,16 @@ const routes = [
     component: () => import('@/pages/admin/admin-dashboard.vue'),
     meta: { requiresAuth: true, role: 'admin' },
   },
+  {
+    path: '/admin/game-management',
+    component: () => import('@/pages/admin/GameManagement.vue'),
+    meta: { requiresAuth: true, role: 'admin' },
+  },
+  {
+    path: '/admin/users-list',
+    component: () => import('@/pages/admin/users-list.vue'),
+    meta: { requiresAuth: true, role: 'admin' },
+  },
 ]
 
 const router = createRouter({

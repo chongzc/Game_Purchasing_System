@@ -9,6 +9,7 @@ use App\Http\Controllers\GameController;
 use App\Http\Controllers\UserLibraryController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\WishlistController;
+use App\Http\Controllers\AdminGameController;
 
 /*
 |--------------------------------------------------------------------------
@@ -39,7 +40,7 @@ Route::get('/browseGames', [GameController::class, 'browseGames']);
 Route::get('/games/{id}', [GameController::class, 'show']);
 Route::post('/games', [GameController::class, 'store']);
 Route::get('/games/{id}/edit', [GameController::class, 'getGameForEdit'])->middleware('auth:sanctum');
- Route::put('/games/{id}', [GameController::class, 'update'])->middleware('auth:sanctum');
+Route::put('/games/{id}', [GameController::class, 'update'])->middleware('auth:sanctum');
 Route::get('/games/{id}/reviews', [ReviewController::class, 'getReviews']);
 
 // Wishlist routes
@@ -82,6 +83,15 @@ Route::post('/test-upload', function (Request $request) {
 // Developer routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/developer/games', [GameController::class, 'getDeveloperGames']);
+});
+
+// Admin routes
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/admin/games', [AdminGameController::class, 'index']);
+    Route::get('/admin/games/{id}', [AdminGameController::class, 'show']);
+    Route::patch('/admin/games/{id}/status', [AdminGameController::class, 'updateStatus']);
+    Route::delete('/admin/games/{id}', [AdminGameController::class, 'destroy']);
+    Route::get('/admin/statistics', [AdminGameController::class, 'statistics']);
 });
 
 // User Library Routes
