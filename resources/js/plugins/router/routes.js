@@ -32,6 +32,11 @@ export const routes = [
         meta: { requiresAuth: true, roles: ['user', 'developer', 'admin'] },
       },
       {
+        path: 'user-wishlist',
+        component: () => import('@/pages/user/user-wishlist.vue'),
+        meta: { requiresAuth: true, roles: ['user', 'developer', 'admin'] },
+      },
+      {
         path: 'developer-dashboard',
         component: () => import('@/pages/developer/developer-dashboard.vue'),
         meta: { requiresAuth: true, roles: ['developer'] },
@@ -40,6 +45,11 @@ export const routes = [
         path: 'create-game',
         component: () => import('@/pages/developer/create-game.vue'),
         meta: { requiresAuth: true, roles: ['developer'] },
+      },
+      {
+        path: '/game-edit/:id',
+        component: () => import('@/pages/developer/create-game.vue'),
+        meta: { requiresAuth: true, role: 'developer' },
       },
       {
         path: 'admin-dashboard',

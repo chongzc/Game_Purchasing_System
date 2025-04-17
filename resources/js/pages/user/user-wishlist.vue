@@ -1,115 +1,161 @@
 <template>
-  <v-container>
-    <v-row>
-      <v-col cols="12">
-        <h1 class="text-h4 mb-6">My Wishlist</h1>
-      </v-col>
-    </v-row>
+  <div class="user-wishlist">
+    <VContainer>
+      <VBreadcrumbs
+        :items="breadcrumbs"
+        class="pa-0 mb-4"
+      />
+      
+      <h1 class="text-h4 mb-6">My Wishlist</h1>
 
-    <v-row v-if="loading">
-      <v-col cols="12" class="text-center">
-        <v-progress-circular indeterminate color="primary"></v-progress-circular>
-      </v-col>
-    </v-row>
+      <!-- Loading State -->
+      <VCard v-if="loading" class="pa-6 d-flex justify-center">
+        <VProgressCircular indeterminate />
+      </VCard>
 
-    <template v-else>
-      <v-row v-if="wishlist.length === 0">
-        <v-col cols="12" class="text-center">
-          <v-icon size="64" color="grey">mdi-heart-outline</v-icon>
-          <p class="text-h6 mt-4">Your wishlist is empty</p>
-          <p class="text-body-1 text-grey">Browse our game collection and add games to your wishlist</p>
-          <v-btn
-            color="primary"
-            class="mt-4"
-            :to="{ name: 'browse-games' }"
-            prepend-icon="mdi-store"
-          >
-            Browse Games
-          </v-btn>
-        </v-col>
-      </v-row>
+      <!-- Empty State -->
+      <VCard v-else-if="!wishlistGames.length" class="pa-6 text-center">
+        <VIcon icon="bx-heart" size="64" color="grey" class="mb-4" />
+        <h2 class="text-h5 mb-2">Your wishlist is empty</h2>
+        <p class="text-body-1 mb-4">Browse our game store to find games you love!</p>
+        <VBtn color="primary" to="/game-store" :href="null">
+          Browse Games
+        </VBtn>
+      </VCard>
 
-      <v-row v-else>
-        <v-col
-          v-for="game in wishlist"
+      <!-- Wishlist Games Grid -->
+      <VRow v-else>
+        <VCol
+          v-for="game in wishlistGames"
           :key="game.id"
           cols="12"
           sm="6"
           md="4"
           lg="3"
         >
-          <v-card class="h-100">
-            <v-img
-              :src="game.image_url"
-              :alt="game.title"
+          <VCard>
+            <VImg
+              :src="game.image"
               height="200"
               cover
-            ></v-img>
+              class="position-relative"
+            >
+              <!-- Wishlist Button -->
+              <WishlistButton
+                :game-id="game.id"
+                class="position-absolute top-0 end-0 ma-2"
+                @update:wishlist="onWishlistUpdate(game.id)"
+              />
+            </VImg>
 
-            <v-card-title class="text-truncate">
+            <VCardTitle class="pt-4">
               {{ game.title }}
-            </v-card-title>
+            </VCardTitle>
 
-            <v-card-text>
-              <div class="d-flex align-center justify-space-between">
-                <div class="text-h6">
-                  {{ formatPrice(game.price) }}
-                </div>
-                <div>
-                  <WishlistButton :game-id="game.id" @removed="removeFromList(game.id)" />
+            <VCardText>
+              <div class="d-flex align-center mb-2">
+                <VRating
+                  :model-value="game.rating"
+                  color="amber"
+                  density="compact"
+                  readonly
+                  size="small"
+                />
+                <span class="text-body-2 ms-2">({{ game.rating }})</span>
+              </div>
+
+              <div class="d-flex align-center">
+                <div class="text-h6">${{ calculateDiscountedPrice(game.price, game.discount).toFixed(2) }}</div>
+                <div v-if="game.discount > 0" class="ms-2">
+                  <span class="text-decoration-line-through text-disabled">${{ game.price }}</span>
+                  <VChip color="error" size="small" class="ms-2">-{{ game.discount }}%</VChip>
                 </div>
               </div>
-            </v-card-text>
 
-            <v-card-actions>
-              <v-btn
+              <div class="text-caption text-disabled mt-1">
+                Added {{ formatDate(game.addedAt) }}
+              </div>
+            </VCardText>
+
+            <VCardActions>
+              <VBtn
                 block
                 color="primary"
-                :to="{ name: 'game-details', params: { id: game.id }}"
+                variant="flat"
+                :to="'/games/' + game.id"
+                :href="null"
               >
                 View Details
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-col>
-      </v-row>
-    </template>
-  </v-container>
+              </VBtn>
+            </VCardActions>
+          </VCard>
+        </VCol>
+      </VRow>
+    </VContainer>
+  </div>
 </template>
 
 <script setup>
-import WishlistButton from '@/components/WishlistButton.vue';
-import axios from 'axios';
-import { onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import WishlistButton from '@/components/WishlistButton.vue'
+import axios from 'axios'
+import { computed, onMounted, ref } from 'vue'
 
-const router = useRouter();
-const wishlist = ref([]);
-const loading = ref(true);
+const loading = ref(true)
+const wishlistGames = ref([])
+
+// Breadcrumbs
+const breadcrumbs = computed(() => [
+  {
+    title: 'Home',
+    disabled: false,
+    to: '/',
+  },
+  {
+    title: 'My Wishlist',
+    disabled: true,
+  },
+])
+
+const calculateDiscountedPrice = (price, discount) => {
+  return price - (price * (discount / 100))
+}
+
+const formatDate = (dateString) => {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  })
+}
 
 const fetchWishlist = async () => {
   try {
-    const response = await axios.get('/api/wishlist');
-    wishlist.value = response.data;
+    loading.value = true
+    const response = await axios.get('/api/wishlist')
+    console.log('Wishlist response:', response.data) // Debug log
+    if (response.data.success) {
+      wishlistGames.value = response.data.wishlist || []
+    }
   } catch (error) {
-    console.error('Error fetching wishlist:', error);
+    console.error('Error fetching wishlist:', error)
+    wishlistGames.value = [] // Reset on error
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 
-const removeFromList = (gameId) => {
-  wishlist.value = wishlist.value.filter(game => game.id !== gameId);
-};
-
-const formatPrice = (price) => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD'
-  }).format(price);
-};
+const onWishlistUpdate = (gameId) => {
+  // Remove the game from the list when it's removed from wishlist
+  wishlistGames.value = wishlistGames.value.filter(game => game.id !== gameId)
+}
 
 onMounted(() => {
-  fetchWishlist();
-});
-</script> 
+  fetchWishlist()
+})
+</script>
+
+<style scoped>
+.user-wishlist {
+  min-height: 400px;
+}
+</style> 

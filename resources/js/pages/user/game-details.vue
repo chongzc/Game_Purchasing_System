@@ -367,7 +367,6 @@ onMounted(async () => {
       <VCard class="mt-6">
         <VTabs v-model="activeTab">
           <VTab value="description">Description</VTab>
-          <VTab value="specifications">Specifications</VTab>
           <VTab value="reviews">Reviews ({{ game.reviewCount }})</VTab>
         </VTabs>
         
@@ -376,7 +375,7 @@ onMounted(async () => {
         <VWindow v-model="activeTab">
           <!-- Description Tab -->
           <VWindowItem value="description">
-            <div class="text-body-1">
+            <div class="text-body-1" style="padding: 0 20px; margin-top: 20px;">
               <p>{{ game.fullDescription }}</p>
               <h3 class="text-h6 font-weight-bold mt-4 mb-2">
                 Key Features
@@ -665,7 +664,7 @@ onMounted(async () => {
       </template>
 
       <!-- Game Actions -->
-      <VCard class="mt-4" v-if="isLoggedIn">
+      <!-- <VCard class="mt-4" v-if="isLoggedIn">
         <VCardText>
           <div class="d-flex align-center justify-space-between">
             <div>
@@ -685,9 +684,9 @@ onMounted(async () => {
                   Play time: {{ Math.floor(playTime) }}h
                 </span>
               </template>
-            </div>
+            </div> -->
             
-            <div class="d-flex align-center">
+            <!-- <div class="d-flex align-center">
               <template v-if="gameStatus === 'downloading'">
                 <VProgressLinear
                   v-model="downloadProgress"
@@ -713,8 +712,8 @@ onMounted(async () => {
             </div>
           </div>
         </VCardText>
-      </VCard>
-    </template>
+      </VCard> -->
+    </template> 
     
     <VAlert v-else type="error" class="mt-4">
       Game not found

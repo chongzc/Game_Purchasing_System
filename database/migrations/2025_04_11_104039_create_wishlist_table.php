@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('wishlist', function (Blueprint $table) {
             $table->id('wl_id');
-            $table->string('wl_name'); 
+            $table->string('wl_name')->nullable(); 
             $table->unsignedBigInteger('wl_gameId'); 
             $table->unsignedBigInteger('wl_userId'); 
             $table->timestamps(); 

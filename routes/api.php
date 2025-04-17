@@ -8,6 +8,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\UserLibraryController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\WishlistController;
 
 /*
 |--------------------------------------------------------------------------
@@ -37,14 +38,16 @@ Route::get('/categories', [GameController::class, 'getCategories']);
 Route::get('/browseGames', [GameController::class, 'browseGames']);
 Route::get('/games/{id}', [GameController::class, 'show']);
 Route::post('/games', [GameController::class, 'store']);
+Route::get('/games/{id}/edit', [GameController::class, 'getGameForEdit'])->middleware('auth:sanctum');
+ Route::put('/games/{id}', [GameController::class, 'update'])->middleware('auth:sanctum');
 Route::get('/games/{id}/reviews', [ReviewController::class, 'getReviews']);
-Route::get('/games/{id}/wishlist-status', [GameController::class, 'getUserWishlistStatus'])->middleware('auth:sanctum');
 
 // Wishlist routes
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/wishlist', [UserController::class, 'getWishlist']);
-    Route::post('/wishlist/{game}', [UserController::class, 'addToWishlist']);
-    Route::delete('/wishlist/{game}', [UserController::class, 'removeFromWishlist']);
+    Route::get('/wishlist', [WishlistController::class, 'getWishlist']);
+    Route::get('/games/{id}/wishlist-status', [WishlistController::class, 'getWishlistStatus']);
+    Route::post('/wishlist/{gameId}', [WishlistController::class, 'addToWishlist']);
+    Route::delete('/wishlist/{gameId}', [WishlistController::class, 'removeFromWishlist']);
 });
 
 // Get authenticated user
