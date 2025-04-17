@@ -1,9 +1,12 @@
 <script setup>
 import axios from 'axios'
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 const router = useRouter()
+const route = useRoute()
+const isEditing = ref(false)
+const gameId = ref(null)
 
 // At the beginning of your script section, configure axios globally
 axios.defaults.withCredentials = true
@@ -46,12 +49,42 @@ const languages = [
   'Multiple Languages',
 ]
 
+// Load game data if editing
+onMounted(async () => {
+  // Check if we're in edit mode by looking for an id parameter
+  if (route.params.id) {
+    gameId.value = route.params.id
+    isEditing.value = true
+    
+    try {
+      const response = await axios.get(`/api/games/${gameId.value}/edit`)
+      if (response.data.success) {
+        const game = response.data.game
+        
+        // Map the game data to the form
+        gameData.value.title = game.title
+        gameData.value.description = game.description
+        gameData.value.price = game.price
+        gameData.value.discount = game.discount
+        gameData.value.genre = game.genre
+        gameData.value.language = game.language
+        
+        // We don't set the cover image and screenshots because they're files
+        // and we can't load them back into input elements
+      }
+    } catch (error) {
+      console.error('Failed to load game data:', error)
+      alert('Failed to load game data for editing')
+    }
+  }
+})
+
 const handleImageUpload = (event, type) => {
   const file = event.target.files[0]
   if (type === 'cover') {
     gameData.value.coverImage = file
   } else if (type === 'screenshots') {
-    gameData.value.screenshots.append(file)
+    gameData.value.screenshots.push(file)
   }
 }
 
@@ -106,10 +139,22 @@ const handleSubmit = async () => {
     console.log('Game data ready for submission:', Object.fromEntries(formData.entries()))
     
     try {
-      const response = await axios.post('/api/games', formData)
+      let response
       
-      console.log('Game created successfully:', response.data)
-      alert('Game submitted successfully! It will be reviewed by an admin.')
+      if (isEditing.value) {
+        // Add a _method field to simulate a PUT request
+        formData.append('_method', 'PUT')
+        
+        // Send to update endpoint
+        response = await axios.post(`/api/games/${gameId.value}`, formData)
+        alert('Game updated successfully! It will be reviewed by an admin.')
+      } else {
+        // Create new game
+        response = await axios.post('/api/games', formData)
+        alert('Game submitted successfully! It will be reviewed by an admin.')
+      }
+      
+      console.log('Game action completed successfully:', response.data)
       
       // Redirect to developer dashboard
       router.push('/developer-dashboard')
@@ -120,7 +165,7 @@ const handleSubmit = async () => {
                           axiosError.response?.data?.message || 
                           axiosError.message
       
-      alert(`Failed to create game: ${errorMessage}`)
+      alert(`Failed to ${isEditing.value ? 'update' : 'create'} game: ${errorMessage}`)
     }
   } catch (error) {
     console.error('General error:', error)
@@ -138,10 +183,16 @@ const navigateToDashboard = () => {
     <VRow>
       <VCol cols="12">
         <VCard>
-          <VCardTitle class="text-h5 mb-4" id="create-game-title">
+          <VCardTitle
+            v-if="!isEditing"
+            class="text-h5 mb-4"
+          >
             Create New Game
           </VCardTitle>
-          <VCardTitle class="text-h5 mb-4 d-none" id="edit-game-title">
+          <VCardTitle
+            v-else
+            class="text-h5 mb-4"
+          >
             Edit Game
           </VCardTitle>
 
@@ -235,8 +286,8 @@ const navigateToDashboard = () => {
                     v-model="gameData.coverImage"
                     label="Cover Image"
                     accept="image/*"
-                    required
-                    :rules="[v => !!v || 'Cover image is required']"
+                    :required="!isEditing"
+                    :rules="[v => isEditing ? true : !!v || 'Cover image is required']"
                     @change="handleImageUpload($event, 'cover')"
                   />
                 </VCol>
@@ -250,8 +301,8 @@ const navigateToDashboard = () => {
                     label="Screenshots"
                     accept="image/*"
                     multiple
-                    required
-                    :rules="[v => v.length > 0 && v.length <= 3 || 'Min:1, Max:3']"
+                    :required="!isEditing"
+                    :rules="[v => isEditing ? true : v.length > 0 || 'At least one screenshot is required']"
                     @change="handleImageUpload($event, 'screenshots')"
                   />
                 </VCol>
@@ -269,21 +320,11 @@ const navigateToDashboard = () => {
                     Cancel
                   </VBtn>
                   <VBtn
-                    id="create-game-btn"
                     color="primary"
                     type="submit"
                     size="large"
                   >
-                    Create Game
-                  </VBtn>
-                  <VBtn
-                    id="edit-game-btn"
-                    color="primary"
-                    type="submit"
-                    size="large"
-                    class="d-none"
-                  >
-                    Edit Game
+                    {{ isEditing ? 'Update Game' : 'Create Game' }}
                   </VBtn>
                 </VCol>
               </VRow>
@@ -294,4 +335,5 @@ const navigateToDashboard = () => {
     </VRow>
   </VContainer>
 </template> 
+
 

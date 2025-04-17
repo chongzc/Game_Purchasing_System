@@ -37,6 +37,8 @@ Route::get('/categories', [GameController::class, 'getCategories']);
 Route::get('/browseGames', [GameController::class, 'browseGames']);
 Route::get('/games/{id}', [GameController::class, 'show']);
 Route::post('/games', [GameController::class, 'store']);
+Route::get('/games/{id}/edit', [GameController::class, 'getGameForEdit'])->middleware('auth:sanctum');
+Route::put('/games/{id}', [GameController::class, 'update'])->middleware('auth:sanctum');
 Route::get('/games/{id}/reviews', [ReviewController::class, 'getReviews']);
 Route::get('/games/{id}/wishlist-status', [GameController::class, 'getUserWishlistStatus'])->middleware('auth:sanctum');
 

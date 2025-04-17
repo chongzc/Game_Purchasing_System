@@ -42,6 +42,11 @@ export const routes = [
         meta: { requiresAuth: true, roles: ['developer'] },
       },
       {
+        path: '/game-edit/:id',
+        component: () => import('@/pages/developer/create-game.vue'),
+        meta: { requiresAuth: true, role: 'developer' },
+      },
+      {
         path: 'admin-dashboard',
         component: () => import('@/pages/admin/admin-dashboard.vue'),
         meta: { requiresAuth: true, roles: ['admin'] },
