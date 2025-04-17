@@ -280,4 +280,196 @@ class GameController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Get distinct game categories with counts
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getCategories()
+    {
+        try {
+            $categories = GameCategory::select('gc_category')
+                ->selectRaw('COUNT(*) as count')
+                ->groupBy('gc_category')
+                ->orderBy('count', 'desc')
+                ->get()
+                ->map(function ($category) {
+                    return [
+                        'name' => $category->gc_category,
+                        'count' => $category->count
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'categories' => $categories
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching categories: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch categories',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get distinct game languages with counts
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getLanguages()
+    {
+        try {
+            $languages = Game::select('g_language')
+                ->selectRaw('COUNT(*) as count')
+                ->where('g_status', 'verified')
+                ->groupBy('g_language')
+                ->orderBy('count', 'desc')
+                ->get()
+                ->map(function ($lang) {
+                    return [
+                        'name' => $lang->g_language,
+                        'count' => $lang->count
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'languages' => $languages
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching languages: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch languages',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get user's library game IDs
+     *
+     * @return array
+     */
+    private function getUserLibraryGameIds()
+    {
+        if (!Auth::check()) {
+            return [];
+        }
+
+        return UserLib::where('ul_userId', Auth::user()->u_id)
+            ->pluck('ul_gameId')
+            ->toArray();
+    }
+
+    /**
+     * Browse games with filters
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function browseGames(Request $request)
+    {
+        try {
+            $query = Game::with(['categories', 'developer'])
+                ->where('g_status', 'verified');
+
+            // Get user's library game IDs
+            $userLibraryGameIds = $this->getUserLibraryGameIds();
+
+            // Apply tab filters
+            switch ($request->tab) {
+                case 'trending':
+                    $query->where('created_at', '>', now()->subDays(90))->orderBy("created_at", "desc");
+                    break;
+                case 'top-sellers':
+                    $query->orderBy('g_downloadCount', 'desc');
+                    break;
+                case 'top-rated':
+                    $query->where('g_overallRate', '>=', 4);
+                    break;
+            }
+
+            // Apply price filter
+            if ($request->has('maxPrice')) {
+                $query->where('g_price', '<=', $request->maxPrice);
+            }
+
+            // Apply category filter
+            if ($request->has('category')) {
+                $query->whereHas('categories', function($q) use ($request) {
+                    $q->where('gc_category', $request->category);
+                });
+            }
+
+            // Apply language filter
+            if ($request->has('language')) {
+                $query->where('g_language', $request->language);
+            }
+
+            // Apply search filter
+            if ($request->has('search')) {
+                $search = $request->search;
+                $query->where(function($q) use ($search) {
+                    $q->where('g_title', 'like', "%{$search}%")
+                      ->orWhereHas('categories', function($q) use ($search) {
+                          $q->where('gc_category', 'like', "%{$search}%");
+                      });
+                });
+            }
+
+            $games = $query->get()->map(function ($game) use ($userLibraryGameIds) {
+                return [
+                    'id' => $game->g_id,
+                    'title' => $game->g_title,
+                    'image' => $game->g_mainImage,
+                    'price' => $game->g_price,
+                    'originalPrice' => $game->g_price,
+                    'discount' => $game->g_discount,
+                    'onSale' => $game->g_discount > 0,
+                    'reviewStatus' => $this->getReviewStatus($game->g_overallRate),
+                    'reviewCount' => $game->g_downloadCount,
+                    'releaseDate' => $game->created_at,
+                    'multiPlayer' => true,
+                    'openWorld' => false,
+                    'tags' => $game->categories->pluck('gc_category')->toArray(),
+                    'inLibrary' => in_array($game->g_id, $userLibraryGameIds)
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'games' => $games
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error fetching games: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch games',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get review status based on rating
+     *
+     * @param float $rating
+     * @return string
+     */
+    private function getReviewStatus($rating)
+    {
+        if ($rating >= 4.5) return 'Overwhelmingly Positive';
+        if ($rating >= 4.0) return 'Very Positive';
+        if ($rating >= 3.5) return 'Positive';
+        if ($rating >= 3.0) return 'Mostly Positive';
+        if ($rating >= 2.5) return 'Mixed';
+        if ($rating >= 2.0) return 'Mostly Negative';
+        return 'Negative';
+    }
 }

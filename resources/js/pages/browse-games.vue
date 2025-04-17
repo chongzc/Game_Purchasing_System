@@ -56,67 +56,76 @@
               class="mb-4"
             />
 
-            <!-- Language Filter -->
-            <div class="d-flex align-center mb-2">
-              <VBtn
-                size="x-small"
-                icon
-                variant="text"
-                density="comfortable"
-                class="mr-2"
-              >
-                <VIcon icon="bx-x" />
-              </VBtn>
-              <span class="text-body-2">English</span>
-            </div>
-            
-            <!-- Hide Ignored Items -->
+            <!-- Hide Library Games -->
             <VCheckbox
-              v-model="hideIgnoredItems"
-              label="Hide ignored items"
+              v-model="hideLibraryGames"
+              label="Hide games in library"
               hide-details
               density="compact"
               class="mb-4"
             />
 
             <div class="text-subtitle-2 font-weight-bold mb-2">
-              TOP-LEVEL GENRES
+              CATEGORIES
             </div>
             
             <div class="filter-categories">
-              <div 
-                v-for="(count, genre) in genres" 
-                :key="genre"
-                class="d-flex justify-space-between align-center mb-1"
-              >
-                <span class="text-caption">{{ genre }}</span>
-                <span class="text-caption text-grey">{{ count }}</span>
-              </div>
+              <VList density="compact">
+                <VListItem
+                  v-for="category in categories"
+                  :key="category.name"
+                  :active="selectedCategory === category.name"
+                  @click="selectedCategory = selectedCategory === category.name ? null : category.name"
+                  class="px-2"
+                >
+                  <template #prepend>
+                    <VIcon
+                      :icon="selectedCategory === category.name ? 'bx-check-circle' : 'bx-circle'"
+                      size="small"
+                      :color="selectedCategory === category.name ? 'primary' : undefined"
+                    />
+                  </template>
+                  
+                  <VListItemTitle class="d-flex justify-space-between align-center">
+                    <span class="text-body-2">{{ category.name }}</span>
+                    <span class="text-caption text-grey">{{ category.count }}</span>
+                  </VListItemTitle>
+                </VListItem>
+              </VList>
             </div>
 
-            <VExpansionPanels
-              variant="accordion"
-              class="mt-4"
-            >
-              <VExpansionPanel
-                v-for="(items, category) in filterCategories"
-                :key="category"
-              >
-                <VExpansionPanelTitle class="text-subtitle-2 font-weight-bold">
-                  {{ category }}
-                </VExpansionPanelTitle>
-                <VExpansionPanelText>
-                  <div 
-                    v-for="item in items" 
-                    :key="item.name"
-                    class="d-flex justify-space-between align-center mb-1"
-                  >
-                    <span class="text-caption">{{ item.name }}</span>
-                    <span class="text-caption text-grey">{{ item.count }}</span>
-                  </div>
-                </VExpansionPanelText>
-              </VExpansionPanel>
-            </VExpansionPanels>
+            <VDivider class="my-4" />
+
+            <div class="text-subtitle-2 font-weight-bold mb-2">
+              LANGUAGES
+            </div>
+            
+            <div class="filter-categories">
+              <VList density="compact">
+                <VListItem
+                  v-for="language in languages"
+                  :key="language.name"
+                  :active="selectedLanguage === language.name"
+                  @click="selectedLanguage = selectedLanguage === language.name ? null : language.name"
+                  class="px-2"
+                >
+                  <template #prepend>
+                    <VIcon
+                      :icon="selectedLanguage === language.name ? 'bx-check-circle' : 'bx-circle'"
+                      size="small"
+                      :color="selectedLanguage === language.name ? 'primary' : undefined"
+                    />
+                  </template>
+                  
+                  <VListItemTitle class="d-flex justify-space-between align-center">
+                    <span class="text-body-2">{{ language.name }}</span>
+                    <span class="text-caption text-grey">{{ language.count }}</span>
+                  </VListItemTitle>
+                </VListItem>
+              </VList>
+            </div>
+
+            <VDivider class="my-4" />
 
             <div class="text-subtitle-2 font-weight-bold mt-4 mb-2">
               PRICE
@@ -175,6 +184,7 @@
                   height="151"
                   cover
                   class="rounded"
+                  style="margin-right: 20px;"
                 />
               </template>
               
@@ -295,7 +305,8 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import axios from 'axios'
+import { computed, onMounted, ref, watch } from 'vue'
 
 // Breadcrumbs
 const breadcrumbs = ref([
@@ -315,296 +326,96 @@ const tabs = [
   { title: 'ALL', value: 'all' },
   { title: 'NEW & TRENDING', value: 'trending' },
   { title: 'TOP SELLERS', value: 'top-sellers' },
-  { title: 'TOP RATED', value: 'top-rated' },
-  { title: 'POPULAR DISCOUNTED', value: 'discounted' },
-  { title: 'POPULAR UPCOMING', value: 'upcoming' },
+  { title: 'TOP RATED', value: 'top-rated' }
 ]
 
 const activeTab = ref('all')
 
 // Filter state
 const searchQuery = ref('')
-const hideIgnoredItems = ref(false)
+const hideLibraryGames = ref(false)
 const priceRange = ref(500)
 const loading = ref(true)
+const games = ref([])
+const categories = ref([])
+const languages = ref([])
+const selectedCategory = ref(null)
+const selectedLanguage = ref(null)
 
-// Mock filter categories data
-const genres = {
-  'Action': 56532,
-  'Casual': 55273,
-  'Adventure': 54789,
-  'Simulation': 27647,
-  'Strategy': 27018,
+// Load categories
+const loadCategories = async () => {
+  try {
+    const response = await axios.get('/api/categories')
+    categories.value = response.data.categories
+  } catch (error) {
+    console.error('Error loading categories:', error)
+  }
 }
 
-const filterCategories = {
-  'GENRES': [
-    { name: 'Action', count: 56532 },
-    { name: 'RPG', count: 35214 },
-    { name: 'Strategy', count: 27018 },
-    { name: 'Simulation', count: 27647 },
-    { name: 'Sports', count: 15321 },
-  ],
-  'SUB-GENRES': [
-    { name: 'FPS', count: 23500 },
-    { name: 'Platformer', count: 15800 },
-    { name: 'Puzzle', count: 12450 },
-    { name: 'Roguelike', count: 8750 },
-    { name: 'Metroidvania', count: 7350 },
-  ],
-  'VISUALS & VIEWPOINT': [
-    { name: '2D', count: 35200 },
-    { name: '3D', count: 85400 },
-    { name: 'Isometric', count: 12350 },
-    { name: 'Top-Down', count: 9800 },
-    { name: 'First-Person', count: 32150 },
-  ],
+// Load languages
+const loadLanguages = async () => {
+  try {
+    const response = await axios.get('/api/languages')
+    languages.value = response.data.languages
+  } catch (error) {
+    console.error('Error loading languages:', error)
+  }
 }
 
-// Mock games data
-const games = ref([
-  {
-    id: 1,
-    title: 'Counter-Strike 2',
-    image: '/images/placeholder.jpg',
-    tags: ['FPS', 'Shooter', 'Multiplayer', 'Competitive', 'Action'],
-    price: 0,
-    originalPrice: 0,
-    discount: 0,
-    onSale: false,
-    reviewStatus: 'Very Positive',
-    reviewCount: 8704251,
-    releaseDate: '2012-08-22',
-    multiPlayer: true,
-    openWorld: false,
-    inLibrary: true,
-  },
-  {
-    id: 2,
-    title: 'Schedule I',
-    image: '/images/placeholder.jpg',
-    tags: ['Simulation', 'Co-op', 'Crime', 'Multiplayer', 'Open World'],
-    price: 49.00,
-    originalPrice: 49.00,
-    discount: 0,
-    onSale: false,
-    reviewStatus: 'Overwhelmingly Positive',
-    reviewCount: 108974,
-    releaseDate: '2025-03-25',
-    multiPlayer: true,
-    openWorld: true,
-    inLibrary: false,
-  },
-  {
-    id: 3,
-    title: 'Marvel Rivals',
-    image: '/images/placeholder.jpg',
-    tags: ['Free to Play', 'Multiplayer', 'Hero Shooter', 'Third-Person Shooter', 'Superhero'],
-    price: 0,
-    originalPrice: 0,
-    discount: 0,
-    onSale: false,
-    reviewStatus: 'Very Positive',
-    reviewCount: 263248,
-    releaseDate: '2024-12-06',
-    multiPlayer: true,
-    openWorld: false,
-    inLibrary: false,
-  },
-  {
-    id: 4,
-    title: 'R.E.P.O.',
-    image: '/images/placeholder.jpg',
-    tags: ['Horror', 'Online Co-Op', 'Comedy', 'Multiplayer', 'Co-op'],
-    price: 26.75,
-    originalPrice: 26.75,
-    discount: 0,
-    onSale: false,
-    reviewStatus: 'Overwhelmingly Positive',
-    reviewCount: 94431,
-    releaseDate: '2025-02-26',
-    multiPlayer: true,
-    openWorld: false,
-    inLibrary: false,
-  },
-  {
-    id: 5,
-    title: 'PUBG: BATTLEGROUNDS',
-    image: '/images/placeholder.jpg',
-    tags: ['Survival', 'Shooter', 'Battle Royale', 'Multiplayer', 'FPS'],
-    price: 0,
-    originalPrice: 0,
-    discount: 0,
-    onSale: false,
-    reviewStatus: 'Mixed',
-    reviewCount: 2532065,
-    releaseDate: '2017-12-21',
-    multiPlayer: true,
-    openWorld: true,
-    inLibrary: true,
-  },
-  {
-    id: 6,
-    title: 'Red Dead Redemption 2',
-    image: '/images/placeholder.jpg',
-    tags: ['Open World', 'Story Rich', 'Western', 'Adventure', 'Multiplayer'],
-    price: 62.25,
-    originalPrice: 249.00,
-    discount: 75,
-    onSale: true,
-    reviewStatus: 'Very Positive',
-    reviewCount: 653452,
-    releaseDate: '2019-12-06',
-    multiPlayer: true,
-    openWorld: true,
-    inLibrary: false,
-  },
-  {
-    id: 6,
-    title: 'Red Dead Redemption 2',
-    image: '/images/placeholder.jpg',
-    tags: ['Open World', 'Story Rich', 'Western', 'Adventure', 'Multiplayer'],
-    price: 62.25,
-    originalPrice: 249.00,
-    discount: 75,
-    onSale: true,
-    reviewStatus: 'Very Positive',
-    reviewCount: 653452,
-    releaseDate: '2019-12-06',
-    multiPlayer: true,
-    openWorld: true,
-    inLibrary: false,
-  },
-  {
-    id: 6,
-    title: 'Red Dead Redemption 2',
-    image: '/images/placeholder.jpg',
-    tags: ['Open World', 'Story Rich', 'Western', 'Adventure', 'Multiplayer'],
-    price: 62.25,
-    originalPrice: 249.00,
-    discount: 75,
-    onSale: true,
-    reviewStatus: 'Very Positive',
-    reviewCount: 653452,
-    releaseDate: '2019-12-06',
-    multiPlayer: true,
-    openWorld: true,
-    inLibrary: false,
-  },
-  {
-    id: 6,
-    title: 'Red Dead Redemption 2',
-    image: '/images/placeholder.jpg',
-    tags: ['Open World', 'Story Rich', 'Western', 'Adventure', 'Multiplayer'],
-    price: 62.25,
-    originalPrice: 249.00,
-    discount: 75,
-    onSale: true,
-    reviewStatus: 'Very Positive',
-    reviewCount: 653452,
-    releaseDate: '2019-12-06',
-    multiPlayer: true,
-    openWorld: true,
-    inLibrary: false,
-  },
-  {
-    id: 6,
-    title: 'Red Dead Redemption 2',
-    image: '/images/placeholder.jpg',
-    tags: ['Open World', 'Story Rich', 'Western', 'Adventure', 'Multiplayer'],
-    price: 62.25,
-    originalPrice: 249.00,
-    discount: 75,
-    onSale: true,
-    reviewStatus: 'Very Positive',
-    reviewCount: 653452,
-    releaseDate: '2019-12-06',
-    multiPlayer: true,
-    openWorld: true,
-    inLibrary: false,
-  },
-  {
-    id: 6,
-    title: 'Red Dead Redemption 2',
-    image: '/images/placeholder.jpg',
-    tags: ['Open World', 'Story Rich', 'Western', 'Adventure', 'Multiplayer'],
-    price: 62.25,
-    originalPrice: 249.00,
-    discount: 75,
-    onSale: true,
-    reviewStatus: 'Very Positive',
-    reviewCount: 653452,
-    releaseDate: '2019-12-06',
-    multiPlayer: true,
-    openWorld: true,
-    inLibrary: false,
-  },
-])
-
-// Computed properties
-const filteredGames = computed(() => {
-  let result = [...games.value]
-  
-  // Apply tab filter
-  if (activeTab.value !== 'all') {
-    switch (activeTab.value) {
-    case 'trending':
-      result = result.filter(game => new Date(game.releaseDate) > new Date(Date.now() - 90 * 24 * 60 * 60 * 1000))
-      break
-    case 'top-sellers':
-      result = result.sort((a, b) => b.reviewCount - a.reviewCount)
-      break
-    case 'top-rated':
-      result = result.filter(game => 
-        game.reviewStatus === 'Very Positive' || 
-          game.reviewStatus === 'Overwhelmingly Positive',
-      )
-      break
-    case 'discounted':
-      result = result.filter(game => game.onSale)
-      break
-    case 'upcoming':
-      result = result.filter(game => new Date(game.releaseDate) > new Date())
-      break
-    }
+// Load games with filters
+const loadGames = async () => {
+  try {
+    loading.value = true
+    const response = await axios.get('/api/browseGames', {
+      params: {
+        tab: activeTab.value,
+        search: searchQuery.value,
+        maxPrice: priceRange.value,
+        category: selectedCategory.value,
+        language: selectedLanguage.value
+      }
+    })
+    games.value = response.data.games
+  } catch (error) {
+    console.error('Error loading games:', error)
+  } finally {
+    loading.value = false
   }
-  
-  // Apply search filter
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-
-    result = result.filter(game => 
-      game.title.toLowerCase().includes(query) || 
-      game.tags.some(tag => tag.toLowerCase().includes(query)),
-    )
-  }
-  
-  // Apply price filter
-  result = result.filter(game => game.price <= priceRange.value)
-  
-  // Apply hide ignored items filter
-  if (hideIgnoredItems.value) {
-    // This is a mock implementation, you would need to implement ignored items logic
-    // result = result.filter(game => !game.ignored)
-  }
-  
-  return result
-})
+}
 
 // Methods
 const clearFilters = () => {
   searchQuery.value = ''
-  hideIgnoredItems.value = false
+  hideLibraryGames.value = false
   priceRange.value = 500
   activeTab.value = 'all'
+  selectedCategory.value = null
+  selectedLanguage.value = null
+  loadGames()
 }
+
+// Watch for filter changes
+watch([activeTab, searchQuery, priceRange, selectedCategory, selectedLanguage], () => {
+  loadGames()
+}, { deep: true })
 
 // Lifecycle hooks
 onMounted(() => {
-  // Simulate loading delay
-  setTimeout(() => {
-    loading.value = false
-  }, 1000)
+  loadCategories()
+  loadLanguages()
+  loadGames()
+})
+
+// Computed properties
+const filteredGames = computed(() => {
+  let result = games.value
+
+  // Filter out library games if enabled
+  if (hideLibraryGames.value) {
+    result = result.filter(game => !game.inLibrary)
+  }
+
+  return result
 })
 </script>
 

@@ -30,6 +30,9 @@ Route::post('/profile', [UserController::class, 'updateProfile']);
 Route::get('/users', [UserController::class, 'getUsers']);
 
 // Game routes
+Route::get('/languages', [GameController::class, 'getLanguages']);
+Route::get('/categories', [GameController::class, 'getCategories']);
+Route::get('/browseGames', [GameController::class, 'browseGames']);
 Route::post('/games', [GameController::class, 'store']);
 
 // Get authenticated user
