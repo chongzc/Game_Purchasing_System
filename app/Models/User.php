@@ -88,7 +88,7 @@ class User extends Authenticatable
     public function purchasedGames()
     {
         return $this->belongsToMany(Game::class, 'purchases', 'p_userId', 'p_gameId')
-                    ->withPivot(['p_purchaseDate', 'p_purchasePrice', 'p_receiptNumber'])
+                    ->withPivot('p_purchaseDate', 'p_purchasePrice', 'p_receiptNumber')
                     ->withTimestamps();
     }
 
@@ -108,7 +108,7 @@ class User extends Authenticatable
     public function gameLibrary()
     {
         return $this->belongsToMany(Game::class, 'user_lib', 'ul_userId', 'ul_gameId')
-                    ->withPivot(['ul_name', 'ul_status'])
+                    ->withPivot('ul_status')
                     ->withTimestamps();
     }
 

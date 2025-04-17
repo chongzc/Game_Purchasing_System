@@ -16,7 +16,16 @@ const activeTab = ref('description')
 // User review form state
 const userRating = ref(0)
 const userReview = ref('')
-const isLoggedIn = computed(() => authStore.isAuthenticated)
+const isLoggedIn = computed(() => {
+  console.log('Auth Store State:', {
+    user: authStore.user,
+    isLoggedIn: authStore.isLoggedIn
+  })
+  return authStore.user !== null && authStore.isLoggedIn
+})
+const isSubmittingReview = ref(false)
+const reviewError = ref('')
+const reviewSuccess = ref(false)
 
 // Game data state
 const game = ref(null)
@@ -95,19 +104,48 @@ const purchaseGame = () => {
 
 const submitReview = async () => {
   try {
-    await axios.post(`/api/games/${gameId.value}/reviews`, {
+    // Reset states
+    reviewError.value = ''
+    reviewSuccess.value = false
+    
+    // Validate input
+    if (!userRating.value) {
+      reviewError.value = 'Please select a rating'
+      return
+    }
+    if (!userReview.value.trim()) {
+      reviewError.value = 'Please write a review'
+      return
+    }
+    
+    isSubmittingReview.value = true
+    
+    const response = await axios.post(`/api/games/${gameId.value}/reviews`, {
       rating: userRating.value,
-      comment: userReview.value
+      comment: userReview.value.trim()
     })
     
-    // Reset form after submission
-    userRating.value = 0
-    userReview.value = ''
-    
-    // Refresh game details to show new review
-    await fetchGameDetails()
+    if (response.data.success) {
+      // Reset form
+      userRating.value = 0
+      userReview.value = ''
+      reviewSuccess.value = true
+      
+      // Update game's overall rating immediately
+      if (game.value && response.data.newOverallRating) {
+        game.value.rating = response.data.newOverallRating
+      }
+      
+      // Refresh game details to show new review and updated stats
+      await fetchGameDetails()
+    } else {
+      reviewError.value = response.data.message || 'Failed to submit review'
+    }
   } catch (error) {
     console.error('Error submitting review:', error)
+    reviewError.value = error.response?.data?.message || 'Failed to submit review'
+  } finally {
+    isSubmittingReview.value = false
   }
 }
 
@@ -125,8 +163,9 @@ const formatDate = (dateString) => {
 }
 
 // Load data on mount
-onMounted(() => {
-  fetchGameDetails()
+onMounted(async () => {
+  await authStore.checkAuth()
+  await fetchGameDetails()
 })
 </script>
 
@@ -334,7 +373,7 @@ onMounted(() => {
         
         <VDivider />
         
-        <VWindow v-model="activeTab" class="pa-6">
+        <VWindow v-model="activeTab">
           <!-- Description Tab -->
           <VWindowItem value="description">
             <div class="text-body-1">
@@ -407,118 +446,153 @@ onMounted(() => {
           
           <!-- Reviews Tab -->
           <VWindowItem value="reviews">
-            <div class="d-flex mb-6">
-              <div>
-                <div class="text-h3 text-center font-weight-bold">
-                  {{ game.rating }}
-                </div>
-                <VRating
-                  :model-value="game.rating"
-                  color="amber"
-                  readonly
-                  size="small"
-                  class="me-2"
-                />
-                <div class="text-subtitle-2 text-disabled text-center">
-                  {{ game.reviewCount }} reviews
-                </div>
-              </div>
-              
-              <VDivider vertical class="mx-6" />
-              
-              <div class="flex-grow-1">
-                <div
-                  v-for="i in 5"
-                  :key="i"
-                  class="d-flex align-center mb-1"
-                >
-                  <div style="width: 30px">{{ 6-i }}</div>
-                  <VProgressLinear
-                    :model-value="game.ratingBreakdown?.[6-i] || 0"
-                    color="amber"
-                    class="mx-4"
-                    height="8"
-                  />
-                  <div style="width: 40px">
-                    {{ game.ratingBreakdown?.[6-i] || 0 }}%
+            <VCard flat>
+              <VCardText>
+                <div class="d-flex mb-6">
+                  <div>
+                    <div class="text-h3 text-center font-weight-bold">
+                      {{ game.rating }}
+                    </div>
+                    <VRating
+                      :model-value="game.rating"
+                      color="amber"
+                      readonly
+                      size="small"
+                      class="me-2"
+                    />
+                    <div class="text-subtitle-2 text-disabled text-center">
+                      {{ game.reviewCount }} reviews
+                    </div>
                   </div>
-                </div>
-              </div>
-            </div>
-            
-            <VDivider class="mb-4" />
-            
-            <!-- Review Form -->
-            <div v-if="isLoggedIn" class="mb-6">
-              <h3 class="text-h6 font-weight-bold mb-2">
-                Write a Review
-              </h3>
-              <div class="d-flex align-center mb-2">
-                <div class="me-4">Your Rating:</div>
-                <VRating v-model="userRating" color="amber" />
-              </div>
-              <VTextarea
-                v-model="userReview"
-                placeholder="Share your experience with this game..."
-                rows="4"
-                variant="outlined"
-                class="mb-2"
-              />
-              <div class="text-right">
-                <VBtn color="primary" @click="submitReview">
-                  Submit Review
-                </VBtn>
-              </div>
-            </div>
-            <VAlert v-else type="info" class="mb-6">
-              <div class="d-flex align-center">
-                <span>Please log in to write a review</span>
-                <VSpacer />
-                <VBtn color="primary" to="/login">
-                  Log In
-                </VBtn>
-              </div>
-            </VAlert>
-            
-            <VDivider class="mb-4" />
-            
-            <!-- Review List -->
-            <div v-if="game.reviews?.length">
-              <div
-                v-for="(review, index) in game.reviews"
-                :key="index"
-                class="mb-4"
-              >
-                <div class="d-flex">
-                  <VAvatar class="me-4">
-                    <VImg :src="review.userAvatar || '/images/placeholder.jpg'" />
-                  </VAvatar>
+                  
+                  <VDivider vertical class="mx-6" />
+                  
                   <div class="flex-grow-1">
-                    <div class="d-flex align-center">
-                      <h4 class="text-subtitle-1 font-weight-bold mb-0">
-                        {{ review.userName }}
-                      </h4>
-                      <VRating
-                        :model-value="review.rating"
+                    <div
+                      v-for="i in 5"
+                      :key="i"
+                      class="d-flex align-center mb-1"
+                    >
+                      <div style="width: 30px">{{ 6-i }}</div>
+                      <VProgressLinear
+                        :model-value="game.ratingBreakdown?.[6-i] || 0"
                         color="amber"
-                        readonly
-                        size="x-small"
-                        class="mx-2"
+                        class="mx-4"
+                        height="8"
                       />
-                      <div class="text-caption text-disabled">
-                        {{ formatDate(review.date) }}
+                      <div style="width: 40px">
+                        {{ game.ratingBreakdown?.[6-i] || 0 }}%
                       </div>
                     </div>
-                    <p class="text-body-2 mb-0 mt-1">
-                      {{ review.comment }}
-                    </p>
                   </div>
                 </div>
-              </div>
-            </div>
-            <VAlert v-else type="info">
-              No reviews yet. Be the first to review this game!
-            </VAlert>
+                
+                <VDivider class="mb-4" />
+                
+                <!-- Review Form -->
+                <template v-if="isLoggedIn">
+                  <div class="mb-6">
+                    <h3 class="text-h6 font-weight-bold mb-2">
+                      Write a Review
+                    </h3>
+                    <VAlert
+                      v-if="reviewError"
+                      type="error"
+                      class="mb-2"
+                      closable
+                      @click:close="reviewError = ''"
+                    >
+                      {{ reviewError }}
+                    </VAlert>
+                    <VAlert
+                      v-if="reviewSuccess"
+                      type="success"
+                      class="mb-2"
+                      closable
+                      @click:close="reviewSuccess = false"
+                    >
+                      Your review has been submitted successfully!
+                    </VAlert>
+                    <div class="d-flex align-center mb-2">
+                      <div class="me-4">Your Rating:</div>
+                      <VRating
+                        v-model="userRating"
+                        color="amber"
+                        hover
+                        :rules="[v => !!v || 'Rating is required']"
+                      />
+                    </div>
+                    <VTextarea
+                      v-model="userReview"
+                      placeholder="Share your experience with this game..."
+                      rows="4"
+                      variant="outlined"
+                      class="mb-2"
+                      :rules="[v => !!v.trim() || 'Review text is required']"
+                    />
+                    <div class="text-right">
+                      <VBtn
+                        color="primary"
+                        :loading="isSubmittingReview"
+                        :disabled="isSubmittingReview"
+                        @click="submitReview"
+                      >
+                        Submit Review
+                      </VBtn>
+                    </div>
+                  </div>
+                </template>
+                <VAlert v-else type="info" class="mb-6">
+                  <div class="d-flex align-center">
+                    <span>Please log in to write a review</span>
+                    <VSpacer />
+                    <VBtn color="primary" to="/login" :href="null">
+                      Log In
+                    </VBtn>
+                  </div>
+                </VAlert>
+                
+                <VDivider class="mb-4" />
+                
+                <!-- Review List -->
+                <div v-if="game.reviews?.length">
+                  <div
+                    v-for="(review, index) in game.reviews"
+                    :key="index"
+                    class="mb-4"
+                  >
+                    <div class="d-flex">
+                      <VAvatar class="me-4">
+                        <VImg :src="review.userAvatar || '/images/placeholder.jpg'" />
+                      </VAvatar>
+                      <div class="flex-grow-1">
+                        <div class="d-flex align-center">
+                          <h4 class="text-subtitle-1 font-weight-bold mb-0">
+                            {{ review.userName }}
+                          </h4>
+                          <VRating
+                            :model-value="review.rating"
+                            color="amber"
+                            readonly
+                            size="x-small"
+                            class="mx-2"
+                          />
+                          <div class="text-caption text-disabled">
+                            {{ formatDate(review.date) }}
+                          </div>
+                        </div>
+                        <p class="text-body-2 mb-0 mt-1">
+                          {{ review.comment }}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <VAlert v-else type="info">
+                  No reviews yet. Be the first to review this game!
+                </VAlert>
+              </VCardText>
+            </VCard>
           </VWindowItem>
         </VWindow>
       </VCard>

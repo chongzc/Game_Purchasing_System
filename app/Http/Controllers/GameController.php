@@ -458,22 +458,6 @@ class GameController extends Controller
     }
 
     /**
-     * Get user's library game IDs
-     *
-     * @return array
-     */
-    private function getUserLibraryGameIds()
-    {
-        if (!Auth::check()) {
-            return [];
-        }
-
-        return UserLib::where('ul_userId', Auth::user()->u_id)
-            ->pluck('ul_gameId')
-            ->toArray();
-    }
-
-    /**
      * Browse games with filters
      *
      * @param Request $request
@@ -486,7 +470,7 @@ class GameController extends Controller
                 ->where('g_status', 'verified');
 
             // Get user's library game IDs
-            $userLibraryGameIds = $this->getUserLibraryGameIds();
+            $userLibraryGameIds = UserLibraryController::getUserLibraryGameIds();
 
             // Apply tab filters
             switch ($request->tab) {
@@ -538,7 +522,7 @@ class GameController extends Controller
                     'originalPrice' => $game->g_price,
                     'discount' => $game->g_discount,
                     'onSale' => $game->g_discount > 0,
-                    'reviewStatus' => $this->getReviewStatus($game->g_overallRate),
+                    'reviewStatus' => ReviewController::getReviewStatus($game->g_overallRate),
                     'reviewCount' => $game->g_downloadCount,
                     'releaseDate' => $game->created_at,
                     'multiPlayer' => true,
@@ -558,154 +542,6 @@ class GameController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to fetch games',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Get review status based on rating
-     *
-     * @param float $rating
-     * @return string
-     */
-    private function getReviewStatus($rating)
-    {
-        if ($rating >= 4.5) return 'Overwhelmingly Positive';
-        if ($rating >= 4.0) return 'Very Positive';
-        if ($rating >= 3.5) return 'Positive';
-        if ($rating >= 3.0) return 'Mostly Positive';
-        if ($rating >= 2.5) return 'Mixed';
-        if ($rating >= 2.0) return 'Mostly Negative';
-        return 'Negative';
-    }
-
-    public function getLibraryGames(Request $request)
-    {
-        $userLibraryIds = $this->getUserLibraryGameIds();
-        
-        // Get user library details with status filter
-        $libraryQuery = UserLib::where('ul_userId', Auth::user()->u_id)
-            ->whereIn('ul_gameId', $userLibraryIds);
-
-        // Apply status filter
-        if ($request->has('status')) {
-            if ($request->status === 'all') {
-                $libraryQuery->whereIn('ul_status', ['owned', 'installed']);
-            } elseif ($request->status !== '') {
-                $libraryQuery->where('ul_status', $request->status);
-            }
-        }
-
-        $libraryDetails = $libraryQuery->get()->keyBy('ul_gameId');
-        $filteredGameIds = $libraryDetails->pluck('ul_gameId')->toArray();
-
-        // Get games that match the filtered library entries
-        $games = Game::select('games.*')
-            ->with(['developer'])
-            ->whereIn('g_id', $filteredGameIds)
-            ->get();
-
-        // Combine game data with library details
-        $libraryGames = $games->map(function ($game) use ($libraryDetails) {
-            $libraryInfo = $libraryDetails[$game->g_id];
-            return [
-                'game' => [
-                    'g_id' => $game->g_id,
-                    'g_title' => $game->g_title,
-                    'g_image' => $game->g_mainImage,
-                    'g_price' => $game->g_price,
-                    'g_description' => $game->g_description,
-                    'developer' => $game->developer
-                ],
-                'ul_createdAt' => $libraryInfo->created_at,
-                'ul_status' => $libraryInfo->ul_status
-            ];
-        });
-
-        return response()->json($libraryGames);
-    }
-
-    /**
-     * Get reviews for a specific game
-     *
-     * @param int $gameId
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function getReviews($gameId)
-    {
-        try {
-            $reviews = Review::where('r_gameId', $gameId)
-                ->with('user')
-                ->orderBy('created_at', 'desc')
-                ->get()
-                ->map(function ($review) {
-                    return [
-                        'id' => $review->r_id,
-                        'rating' => $review->r_rating,
-                        'comment' => $review->r_reviewText,
-                        'created_at' => $review->created_at,
-                        'user' => [
-                            'id' => $review->user->u_id,
-                            'name' => $review->user->u_name,
-                            'avatar' => $review->user->u_profileImagePath
-                        ]
-                    ];
-                });
-
-            return response()->json([
-                'success' => true,
-                'reviews' => $reviews
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to fetch reviews',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Get user's review for a specific game
-     *
-     * @param int $gameId
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function getUserReview($gameId)
-    {
-        try {
-            if (!Auth::check()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'User not authenticated'
-                ], 401);
-            }
-
-            $review = Review::where('r_gameId', $gameId)
-                ->where('r_userId', Auth::user()->u_id)
-                ->first();
-
-            if (!$review) {
-                return response()->json([
-                    'success' => true,
-                    'review' => null
-                ]);
-            }
-
-            return response()->json([
-                'success' => true,
-                'review' => [
-                    'id' => $review->r_id,
-                    'rating' => $review->r_rating,
-                    'comment' => $review->r_reviewText,
-                    'created_at' => $review->created_at
-                ]
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to fetch user review',
                 'error' => $e->getMessage()
             ], 500);
         }

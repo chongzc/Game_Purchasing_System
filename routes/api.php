@@ -6,6 +6,8 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\GameController;
+use App\Http\Controllers\UserLibraryController;
+use App\Http\Controllers\ReviewController;
 
 /*
 |--------------------------------------------------------------------------
@@ -35,8 +37,7 @@ Route::get('/categories', [GameController::class, 'getCategories']);
 Route::get('/browseGames', [GameController::class, 'browseGames']);
 Route::get('/games/{id}', [GameController::class, 'show']);
 Route::post('/games', [GameController::class, 'store']);
-Route::get('/games/{id}/reviews', [GameController::class, 'getReviews']);
-Route::get('/games/{id}/user-review', [GameController::class, 'getUserReview'])->middleware('auth:sanctum');
+Route::get('/games/{id}/reviews', [ReviewController::class, 'getReviews']);
 Route::get('/games/{id}/wishlist-status', [GameController::class, 'getUserWishlistStatus'])->middleware('auth:sanctum');
 
 // Wishlist routes
@@ -75,7 +76,19 @@ Route::post('/test-upload', function (Request $request) {
     ]);
 });
 
+// Developer routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/developer/games', [GameController::class, 'getDeveloperGames']);
-    Route::get('/library-games', [GameController::class, 'getLibraryGames']);
+});
+
+// User Library Routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/library', [UserLibraryController::class, 'getLibraryGames']);
+    Route::patch('/library/{game}/status', [UserLibraryController::class, 'updateLibraryStatus']);
+});
+
+// Review Routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/games/{id}/user-review', [ReviewController::class, 'getUserReview']);
+    Route::post('/games/{id}/reviews', [ReviewController::class, 'submitReview']);
 });

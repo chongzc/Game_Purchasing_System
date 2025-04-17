@@ -270,10 +270,10 @@ const fetchAllGames = async () => {
   }
 }
 
-const fetchLibrary = async () => {
+const fetchLibraryGames = async () => {
   try {
     loading.value = true
-    const response = await axios.get('/api/library-games', {
+    const response = await axios.get('/api/library', {
       params: {
         status: filterStatus.value
       }
@@ -296,7 +296,7 @@ const fetchLibrary = async () => {
 
     console.log('Transformed Library:', library.value)
   } catch (error) {
-    console.error('Error fetching library:', error)
+    console.error('Error fetching library games:', error)
     library.value = [] // Reset library on error
   } finally {
     loading.value = false
@@ -363,12 +363,12 @@ const getEmptyStateMessage = computed(() => {
 
 // Add watch for filterStatus changes
 watch(filterStatus, () => {
-  fetchLibrary()
+  fetchLibraryGames()
 })
 
 // Load library data on mount
 onMounted(() => {
-  fetchLibrary()
+  fetchLibraryGames()
 })
 </script>
 

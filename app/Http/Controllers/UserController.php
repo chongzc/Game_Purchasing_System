@@ -15,7 +15,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-
+use Illuminate\Support\Facades\Log;
 class UserController extends Controller
 {
     /**
@@ -51,7 +51,7 @@ class UserController extends Controller
     {
         try {
             // Log request details
-            \Log::info('Profile update request details', [
+            Log::info('Profile update request details', [
                 'has_file' => $request->hasFile('profile_picture'),
                 'all_files' => $request->allFiles(),
                 'all_inputs' => $request->all()
@@ -81,7 +81,7 @@ class UserController extends Controller
                     $file = $request->file('profile_picture');
                     
                     // Log file details
-                    \Log::info('File details', [
+                    Log::info('File details', [
                         'original_name' => $file->getClientOriginalName(),
                         'mime_type' => $file->getMimeType(),
                         'size' => $file->getSize(),
@@ -92,7 +92,7 @@ class UserController extends Controller
                     $uploadPath = public_path('images/user_profile');
                     if (!File::exists($uploadPath)) {
                         File::makeDirectory($uploadPath, 0777, true);
-                        \Log::info('Created directory: ' . $uploadPath);
+                        Log::info('Created directory: ' . $uploadPath);
                     }
                     
                     // Delete previous profile picture if it exists
@@ -100,7 +100,7 @@ class UserController extends Controller
                         $previousImagePath = public_path($user->u_profileImagePath);
                         if (File::exists($previousImagePath)) {
                             File::delete($previousImagePath);
-                            \Log::info('Deleted previous profile picture: ' . $previousImagePath);
+                            Log::info('Deleted previous profile picture: ' . $previousImagePath);
                         }
                     }
                     
@@ -109,12 +109,12 @@ class UserController extends Controller
                     
                     // Move file to public directory
                     $file->move($uploadPath, $filename);
-                    \Log::info('File moved to: ' . $uploadPath . '/' . $filename);
+                    Log::info('File moved to: ' . $uploadPath . '/' . $filename);
                     
                     // Store file path in database
                     $user->u_profileImagePath = 'images/user_profile/' . $filename;
                 } catch (\Exception $e) {
-                    \Log::error('File upload error: ' . $e->getMessage());
+                    Log::error('File upload error: ' . $e->getMessage());
                     return response()->json([
                         'message' => 'Failed to upload profile picture: ' . $e->getMessage()
                     ], 500);
@@ -137,7 +137,7 @@ class UserController extends Controller
             $user->save();
             
             // Log successful update
-            \Log::info('Profile updated for user ID: ' . $user->u_id);
+            Log::info('Profile updated for user ID: ' . $user->u_id);
     
             // Return response with success message and user data
             return response()->json([
@@ -154,8 +154,8 @@ class UserController extends Controller
             ]);
         } catch (\Exception $e) {
             // Log the exception
-            \Log::error('Profile update error: ' . $e->getMessage());
-            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            Log::error('Profile update error: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
             
             return response()->json([
                 'message' => 'Failed to update profile: ' . $e->getMessage()
