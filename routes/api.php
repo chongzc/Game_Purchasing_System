@@ -30,6 +30,9 @@ Route::post('/profile', [UserController::class, 'updateProfile']);
 Route::get('/users', [UserController::class, 'getUsers']);
 
 // Game routes
+Route::get('/languages', [GameController::class, 'getLanguages']);
+Route::get('/categories', [GameController::class, 'getCategories']);
+Route::get('/browseGames', [GameController::class, 'browseGames']);
 Route::post('/games', [GameController::class, 'store']);
 
 // Get authenticated user
@@ -59,4 +62,9 @@ Route::post('/test-upload', function (Request $request) {
         'message' => 'No file was uploaded',
         'inputs' => $request->all()
     ]);
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/developer/games', [GameController::class, 'getDeveloperGames']);
+    Route::get('/library-games', [GameController::class, 'getLibraryGames']);
 });

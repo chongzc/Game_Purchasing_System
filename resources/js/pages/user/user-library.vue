@@ -96,42 +96,44 @@
             height="200"
             cover
             class="game-image"
-          />
+          >
+            <div class="image-overlay d-flex align-center justify-center">
+              <VBtn
+                icon="bx-play-circle"
+                size="x-large"
+                color="white"
+                variant="text"
+                @click="toggleInstallation(game)"
+              />
+            </div>
+          </VImg>
           
           <VCardText>
-            <div class="font-weight-bold text-subtitle-1 mb-1">
-              {{ game.title }}
+            <div class="d-flex justify-space-between align-center mb-2">
+              <div class="font-weight-bold text-subtitle-1">
+                {{ game.title }}
+              </div>
+              <VChip
+                :color="getStatusColor(game.status)"
+                size="small"
+                variant="flat"
+              >
+                {{ game.status }}
+              </VChip>
             </div>
             
-            <div class="d-flex align-center justify-space-between">
-              <div class="text-caption">
-                <span>Status: {{ game.status }}</span>
+            <div class="text-caption text-grey">
+              <div class="mb-1">
+                <v-icon size="small" icon="bx-calendar" class="mr-1" />
+                Added: {{ formatDate(game.purchaseDate) }}
               </div>
-              <div>
-                <VChip
-                  v-if="game.status === 'installed'"
-                  color="success"
-                  size="small"
-                  variant="flat"
-                >
-                  Installed
-                </VChip>
-                <VChip
-                  v-else-if="game.status === 'owned'"
-                  color="info"
-                  size="small"
-                  variant="flat"
-                >
-                  Owned
-                </VChip>
-                <VChip
-                  v-else
-                  color="grey"
-                  size="small"
-                  variant="flat"
-                >
-                  {{ game.status }}
-                </VChip>
+              <div class="mb-1">
+                <v-icon size="small" icon="bx-purchase-tag" class="mr-1" />
+                Price: ${{ game.price }}
+              </div>
+              <div v-if="game.developer" class="mb-1">
+                <v-icon size="small" icon="bx-code-alt" class="mr-1" />
+                Developer: {{ game.developer.u_name }}
               </div>
             </div>
           </VCardText>
@@ -140,6 +142,7 @@
             <VBtn
               block
               :color="game.status === 'installed' ? 'success' : 'primary'"
+              :prepend-icon="game.status === 'installed' ? 'bx-play' : 'bx-download'"
               size="small"
               variant="flat"
               @click="toggleInstallation(game)"
@@ -165,9 +168,7 @@
         No Games Found
       </h2>
       <p class="text-body-1 mb-6">
-        {{ library.length === 0 
-          ? "You haven't purchased any games yet." 
-          : "No games match your current filters." }}
+        {{ getEmptyStateMessage }}
       </p>
       <VBtn 
         v-if="library.length === 0"
@@ -189,8 +190,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
+import { computed, onMounted, ref, watch } from 'vue'
 
 // Breadcrumbs
 const breadcrumbs = ref([
@@ -208,19 +209,23 @@ const breadcrumbs = ref([
 // Library data
 const library = ref([])
 const loading = ref(true)
+const allGames = ref([])
 
 // Search and filtering
 const searchQuery = ref('')
-const filterStatus = ref('All')
+const filterStatus = ref('all')
 const sortOption = ref('title-asc')
 
 // Filter options
-const statusOptions = ['All', 'installed', 'owned', 'removed']
+const statusOptions = [
+  { title: 'All Games', value: 'all' },
+  { title: 'Owned Games', value: 'owned' },
+  { title: 'Installed Games', value: 'installed' }
+]
 
 const sortOptions = [
   { title: 'Title (A-Z)', value: 'title-asc' },
-  { title: 'Title (Z-A)', value: 'title-desc' },
-  { title: 'Status', value: 'status' },
+  { title: 'Title (Z-A)', value: 'title-desc' }
 ]
 
 // Filter and sort library
@@ -234,21 +239,19 @@ const filteredGames = computed(() => {
   }
   
   // Filter by status
-  if (filterStatus.value !== 'All') {
-    result = result.filter(game => game.status === filterStatus.value)
+  if (filterStatus.value !== 'all') {
+    result = result.filter(game => game.status.toLowerCase() === filterStatus.value)
   }
   
   // Sort
   result.sort((a, b) => {
     switch (sortOption.value) {
-    case 'title-asc':
-      return a.title.localeCompare(b.title)
-    case 'title-desc':
-      return b.title.localeCompare(a.title)
-    case 'status':
-      return a.status.localeCompare(b.status)
-    default:
-      return 0
+      case 'title-asc':
+        return a.title.localeCompare(b.title)
+      case 'title-desc':
+        return b.title.localeCompare(a.title)
+      default:
+        return 0
     }
   })
   
@@ -256,13 +259,45 @@ const filteredGames = computed(() => {
 })
 
 // Methods
+const fetchAllGames = async () => {
+  try {
+    const response = await axios.get('/api/browseGames')
+    allGames.value = response.data
+    return response.data
+  } catch (error) {
+    console.error('Error fetching games:', error)
+    return []
+  }
+}
+
 const fetchLibrary = async () => {
   try {
     loading.value = true
-    const response = await axios.get('/game-library/games')
-    library.value = response.data
+    const response = await axios.get('/api/library-games', {
+      params: {
+        status: filterStatus.value
+      }
+    })
+    
+    console.log('API Response:', response.data)
+    
+    // Transform the response data with default values
+    library.value = response.data.map(item => ({
+      id: item.game?.g_id || 0,
+      title: item.game?.g_title || 'Unknown Game',
+      image: item.game?.g_image || '/images/placeholder.jpg',
+      status: item.ul_status || 'owned',
+      purchaseDate: item.ul_createdAt || new Date().toISOString(),
+      price: item.game?.g_price || 0,
+      description: item.game?.g_description || '',
+      developer: item.game?.developer || 'Unknown Developer',
+      downloadProgress: item.ul_status === 'downloading' ? Math.floor(Math.random() * 100) : null
+    }))
+
+    console.log('Transformed Library:', library.value)
   } catch (error) {
     console.error('Error fetching library:', error)
+    library.value = [] // Reset library on error
   } finally {
     loading.value = false
   }
@@ -285,9 +320,51 @@ const toggleInstallation = async (game) => {
 
 const clearFilters = () => {
   searchQuery.value = ''
-  filterStatus.value = 'All'
+  filterStatus.value = 'all'
   sortOption.value = 'title-asc'
 }
+
+// Add new helper functions
+const formatDate = (date) => {
+  if (!date) return 'N/A'
+  return new Date(date).toLocaleDateString()
+}
+
+const getStatusColor = (status) => {
+  switch ((status || 'owned').toLowerCase()) {
+    case 'installed':
+      return 'success'
+    case 'owned':
+      return 'info'
+    case 'downloading':
+      return 'warning'
+    case 'update-available':
+      return 'error'
+    default:
+      return 'grey'
+  }
+}
+
+// Add computed property for filtered games count
+const filteredGamesCount = computed(() => {
+  return library.value.length
+})
+
+// Update the empty state message
+const getEmptyStateMessage = computed(() => {
+  if (filteredGames.value.length === 0) {
+    if (searchQuery.value || filterStatus.value !== 'all') {
+      return "No games match your current filters."
+    }
+    return "You haven't added any games to your library yet."
+  }
+  return ""
+})
+
+// Add watch for filterStatus changes
+watch(filterStatus, () => {
+  fetchLibrary()
+})
 
 // Load library data on mount
 onMounted(() => {
@@ -298,6 +375,21 @@ onMounted(() => {
 <style scoped>
 .game-image {
   position: relative;
+}
+
+.image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.game-image:hover .image-overlay {
+  opacity: 1;
 }
 
 .game-platform {
