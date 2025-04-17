@@ -16,6 +16,8 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+
 class UserController extends Controller
 {
     /**
@@ -69,11 +71,20 @@ class UserController extends Controller
             }
             
             // Basic validation for the form fields
-            $validated = [
-                'name' => $request->input('name'),
-                'email' => $request->input('email'),
-                'birthdate' => $request->input('birthdate'),
-            ];
+            $validator = Validator::make($request->all(), [
+                'name' => ['required', 'string', 'max:255', Rule::unique('users', 'u_name')->ignore($user->u_id, 'u_id')],
+                'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'u_email')->ignore($user->u_id, 'u_id')],
+                'birthdate' => ['required', 'date', 'before:today'],
+            ]);
+            
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+            
+            $validated = $validator->validated();
     
             // Handle profile picture upload if present
             if ($request->hasFile('profile_picture')) {
