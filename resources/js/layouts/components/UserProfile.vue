@@ -6,6 +6,7 @@ import { useRouter } from 'vue-router'
 const authStore = useAuthStore()
 const router = useRouter()
 
+
 const logout = async () => {
   await authStore.logout()
   router.push('/game-store')
@@ -47,8 +48,8 @@ const getUserRoleText = role => {
       variant="tonal"
     >
       <VImg
-        v-if="authStore.user?.u_profilePic"
-        :src="authStore.user.u_profilePic"
+        v-if="authStore.user?.profilePic"
+        :src="getUserProfileImage(authStore.user.profilePic)"
       />
       <VImg
         v-else
@@ -79,8 +80,8 @@ const getUserRoleText = role => {
                     variant="tonal"
                   >
                     <VImg
-                      v-if="authStore.user?.u_profilePic"
-                      :src="authStore.user.u_profilePic"
+                      v-if="authStore.user?.profilePic"
+                      :src="getUserProfileImage(authStore.user.profilePic)"
                     />
                     <VImg
                       v-else

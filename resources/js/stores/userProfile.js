@@ -1,4 +1,4 @@
-import axios from 'axios'
+import { authRequest } from '@/utils/auth-helper'
 import { defineStore } from 'pinia'
 
 export const useUserProfileStore = defineStore('userProfile', {
@@ -15,7 +15,7 @@ export const useUserProfileStore = defineStore('userProfile', {
       this.error = null
       
       try {
-        const response = await axios.get('/api/profile')
+        const response = await authRequest('get', '/api/profile')
         
         // Normalize the data to use consistent field names
         this.profile = {
@@ -43,15 +43,16 @@ export const useUserProfileStore = defineStore('userProfile', {
       try {
         const formData = new FormData()
         
-        if (profileData.profile_picture instanceof File) {
-          formData.append('profile_picture', profileData.profile_picture)
+        if (profileData.profilePicture instanceof File) {
+          formData.append('profile_picture', profileData.profilePicture)
         }
         
         if (profileData.name) formData.append('name', profileData.name)
         if (profileData.email) formData.append('email', profileData.email)
         if (profileData.birthdate) formData.append('birthdate', profileData.birthdate)
         
-        const response = await axios.post('/api/profile', formData, {
+        // Use authRequest with multipart/form-data config
+        const response = await authRequest('post', '/api/profile', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
@@ -75,7 +76,7 @@ export const useUserProfileStore = defineStore('userProfile', {
       this.success = null
       
       try {
-        const response = await axios.post('/api/profile', {
+        const response = await authRequest('post', '/api/profile', {
           current_password: passwordData.currentPassword,
           new_password: passwordData.newPassword,
         })

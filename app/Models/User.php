@@ -21,7 +21,7 @@ class User extends Authenticatable
         'u_password',
         'u_birthdate',
         'u_role',
-        'u_profileImageId',
+        'u_profileImagePath',
     ];
 
     protected $hidden = [
@@ -33,16 +33,6 @@ class User extends Authenticatable
         'u_birthdate' => 'date',
         'u_password' => 'hashed',
     ];
-
-    protected $with = ['profileImage'];
-
-    /**
-     * Get the user's profile image
-     */
-    public function profileImage()
-    {
-        return $this->belongsTo(Image::class, 'u_profileImageId', 'img_id');
-    }
 
     /**
      * Get the email column for authentication.
@@ -74,6 +64,14 @@ class User extends Authenticatable
     public function getAuthPassword()
     {
         return $this->u_password;
+    }
+
+    /**
+     * Get the user's profile image.
+     */
+    public function profileImage()
+    {
+        return $this->belongsTo(Image::class, 'u_profileImageId', 'img_id');
     }
 
     /**

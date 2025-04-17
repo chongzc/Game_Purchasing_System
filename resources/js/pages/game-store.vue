@@ -22,7 +22,7 @@
                 color="primary"
                 class="mt-4"
               >
-                SHOP NOW
+                SHOP NOWs
               </VBtn>
             </div>
           </VImg>

@@ -1,25 +1,50 @@
 <template>
   <div>
-    <VBreadcrumbs :items="breadcrumbs" class="pa-0 mb-6"></VBreadcrumbs>
+    <VBreadcrumbs
+      :items="breadcrumbs"
+      class="pa-0 mb-6"
+    />
     
-    <h1 class="text-h3 font-weight-bold mb-6">Checkout</h1>
+    <h1 class="text-h3 font-weight-bold mb-6">
+      Checkout
+    </h1>
     
     <VRow>
-      <VCol cols="12" md="8">
+      <VCol
+        cols="12"
+        md="8"
+      >
         <!-- Payment Method -->
         <VCard class="mb-6">
           <VCardText>
-            <h2 class="text-h5 font-weight-bold mb-4">Payment Method</h2>
+            <h2 class="text-h5 font-weight-bold mb-4">
+              Payment Method
+            </h2>
             
-            <VRadioGroup v-model="paymentMethod" inline>
-              <VRadio value="credit_card" label="Credit Card"></VRadio>
-              <VRadio value="paypal" label="PayPal"></VRadio>
-              <VRadio value="crypto" label="Cryptocurrency"></VRadio>
+            <VRadioGroup
+              v-model="paymentMethod"
+              inline
+            >
+              <VRadio
+                value="credit_card"
+                label="Credit Card"
+              />
+              <VRadio
+                value="paypal"
+                label="PayPal"
+              />
+              <VRadio
+                value="crypto"
+                label="Cryptocurrency"
+              />
             </VRadioGroup>
             
             <!-- Credit Card Form -->
             <VExpandTransition>
-              <div v-if="paymentMethod === 'credit_card'" class="mt-4">
+              <div
+                v-if="paymentMethod === 'credit_card'"
+                class="mt-4"
+              >
                 <VRow>
                   <VCol cols="12">
                     <VTextField
@@ -32,7 +57,10 @@
                   </VCol>
                 </VRow>
                 <VRow>
-                  <VCol cols="12" md="6">
+                  <VCol
+                    cols="12"
+                    md="6"
+                  >
                     <VTextField
                       v-model="creditCardForm.name"
                       label="Cardholder Name"
@@ -41,7 +69,10 @@
                       required
                     />
                   </VCol>
-                  <VCol cols="6" md="3">
+                  <VCol
+                    cols="6"
+                    md="3"
+                  >
                     <VTextField
                       v-model="creditCardForm.expiry"
                       label="Expiry Date"
@@ -50,7 +81,10 @@
                       required
                     />
                   </VCol>
-                  <VCol cols="6" md="3">
+                  <VCol
+                    cols="6"
+                    md="3"
+                  >
                     <VTextField
                       v-model="creditCardForm.cvv"
                       label="CVV"
@@ -66,8 +100,15 @@
             
             <!-- PayPal Info -->
             <VExpandTransition>
-              <div v-if="paymentMethod === 'paypal'" class="mt-4">
-                <VAlert type="info" border="start" prominent>
+              <div
+                v-if="paymentMethod === 'paypal'"
+                class="mt-4"
+              >
+                <VAlert
+                  type="info"
+                  border="start"
+                  prominent
+                >
                   You will be redirected to PayPal to complete your payment.
                 </VAlert>
               </div>
@@ -75,8 +116,15 @@
             
             <!-- Crypto Info -->
             <VExpandTransition>
-              <div v-if="paymentMethod === 'crypto'" class="mt-4">
-                <VAlert type="info" border="start" prominent>
+              <div
+                v-if="paymentMethod === 'crypto'"
+                class="mt-4"
+              >
+                <VAlert
+                  type="info"
+                  border="start"
+                  prominent
+                >
                   You will be redirected to our cryptocurrency payment processor.
                 </VAlert>
               </div>
@@ -87,10 +135,15 @@
         <!-- Billing Information -->
         <VCard class="mb-6">
           <VCardText>
-            <h2 class="text-h5 font-weight-bold mb-4">Billing Information</h2>
+            <h2 class="text-h5 font-weight-bold mb-4">
+              Billing Information
+            </h2>
             
             <VRow>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField
                   v-model="billingInfo.firstName"
                   label="First Name"
@@ -98,7 +151,10 @@
                   required
                 />
               </VCol>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField
                   v-model="billingInfo.lastName"
                   label="Last Name"
@@ -132,7 +188,10 @@
             </VRow>
             
             <VRow>
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VTextField
                   v-model="billingInfo.city"
                   label="City"
@@ -140,7 +199,10 @@
                   required
                 />
               </VCol>
-              <VCol cols="12" md="3">
+              <VCol
+                cols="12"
+                md="3"
+              >
                 <VTextField
                   v-model="billingInfo.state"
                   label="State/Province"
@@ -148,7 +210,10 @@
                   required
                 />
               </VCol>
-              <VCol cols="12" md="3">
+              <VCol
+                cols="12"
+                md="3"
+              >
                 <VTextField
                   v-model="billingInfo.zip"
                   label="ZIP/Postal Code"
@@ -175,7 +240,9 @@
         <!-- Special Instructions -->
         <VCard>
           <VCardText>
-            <h2 class="text-h5 font-weight-bold mb-4">Additional Information</h2>
+            <h2 class="text-h5 font-weight-bold mb-4">
+              Additional Information
+            </h2>
             
             <VTextarea
               v-model="additionalInfo"
@@ -194,20 +261,41 @@
         </VCard>
       </VCol>
       
-      <VCol cols="12" md="4">
+      <VCol
+        cols="12"
+        md="4"
+      >
         <!-- Order Summary -->
         <VCard sticky>
           <VCardText>
-            <h2 class="text-h5 font-weight-bold mb-4">Order Summary</h2>
+            <h2 class="text-h5 font-weight-bold mb-4">
+              Order Summary
+            </h2>
             
-            <div v-for="(item, index) in cartItems" :key="index" class="mb-4">
+            <div
+              v-for="(item, index) in cartItems"
+              :key="index"
+              class="mb-4"
+            >
               <div class="d-flex">
-                <VImg :src="item.image || '/images/placeholder.jpg'" width="60" height="60" cover class="rounded mr-3" />
+                <VImg
+                  :src="item.image || '/images/placeholder.jpg'"
+                  width="60"
+                  height="60"
+                  cover
+                  class="rounded mr-3"
+                />
                 <div>
-                  <div class="font-weight-medium">{{ item.name }}</div>
+                  <div class="font-weight-medium">
+                    {{ item.name }}
+                  </div>
                   <div class="d-flex align-center">
-                    <div class="text-caption text-disabled">Qty: {{ item.quantity }}</div>
-                    <div class="text-caption ml-2">${{ (item.price * item.quantity).toFixed(2) }}</div>
+                    <div class="text-caption text-disabled">
+                      Qty: {{ item.quantity }}
+                    </div>
+                    <div class="text-caption ml-2">
+                      ${{ (item.price * item.quantity).toFixed(2) }}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -233,8 +321,12 @@
             <VDivider class="mb-4" />
             
             <div class="d-flex justify-space-between mb-6">
-              <div class="text-h6 font-weight-bold">Total</div>
-              <div class="text-h6 font-weight-bold">${{ orderTotal.toFixed(2) }}</div>
+              <div class="text-h6 font-weight-bold">
+                Total
+              </div>
+              <div class="text-h6 font-weight-bold">
+                ${{ orderTotal.toFixed(2) }}
+              </div>
             </div>
             
             <VBtn
@@ -264,21 +356,36 @@
     </VRow>
     
     <!-- Order Confirmation Dialog -->
-    <VDialog v-model="orderDialog" max-width="500">
+    <VDialog
+      v-model="orderDialog"
+      max-width="500"
+    >
       <VCard>
         <VCardItem>
           <VCardTitle>Order Confirmation</VCardTitle>
         </VCardItem>
         
         <VCardText class="text-center pa-6">
-          <VIcon icon="bx-check-circle" color="success" size="64" />
+          <VIcon
+            icon="bx-check-circle"
+            color="success"
+            size="64"
+          />
           
-          <h3 class="text-h5 font-weight-bold mt-4">Thank you for your order!</h3>
+          <h3 class="text-h5 font-weight-bold mt-4">
+            Thank you for your order!
+          </h3>
           
-          <p class="mt-2">Your order has been placed successfully.</p>
-          <p class="text-subtitle-1 font-weight-bold mt-2">Order Number: {{ orderNumber }}</p>
+          <p class="mt-2">
+            Your order has been placed successfully.
+          </p>
+          <p class="text-subtitle-1 font-weight-bold mt-2">
+            Order Number: {{ orderNumber }}
+          </p>
           
-          <p class="mt-4">A confirmation email has been sent to <span class="font-weight-bold">{{ billingInfo.email }}</span>.</p>
+          <p class="mt-4">
+            A confirmation email has been sent to <span class="font-weight-bold">{{ billingInfo.email }}</span>.
+          </p>
         </VCardText>
         
         <VCardActions class="pb-6 px-6">
@@ -313,17 +420,17 @@ const breadcrumbs = ref([
   {
     title: 'Home',
     disabled: false,
-    to: '/'
+    to: '/',
   },
   {
     title: 'Cart',
     disabled: false,
-    to: '/cart'
+    to: '/cart',
   },
   {
     title: 'Checkout',
-    disabled: true
-  }
+    disabled: true,
+  },
 ])
 
 // Cart items (in a real app, this would be fetched from a store or API)
@@ -334,7 +441,7 @@ const cartItems = ref([
     price: 59.99,
     quantity: 1,
     platform: 'PC Digital Download',
-    image: '/images/placeholder.jpg'
+    image: '/images/placeholder.jpg',
   },
   {
     id: 3,
@@ -342,8 +449,8 @@ const cartItems = ref([
     price: 44.99,
     quantity: 1,
     platform: 'PS5 Digital Download',
-    image: '/images/placeholder.jpg'
-  }
+    image: '/images/placeholder.jpg',
+  },
 ])
 
 // Payment method
@@ -354,7 +461,7 @@ const creditCardForm = ref({
   number: '',
   name: '',
   expiry: '',
-  cvv: ''
+  cvv: '',
 })
 
 // Billing information
@@ -366,7 +473,7 @@ const billingInfo = ref({
   city: '',
   state: '',
   zip: '',
-  country: 'United States'
+  country: 'United States',
 })
 
 // Countries list (shortened for brevity)
@@ -378,6 +485,7 @@ const countries = [
   'Germany',
   'France',
   'Japan',
+
   // Add more countries as needed
 ]
 
@@ -428,6 +536,7 @@ const formValid = computed(() => {
 const placeOrder = () => {
   if (!formValid.value) {
     alert('Please fill out all required fields.')
+    
     return
   }
   
