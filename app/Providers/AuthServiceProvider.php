@@ -36,15 +36,5 @@ class AuthServiceProvider extends ServiceProvider
         Gate::define('is-user', function (User $user) {
             return $user->u_role === 'user';
         });
-
-        // Define gate for checking if user can access developer dashboard
-        Gate::define('access-developer-dashboard', function (User $user) {
-            return $user->u_role === 'developer' || $user->u_role === 'admin';
-        });
-
-        // Define gate for checking if user can access admin dashboard
-        Gate::define('access-admin-dashboard', function (User $user) {
-            return $user->u_role === 'admin';
-        });
     }
 } 
