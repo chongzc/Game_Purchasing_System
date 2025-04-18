@@ -141,7 +141,7 @@ const handlePasswordChange = async () => {
 
             <VBtn
               type="reset"
-              color="secondary"
+              color="error"
               variant="tonal"
               @click="() => {
                 currentPassword = ''

@@ -245,20 +245,6 @@ onMounted(() => {
             />
           </div>
         </VCol>
-        <VCol
-          cols="12"
-          md="3"
-          class="d-flex align-center justify-end"
-        >
-          <VBtn
-            color="primary"
-            :loading="loading"
-            :disabled="loading"
-            @click="fetchUsers"
-          >
-            Refresh
-          </VBtn>
-        </VCol>
       </VRow>
         
       <!-- Loading and Error States -->
@@ -338,7 +324,7 @@ onMounted(() => {
         
         <!-- Actions Column -->
         <template #item.actions="{ item }">
-          <div class="d-flex align-center gap-2">
+          <div class="d-flex align-center gap-2">   
             <VBtn
               v-if="item.isBanned !== 'true'"
               size="small"

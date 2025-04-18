@@ -59,9 +59,9 @@ class LoginController extends Controller
             
             // Determine redirect based on role
             $redirectUrl = '/game-store';
-            if ($user->isDeveloper()) {
+            if ($user->u_role === 'developer') {
                 $redirectUrl = '/developer-dashboard';
-            } elseif ($user->isAdmin()) {
+            } elseif ($user->u_role === 'admin') {
                 $redirectUrl = '/admin-dashboard';
             }
             

@@ -682,7 +682,7 @@ class GameController extends Controller
               $game->g_description = $request->g_description;
               $game->g_price = $request->g_price;
               $game->g_discount = $request->g_discount ?? 0;
-              $game->g_status = 'pending'; // Reset status to pending on update
+              $game->g_status = $request->g_status ?? 'pending'; // Use provided status or default to pending
               $game->g_language = $request->g_language;
               $game->g_category = $request->g_category;
               
