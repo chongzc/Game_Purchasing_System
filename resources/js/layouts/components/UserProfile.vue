@@ -10,13 +10,13 @@ const authStore = useAuthStore()
 const router = useRouter()
 
 // Add getUserProfileImage function
-const userProfileImage = ref(''); // Reactive variable to hold the profile image URL
+const userProfileImage = ref(avatar1); // Initialize with default avatar
 const fetchUserProfile = async () => {
   try {
     const response = await axios.get('/api/profile'); // Fetch user profile data
     const userData = response.data; // Assuming the response contains user data
     console.log('User profile data:', userData);
-    userProfileImage.value = userData.profilePic; // Set the profile image
+    userProfileImage.value = userData.profilePic ? userData.profilePic : avatar1; // Set the profile image
     console.log('User profile image:', userProfileImage.value);
   } catch (error) {
     console.error('Error fetching user profile:', error);
@@ -70,7 +70,7 @@ onMounted(() => {
       variant="tonal"
     >
       <VImg
-        :src="userProfileImage ? userProfileImage : '/images/avatars/default.png'"
+        :src="userProfileImage"
         alt="User Profile Image"
       />
 
@@ -98,7 +98,7 @@ onMounted(() => {
                     variant="tonal"
                   >
                     <VImg
-                      :src="userProfileImage ? userProfileImage : '/images/avatars/default.png'"
+                      :src="userProfileImage"
                       alt="User Profile Image"
                     />
                   </VAvatar>
