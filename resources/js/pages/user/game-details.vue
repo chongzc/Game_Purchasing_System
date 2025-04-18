@@ -38,7 +38,7 @@ const similarGames = ref([])
 const loading = ref(true)
 
 // Game status state
-const gameStatus = ref('')
+
 
 // Breadcrumbs
 const breadcrumbs = computed(() => [
@@ -66,22 +66,26 @@ const discountedPrice = computed(() => {
 })
 
 // Add computed properties for status text and color
-const getStatusText = computed(() => {
-  if (!game.value?.libraryStatus) return 'Not Owned'
-  if (game.value.libraryStatus === 'owned') {
-    return game.value.isInstalled ? 'Installed' : 'Not Installed'
-  }
+
+
+
+// Add computed property to check if user is regular user
+const isRegularUser = computed(() => { 
+  console.log('User data:', {
+    user: authStore.user,
+    userRole: authStore.userRole,
+    isUser: authStore.isUser,
+  })
   
-  return 'In Library'
+  return authStore.isUser
 })
 
-const getStatusColor = computed(() => {
-  if (!game.value?.libraryStatus) return 'warning'
-  if (game.value.libraryStatus === 'owned') {
-    return game.value.isInstalled ? 'success' : 'info'
-  }
+// Add computed property for disabled actions message
+const disabledActionsMessage = computed(() => {
+  if (!isLoggedIn.value) return 'Please log in to perform this action'
+  if (!isRegularUser.value) return 'Only regular users can purchase games or submit reviews'
   
-  return 'primary'
+  return ''
 })
 
 // Methods
@@ -106,14 +110,12 @@ const fetchGameDetails = async () => {
   }
 }
 
-// Add timer function to hide cart success message after 3 seconds
 const hideCartSuccessAfterDelay = () => {
   setTimeout(() => {
     cartSuccess.value = false
   }, 3000)
 }
 
-// Add timer function to hide already in cart message after 3 seconds
 const hideCartAlreadyInCartAfterDelay = () => {
   setTimeout(() => {
     cartAlreadyInCart.value = false
@@ -387,6 +389,7 @@ watch(
                 <VSpacer />
 
                 <WishlistButton 
+                  v-if="isRegularUser"
                   :game-id="Number(gameId)" 
                   :is-wishlisted="game.isWishlisted"
                 />
@@ -513,6 +516,20 @@ watch(
                     </VAlert>
                   </VCol>
                   
+                  <!-- Add message for admin/developer users -->
+                  <VCol 
+                    v-if="isLoggedIn && !isRegularUser"
+                    cols="12"
+                  >
+                    <VAlert
+                      type="info"
+                      closable
+                      class="mb-2"
+                    >
+                      {{ disabledActionsMessage }}
+                    </VAlert>
+                  </VCol>
+                  
                   <VCol
                     cols="12"
                     md="6"
@@ -522,6 +539,7 @@ watch(
                       size="large"
                       color="primary"
                       prepend-icon="mdi-cart"
+                      :disabled="!isRegularUser"
                       @click="addToCart"
                     >
                       Add to Cart
@@ -535,6 +553,7 @@ watch(
                       block
                       size="large"
                       color="success"
+                      :disabled="!isRegularUser"
                       @click="buyNow"
                     >
                       Buy Now
@@ -728,6 +747,16 @@ watch(
                     <h3 class="text-h6 font-weight-bold mb-2">
                       Write a Review
                     </h3>
+                    
+                    <!-- Add alert for admin/developer users -->
+                    <VAlert
+                      v-if="!isRegularUser"
+                      type="info"
+                      class="mb-2"
+                    >
+                      {{ disabledActionsMessage }}
+                    </VAlert>
+                    
                     <VAlert
                       v-if="reviewError"
                       type="error"
@@ -756,6 +785,7 @@ watch(
                         color="amber"
                         hover
                         :rules="[v => !!v || 'Rating is required']"
+                        :disabled="!isRegularUser"
                       />
                     </div>
                     <VTextarea
@@ -765,12 +795,13 @@ watch(
                       variant="outlined"
                       class="mb-2"
                       :rules="[v => !!v.trim() || 'Review text is required']"
+                      :disabled="!isRegularUser"
                     />
                     <div class="text-right">
                       <VBtn
                         color="primary"
                         :loading="isSubmittingReview"
-                        :disabled="isSubmittingReview"
+                        :disabled="isSubmittingReview || !isRegularUser"
                         @click="submitReview"
                       >
                         Submit Review

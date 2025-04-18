@@ -1,112 +1,115 @@
 <template>
-  <v-btn
+  <VBtn
     :icon="true"
     :color="isWishlisted ? 'warning' : 'default'"
     :loading="loading"
-    @click="toggleWishlist"
     variant="text"
     size="small"
     class="wishlist-btn"
+    @click="toggleWishlist"
   >
-    <v-icon :color="isWishlisted ? 'warning-darken-2' : 'grey'">
+    <VIcon :color="isWishlisted ? 'warning-darken-2' : 'grey'">
       {{ isWishlisted ? 'bxs-star' : 'bx-star' }}
-    </v-icon>
+    </VIcon>
 
-    <v-tooltip
+    <VTooltip
       activator="parent"
       location="top"
     >
       {{ buttonTitle }}
-    </v-tooltip>
-  </v-btn>
+    </VTooltip>
+  </VBtn>
 </template>
 
 <script setup>
-import { useAuthStore } from '@/stores/auth';
-import axios from 'axios';
-import { computed, onMounted, ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores/auth'
+import axios from 'axios'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 
 const props = defineProps({
   gameId: {
     type: Number,
-    required: true
-  }
-});
+    required: true,
+  },
+})
 
-const emit = defineEmits(['update:wishlist']);
+const emit = defineEmits(['update:wishlist'])
 
-const router = useRouter();
-const authStore = useAuthStore();
-const loading = ref(false);
-const isWishlisted = ref(false);
+const router = useRouter()
+const authStore = useAuthStore()
+const loading = ref(false)
+const isWishlisted = ref(false)
 
-const isLoggedIn = computed(() => authStore.user !== null && authStore.isLoggedIn);
+const isLoggedIn = computed(() => authStore.user !== null && authStore.isLoggedIn)
 
 const buttonTitle = computed(() => {
-  if (!isLoggedIn.value) return 'Please log in to add to wishlist';
-  return isWishlisted.value ? 'Remove from wishlist' : 'Add to wishlist';
-});
+  if (!isLoggedIn.value) return 'Please log in to add to wishlist'
+  
+  return isWishlisted.value ? 'Remove from wishlist' : 'Add to wishlist'
+})
 
 const checkWishlistStatus = async () => {
-  if (!isLoggedIn.value) return;
+  if (!isLoggedIn.value) return
 
   try {
-    loading.value = true;
-    const response = await axios.get(`/api/games/${props.gameId}/wishlist-status`);
+    loading.value = true
+
+    const response = await axios.get(`/api/games/${props.gameId}/wishlist-status`)
     if (response.data.success) {
-      isWishlisted.value = response.data.isWishlisted;
+      isWishlisted.value = response.data.isWishlisted
     }
   } catch (error) {
-    console.error('Error checking wishlist status:', error);
+    console.error('Error checking wishlist status:', error)
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 
 const toggleWishlist = async () => {
   if (!isLoggedIn.value) {
-    router.push('/login');
-    return;
+    router.push('/login')
+    
+    return
   }
 
   try {
-    loading.value = true;
+    loading.value = true
     
     if (isWishlisted.value) {
-      const response = await axios.delete(`/api/wishlist/${props.gameId}`);
+      const response = await axios.delete(`/api/wishlist/${props.gameId}`)
       if (response.data.success) {
-        isWishlisted.value = false;
-        emit('update:wishlist', false);
+        isWishlisted.value = false
+        emit('update:wishlist', false)
       }
     } else {
-      const response = await axios.post(`/api/wishlist/${props.gameId}`);
+      const response = await axios.post(`/api/wishlist/${props.gameId}`)
       if (response.data.success) {
-        isWishlisted.value = true;
-        emit('update:wishlist', true);
+        isWishlisted.value = true
+        emit('update:wishlist', true)
       }
     }
   } catch (error) {
-    console.error('Error toggling wishlist:', error);
+    console.error('Error toggling wishlist:', error)
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 
 // Watch for auth state changes
-watch(() => isLoggedIn.value, (newValue) => {
+watch(() => isLoggedIn.value, newValue => {
   if (newValue) {
-    checkWishlistStatus();
+    checkWishlistStatus()
   } else {
-    isWishlisted.value = false;
+    isWishlisted.value = false
   }
-});
+})
 
 onMounted(() => {
   if (isLoggedIn.value) {
-    checkWishlistStatus();
+    checkWishlistStatus()
   }
-});
+})
 </script>
 
 <style scoped>

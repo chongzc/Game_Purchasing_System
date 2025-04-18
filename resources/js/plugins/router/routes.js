@@ -7,6 +7,7 @@ export const routes = [
       {
         path: 'game-store',
         component: () => import('@/pages/game-store.vue'),
+        meta: { requiresAuth: false, roles: ['user'] },
       },
       {
         path: 'browse-games',

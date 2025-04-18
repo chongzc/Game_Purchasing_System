@@ -121,10 +121,28 @@ class ReviewController extends Controller
     public function submitReview(Request $request, $gameId)
     {
         try {
+            if (!Auth::check()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not authenticated'
+                ], 401);
+            }
+
             $validated = $request->validate([
                 'rating' => 'required|integer|min:1|max:5',
                 'comment' => 'required|string|max:1000'
             ]);
+
+            // Get the game
+            $game = Game::findOrFail($gameId);
+            
+            // Check if user is authorized to submit a review
+            if (!Auth::user()->can('review', $game)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You are not authorized to submit reviews. Only regular users can submit reviews.'
+                ], 403);
+            }
 
             $review = Review::updateOrCreate(
                 [
@@ -142,7 +160,6 @@ class ReviewController extends Controller
                 ->avg('r_rating');
 
             // Update game's overall rating
-            $game = Game::findOrFail($gameId);
             $game->g_overallRate = round($averageRating, 2);
             $game->save();
 

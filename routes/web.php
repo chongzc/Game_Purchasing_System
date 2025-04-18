@@ -17,6 +17,10 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('/game-store', function () {
+    if (auth()->check() && !Gate::allows('is-user')) {
+        abort(403, 'Unauthorized action.');
+    }
+    
     return view('application');
 })->name('game-store');
 

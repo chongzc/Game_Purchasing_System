@@ -60,6 +60,20 @@ class CartController extends Controller
         $userId = Auth::id();
         $gameId = $request->gameId;
         
+        // Get the game data
+        $game = Game::find($gameId);
+        
+        // Check if user is authorized to add game to cart
+        if (!Auth::user()->can('addToCart', $game)) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'error' => 'You are not authorized to add games to cart. Only regular users can make purchases.',
+                ], 403);
+            }
+            
+            return redirect()->back()->with('error', 'You are not authorized to add games to cart. Only regular users can make purchases.');
+        }
+        
         // Debug info for client
         $debugInfo = [
             'userId' => $userId,
@@ -83,9 +97,6 @@ class CartController extends Controller
             
             return redirect()->back()->with('message', 'Game is already in your cart.');
         }
-        
-        // Get the game data
-        $game = Game::find($gameId);
         
         // If originalPrice is provided in the request, use it, otherwise use the game's price
         $price = $request->filled('originalPrice') ? $request->originalPrice : $game->g_price;
