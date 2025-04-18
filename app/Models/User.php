@@ -22,6 +22,7 @@ class User extends Authenticatable
         'u_birthdate',
         'u_role',
         'u_profileImagePath',
+        'u_isBanned',
     ];
 
     protected $hidden = [
@@ -32,6 +33,7 @@ class User extends Authenticatable
     protected $casts = [
         'u_birthdate' => 'date',
         'u_password' => 'hashed',
+        'u_isBanned' => 'string',
     ];
 
     /**
@@ -142,6 +144,14 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->u_role === 'admin';
+    }
+
+    /**
+     * Check if the user is banned.
+     */
+    public function isBanned(): bool
+    {
+        return $this->u_isBanned === 'true';
     }
 
     /**

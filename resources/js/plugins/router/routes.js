@@ -64,6 +64,10 @@ export const routes = [
             path: 'games',
             component: () => import('@/pages/admin/GameManagement.vue'),
           },
+          {
+            path: 'users',
+            component: () => import('@/pages/admin/user-management.vue'),
+          },
 
           // More admin routes can be added here
         ],

@@ -6,8 +6,10 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+
 
 class UserController extends Controller
 {
@@ -32,11 +34,22 @@ class UserController extends Controller
             }
             
             // Basic validation for the form fields
-            $validated = [
-                'name' => $request->input('name'),
-                'email' => $request->input('email'),
-                'birthdate' => $request->input('birthdate'),
-            ];
+            $validator = Validator::make($request->all(), [
+                'name' => ['sometimes', 'string', 'max:255', Rule::unique('users', 'u_name')->ignore($user->u_id, 'u_id')],
+                'email' => ['sometimes', 'string', 'email', 'max:255', Rule::unique('users', 'u_email')->ignore($user->u_id, 'u_id')],
+                'birthdate' => ['sometimes', 'date', 'before:today'],
+                'current_password' => ['sometimes', 'required_with:new_password'],
+                'new_password' => ['sometimes', 'required_with:current_password', 'min:8'],
+            ]);
+            
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+            
+            $validated = $validator->validated();
     
             // Handle profile picture upload if present
             if ($request->hasFile('profile_picture')) {
@@ -95,6 +108,20 @@ class UserController extends Controller
             
             if (isset($validated['birthdate'])) {
                 $user->u_birthdate = $validated['birthdate'];
+            }
+            
+            // Handle password update if both current and new passwords are provided
+            if ($request->has('current_password') && $request->has('new_password')) {
+                // Verify current password
+                if (!Hash::check($request->current_password, $user->u_password)) {
+                    return response()->json([
+                        'message' => 'Validation failed',
+                        'errors' => ['current_password' => ['Current password is incorrect']]
+                    ], 422);
+                }
+                
+                // Update password
+                $user->u_password = Hash::make($request->new_password);
             }
     
             User::where('u_id', $user->u_id)->update([

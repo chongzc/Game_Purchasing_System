@@ -32,6 +32,20 @@ class LoginController extends Controller
             'password' => ['required'],
         ]);
 
+        // Check if user exists and is banned
+        $user = User::where('u_email', $credentials['email'])->first();
+        if ($user && $user->isBanned()) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'message' => 'Your account has been suspended. Please contact support.'
+                ], 403);
+            }
+
+            return back()->withErrors([
+                'email' => 'Your account has been suspended. Please contact support.',
+            ]);
+        }
+
         // Map the credentials to the database column names
         $authCredentials = [
             'u_email' => $credentials['email'],
