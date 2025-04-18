@@ -76,8 +76,19 @@ export const useUserProfileStore = defineStore('userProfile', {
       this.success = null
       
       try {
+        // Fetch current user data if profile is not already loaded
+        if (!this.profile) {
+          await this.fetchProfile()
+        }
+        
+        // Include required profile fields to satisfy validation
         const response = await authRequest('post', '/api/profile', {
+          name: this.profile.name,
+          email: this.profile.email,
+          birthdate: this.profile.birthdate,
+          // eslint-disable-next-line camelcase
           current_password: passwordData.currentPassword,
+          // eslint-disable-next-line camelcase
           new_password: passwordData.newPassword,
         })
         
@@ -85,7 +96,11 @@ export const useUserProfileStore = defineStore('userProfile', {
 
         return response.data
       } catch (error) {
-        this.error = error.response?.data?.message || 'An error occurred while updating password'
+        if (error.response?.data?.errors?.current_password) {
+          this.error = error.response.data.errors.current_password[0]
+        } else {
+          this.error = error.response?.data?.message || 'An error occurred while updating password'
+        }
         throw error
       } finally {
         this.loading = false

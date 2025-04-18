@@ -72,9 +72,11 @@ class UserController extends Controller
             
             // Basic validation for the form fields
             $validator = Validator::make($request->all(), [
-                'name' => ['required', 'string', 'max:255', Rule::unique('users', 'u_name')->ignore($user->u_id, 'u_id')],
-                'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'u_email')->ignore($user->u_id, 'u_id')],
-                'birthdate' => ['required', 'date', 'before:today'],
+                'name' => ['sometimes', 'string', 'max:255', Rule::unique('users', 'u_name')->ignore($user->u_id, 'u_id')],
+                'email' => ['sometimes', 'string', 'email', 'max:255', Rule::unique('users', 'u_email')->ignore($user->u_id, 'u_id')],
+                'birthdate' => ['sometimes', 'date', 'before:today'],
+                'current_password' => ['sometimes', 'required_with:new_password'],
+                'new_password' => ['sometimes', 'required_with:current_password', 'min:8'],
             ]);
             
             if ($validator->fails()) {
@@ -143,6 +145,20 @@ class UserController extends Controller
             
             if (isset($validated['birthdate'])) {
                 $user->u_birthdate = $validated['birthdate'];
+            }
+            
+            // Handle password update if both current and new passwords are provided
+            if ($request->has('current_password') && $request->has('new_password')) {
+                // Verify current password
+                if (!Hash::check($request->current_password, $user->u_password)) {
+                    return response()->json([
+                        'message' => 'Validation failed',
+                        'errors' => ['current_password' => ['Current password is incorrect']]
+                    ], 422);
+                }
+                
+                // Update password
+                $user->u_password = Hash::make($request->new_password);
             }
     
             $user->save();
