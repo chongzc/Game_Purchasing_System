@@ -139,7 +139,7 @@ onMounted(() => {
               <template #prepend>
                 <VIcon
                   class="me-2"
-                  icon="bx-dashboard"
+                  icon="bx-code-alt"
                   size="22"
                 />
               </template>
