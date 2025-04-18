@@ -11,9 +11,6 @@ const router = useRouter()
 
 // Add getUserProfileImage function
 const userProfileImage = ref(''); // Reactive variable to hold the profile image URL
-
-
-
 const fetchUserProfile = async () => {
   try {
     const response = await axios.get('/api/profile'); // Fetch user profile data

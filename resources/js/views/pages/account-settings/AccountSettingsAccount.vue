@@ -1,10 +1,28 @@
 <script setup>
-import { useAuthStore } from '@/stores/auth'
-import { useUserProfileStore } from '@/stores/userProfile'
-import avatar1 from '@images/avatars/avatar-1.png'
+import { useAuthStore } from '@/stores/auth';
+import { useUserProfileStore } from '@/stores/userProfile';
+import avatar1 from '@images/avatars/avatar-1.png';
+import axios from 'axios';
+import { ref } from 'vue';
 
 const authStore = useAuthStore()
 const userProfileStore = useUserProfileStore()
+
+// Add getUserProfileImage function
+const userProfileImage = ref(''); // Reactive variable to hold the profile image URL
+
+const fetchUserProfile = async () => {
+  try {
+    const response = await axios.get('/api/profile'); // Fetch user profile data
+    const userData = response.data; // Assuming the response contains user data
+    console.log('User profile data:', userData);
+    userProfileImage.value = userData.profilePic; // Set the profile image
+    console.log('User profile image:', userProfileImage.value);
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    userProfileImage.value = avatar1; // Fallback to default avatar on error
+  }
+};
 
 // Function to get profile image source with proper URL handling
 const getUserProfileImage = imageSource => {
@@ -25,7 +43,7 @@ const getUserProfileImage = imageSource => {
 }
 
 const accountDataLocal = ref({
-  avatarImg: getUserProfileImage(authStore.user?.profilePic),
+  avatarImg: userProfileImage.value,
   name: authStore.user?.u_name || '',
   email: authStore.user?.u_email || '',
   birthdate: authStore.user?.u_birthdate || null,
@@ -43,7 +61,7 @@ const usersFetchError = ref('')
 
 const resetForm = () => {
   accountDataLocal.value = {
-    avatarImg: getUserProfileImage(authStore.user?.profilePic),
+    avatarImg: fetchUserProfile(),
     name: authStore.user?.u_name || '',
     email: authStore.user?.u_email || '',
     birthdate: authStore.user?.u_birthdate || null,
@@ -63,7 +81,7 @@ const changeAvatar = event => {
 
     fileReader.onload = () => {
       if (typeof fileReader.result === 'string')
-        accountDataLocal.value.avatarImg = fileReader.result
+        userProfileImage.value = fileReader.result
     }
     fileReader.readAsDataURL(file)
   }
@@ -78,42 +96,6 @@ const getCsrfToken = () => {
     ?.split('=')[1]
   
   return csrfToken ? decodeURIComponent(csrfToken) : null
-}
-
-// Function to fetch all users
-const fetchUsers = async () => {
-  isLoadingUsers.value = true
-  usersFetchError.value = ''
-  users.value = []
-  
-  try {
-    // Get CSRF token
-    const csrfToken = getCsrfToken()
-    
-    const response = await fetch('/api/users', {
-      method: 'GET',
-      credentials: 'same-origin',
-      headers: {
-        'X-Requested-With': 'XMLHttpRequest',
-        'Accept': 'application/json',
-        ...(csrfToken ? { 'X-XSRF-TOKEN': csrfToken } : {}),
-      },
-    })
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch users: ${response.status} ${response.statusText}`)
-    }
-    
-    const data = await response.json()
-
-    users.value = data
-    successMessage.value = 'Users fetched successfully'
-  } catch (error) {
-    console.error('Error fetching users:', error)
-    usersFetchError.value = error.message || 'Failed to fetch users'
-  } finally {
-    isLoadingUsers.value = false
-  }
 }
 
 const handleSubmit = async () => {
@@ -176,13 +158,19 @@ const handleSubmit = async () => {
       // Update the display image with proper URL formatting
       accountDataLocal.value.avatarImg = getUserProfileImage(data.user.profilePic)
     }
+    window.location.reload()
   } catch (error) {
     console.error('Error updating profile:', error)
     errorMessage.value = error.message || 'Failed to update profile'
   } finally {
     isSubmitting.value = false
   }
+
 }
+
+onMounted(() => {
+    fetchUserProfile(); // Call the function to fetch user profile on component mount
+  });
 </script>
 
 <template>
@@ -197,9 +185,9 @@ const handleSubmit = async () => {
             class="me-6"
           >
             <VImg
-              :src="accountDataLocal.avatarImg"
+              :src="userProfileImage"
               alt="Profile Picture"
-            />
+            /> 
           </VAvatar>
 
           <!-- Upload Photo -->
