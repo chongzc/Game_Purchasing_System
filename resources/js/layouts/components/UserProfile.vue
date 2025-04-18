@@ -1,27 +1,29 @@
 <script setup>
 import { useAuthStore } from '@/stores/auth'
 import avatar1 from '@images/avatars/avatar-1.png'
+import axios from 'axios'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+
 
 const authStore = useAuthStore()
 const router = useRouter()
 
 // Add getUserProfileImage function
-const getUserProfileImage = imageSource => {
-  if (!imageSource) return avatar1
-  
-  // If it's already a complete URL, return it
-  if (imageSource.startsWith('http://') || imageSource.startsWith('https://')) {
-    return imageSource
+const userProfileImage = ref(avatar1) // Initialize with default avatar
+
+const fetchUserProfile = async () => {
+  try {
+    const response = await axios.get('/api/profile') // Fetch user profile data
+    const userData = response.data // Assuming the response contains user data
+
+    console.log('User profile data:', userData)
+    userProfileImage.value = userData.profilePic ? userData.profilePic : avatar1 // Set the profile image
+    console.log('User profile image:', userProfileImage.value)
+  } catch (error) {
+    console.error('Error fetching user profile:', error)
+    userProfileImage.value = avatar1 // Fallback to default avatar on error
   }
-  
-  // If it's a relative path, convert it to absolute URL
-  if (imageSource.startsWith('/')) {
-    return window.location.origin + imageSource
-  }
-  
-  // For paths without leading slash
-  return window.location.origin + '/' + imageSource
 }
 
 const logout = async () => {
@@ -35,6 +37,10 @@ const getUserRoleText = role => {
   
   return 'User'
 }
+
+onMounted(() => {
+  fetchUserProfile() // Call the function to fetch user profile on component mount
+})
 </script>
 
 <template>
@@ -65,12 +71,8 @@ const getUserRoleText = role => {
       variant="tonal"
     >
       <VImg
-        v-if="authStore.user?.profilePic"
-        :src="getUserProfileImage(authStore.user.profilePic)"
-      />
-      <VImg
-        v-else
-        :src="avatar1"
+        :src="userProfileImage"
+        alt="User Profile Image"
       />
 
       <!-- SECTION Menu -->
@@ -97,12 +99,8 @@ const getUserRoleText = role => {
                     variant="tonal"
                   >
                     <VImg
-                      v-if="authStore.user?.profilePic"
-                      :src="getUserProfileImage(authStore.user.profilePic)"
-                    />
-                    <VImg
-                      v-else
-                      :src="avatar1"
+                      :src="userProfileImage"
+                      alt="User Profile Image"
                     />
                   </VAvatar>
                 </VBadge>
@@ -142,7 +140,7 @@ const getUserRoleText = role => {
               <template #prepend>
                 <VIcon
                   class="me-2"
-                  icon="bx-dashboard"
+                  icon="bx-code-alt"
                   size="22"
                 />
               </template>
