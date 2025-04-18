@@ -102,6 +102,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/library', [UserLibraryController::class, 'getLibraryGames']);
     Route::put('/library/{game}/status', [UserLibraryController::class, 'updateLibraryStatus']);
+    Route::post('/user-library', [UserLibraryController::class, 'addToLibrary']);
 });
 
 // Review Routes

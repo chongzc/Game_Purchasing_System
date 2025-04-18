@@ -1,9 +1,9 @@
 <script setup>
 import WishlistButton from '@/components/WishlistButton.vue'
 import { useAuthStore } from '@/stores/auth'
+import axios from 'axios'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import axios from 'axios'
 
 const route = useRoute()
 const router = useRouter()
@@ -137,8 +137,13 @@ const addToCart = async () => {
     await axios.get('/sanctum/csrf-cookie')
     
     // Try to add to cart with explicit credentials
-    const response = await axios.post('/api/cart', 
-      { gameId: gameId.value },
+    const response = await axios.post(
+      '/api/cart', 
+      { 
+        gameId: gameId.value,
+        originalPrice: game.value?.price,
+        discount: game.value?.discount,
+      },
       { 
         withCredentials: true,
         headers: {
@@ -175,7 +180,18 @@ const addToCart = async () => {
 }
 
 const buyNow = () => {
-  router.push(`/checkout?gameId=${gameId.value}`)
+  // Redirect to checkout with game details as query parameters
+  router.push({
+    path: '/checkout',
+    query: { 
+      gameId: gameId.value,
+      directPurchase: 'true',
+      gameTitle: game.value?.title,
+      gamePrice: game.value?.price,
+      gameDiscount: game.value?.discount,
+      gameImage: game.value?.mainImage,
+    },
+  })
 }
 
 const playGame = async () => {
@@ -473,6 +489,32 @@ watch(
                   v-if="!game.libraryStatus"
                   class="mt-4"
                 >
+                  <!-- Add success messages -->
+                  <VCol
+                    v-if="cartSuccess || cartAlreadyInCart"
+                    cols="12"
+                  >
+                    <VAlert
+                      v-if="cartSuccess"
+                      type="success"
+                      closable
+                      class="mb-2"
+                      @click:close="cartSuccess = false"
+                    >
+                      Game added to your cart successfully!
+                    </VAlert>
+                    
+                    <VAlert
+                      v-if="cartAlreadyInCart"
+                      type="info"
+                      closable
+                      class="mb-2"
+                      @click:close="cartAlreadyInCart = false"
+                    >
+                      This game is already in your cart.
+                    </VAlert>
+                  </VCol>
+                  
                   <VCol
                     cols="12"
                     md="6"

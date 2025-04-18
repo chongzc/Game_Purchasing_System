@@ -53,6 +53,8 @@ class CartController extends Controller
         // Validate the game ID
         $validated = $request->validate([
             'gameId' => 'required|exists:games,g_id',
+            'originalPrice' => 'nullable|numeric',
+            'discount' => 'nullable|numeric',
         ]);
 
         $userId = Auth::id();
@@ -82,17 +84,16 @@ class CartController extends Controller
             return redirect()->back()->with('message', 'Game is already in your cart.');
         }
         
-        // Get the game price
+        // Get the game data
         $game = Game::find($gameId);
-        $price = $game->g_price;
-        $discount = $game->g_discount;
         
-        // Apply discount if available
-        if ($discount > 0) {
-            $price = $price * (1 - ($discount / 100));
-        }
+        // If originalPrice is provided in the request, use it, otherwise use the game's price
+        $price = $request->filled('originalPrice') ? $request->originalPrice : $game->g_price;
         
-        // Add to cart
+        // If discount is provided in the request, use it, otherwise use the game's discount
+        $discount = $request->filled('discount') ? $request->discount : $game->g_discount;
+        
+        // Add to cart with original price (not discounted price)
         Cart::create([
             'c_userId' => $userId,
             'c_gameId' => $gameId,
