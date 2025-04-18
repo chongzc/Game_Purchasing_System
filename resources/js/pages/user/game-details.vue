@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/auth'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
+
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
