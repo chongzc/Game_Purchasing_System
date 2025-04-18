@@ -5,6 +5,7 @@ import logo from '@images/logo.svg?raw'
 import authV1BottomShape from '@images/svg/auth-v1-bottom-shape.svg?url'
 import authV1TopShape from '@images/svg/auth-v1-top-shape.svg?url'
 import { useRouter } from 'vue-router'
+import { ref, computed, watch } from 'vue'
 
 const form = ref({
   username: '',
@@ -26,6 +27,7 @@ const isPasswordVisible = ref(false)
 const isConfirmPasswordVisible = ref(false)
 const birthDateMenu = ref(false)
 const errorMessages = ref({})
+const formSubmitted = ref(false) // Track if the form has been submitted
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -35,17 +37,38 @@ const passwordsMatch = computed(() => {
   return !form.value.confirmPassword || form.value.password === form.value.confirmPassword
 })
 
+// Username validation
+const validateUsername = username => {
+  const usernameRegex = /^[a-zA-Z0-9]{5,100}$/ // Alphanumeric, min 5 characters and max 100
+  if (!username) return 'Username is required.'
+  if (!usernameRegex.test(username)) return 'Username must be alphanumeric, max 5 characters, and no special characters.'
+  return ''
+}
+
+// Password validation
+const validatePassword = password => {
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/ // At least one uppercase, one lowercase, one number, one special character, min 8 characters
+  if (!password) return 'Password is required.'
+  if (!passwordRegex.test(password)) return 'Password must be at least 8 characters long and include an uppercase letter, a lowercase letter, a number, and a special character.'
+  return ''
+}
+
 // Update formatted date when birthDate changes
 watch(() => form.value.birthDate, newDate => {
-  form.value.formattedBirthDate = formatDate(newDate)
+  form.value.formattedBirthDate = newDate ? newDate.toISOString().split('T')[0] : ''
 })
 
 // Form validation
 const isFormValid = computed(() => {
+  if (!formSubmitted.value) return true // Skip validation if the form hasn't been submitted
+
+  errorMessages.value.username = validateUsername(form.value.username)
+  errorMessages.value.password = validatePassword(form.value.password)
+
   return (
-    form.value.username &&
+    !errorMessages.value.username &&
+    !errorMessages.value.password &&
     form.value.email &&
-    form.value.password &&
     form.value.confirmPassword &&
     passwordsMatch.value &&
     form.value.birthDate &&
@@ -55,17 +78,16 @@ const isFormValid = computed(() => {
 
 // Handle registration
 const handleRegister = async () => {
+  formSubmitted.value = true // Mark the form as submitted
+
   if (!isFormValid.value) {
-    errorMessages.value = {
-      form: 'Please fill in all required fields',
-    }
-    
+    errorMessages.value.form = 'Please fill in all required fields.'
     return
   }
-  
+
   try {
     errorMessages.value = {}
-    
+
     const userData = {
       username: form.value.username,
       email: form.value.email,
@@ -73,9 +95,9 @@ const handleRegister = async () => {
       birthDate: form.value.birthDate,
       role: form.value.role,
     }
-    
+
     await authStore.register(userData)
-    
+
     // Redirect based on role
     if (authStore.isAdmin) {
       router.push('/admin-dashboard')
@@ -84,16 +106,13 @@ const handleRegister = async () => {
     } else {
       router.push('/game-store')
     }
-    
   } catch (error) {
     console.error('Registration error:', error)
-    
+
     if (error.response?.data?.errors) {
       errorMessages.value = error.response.data.errors
     } else {
-      errorMessages.value = {
-        form: authStore.error || 'An error occurred during registration',
-      }
+      errorMessages.value.form = authStore.error || 'An error occurred during registration.'
     }
   }
 }
