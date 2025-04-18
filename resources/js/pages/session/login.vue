@@ -1,40 +1,41 @@
 <script setup>
-import { useAuthStore } from '@/stores/auth'
-import logo from '@images/logo.svg?raw'
-import authV1BottomShape from '@images/svg/auth-v1-bottom-shape.svg?url'
-import authV1TopShape from '@images/svg/auth-v1-top-shape.svg?url'
-import { useRoute, useRouter } from 'vue-router'
+import { ref } from 'vue';
+import { useAuthStore } from '@/stores/auth';
+import { getCookie } from '@/utils/cookie';
+import logo from '@images/logo.svg?raw';
+import authV1BottomShape from '@images/svg/auth-v1-bottom-shape.svg?url';
+import authV1TopShape from '@images/svg/auth-v1-top-shape.svg?url';
+import { useRoute, useRouter } from 'vue-router';
 
 const form = ref({
-  email: '',
-  password: '',
-  remember: false,
-})
+  email: getCookie('email') || '', // Pre-fill email from cookie
+  password: getCookie('password') || '', // Pre-fill password from cookie
+  remember: !!getCookie('email'), // Check if "remember" was enabled
+});
 
-const isPasswordVisible = ref(false)
-const router = useRouter()
-const route = useRoute()
-const authStore = useAuthStore()
+const isPasswordVisible = ref(false);
+const router = useRouter();
+const route = useRoute();
+const authStore = useAuthStore();
 
-// Function to handle login
 const handleLogin = async () => {
   try {
-    await authStore.login(form.value.email, form.value.password, form.value.remember)
-    
+    await authStore.login(form.value.email, form.value.password, form.value.remember);
+
     // Redirect based on user role or previous intended route
-    const redirectPath = route.query.redirect 
-      ? route.query.redirect 
-      : authStore.isAdmin 
-        ? '/admin-dashboard' 
-        : authStore.isDeveloper 
-          ? '/developer-dashboard' 
-          : '/game-store'
-    
-    router.push(redirectPath)
+    const redirectPath = route.query.redirect
+      ? route.query.redirect
+      : authStore.isAdmin
+      ? '/admin-dashboard'
+      : authStore.isDeveloper
+      ? '/developer-dashboard'
+      : '/game-store';
+
+    router.push(redirectPath);
   } catch (error) {
-    console.error('Login error:', error)
+    console.error('Login failed:', error);
   }
-}
+};
 </script>
 
 <template>

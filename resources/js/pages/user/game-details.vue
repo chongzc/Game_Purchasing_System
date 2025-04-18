@@ -16,16 +16,21 @@ const activeTab = ref('description')
 // User review form state
 const userRating = ref(0)
 const userReview = ref('')
+
 const isLoggedIn = computed(() => {
   console.log('Auth Store State:', {
     user: authStore.user,
-    isLoggedIn: authStore.isLoggedIn
+    isLoggedIn: authStore.isLoggedIn,
   })
+  
   return authStore.user !== null && authStore.isLoggedIn
 })
+
 const isSubmittingReview = ref(false)
 const reviewError = ref('')
 const reviewSuccess = ref(false)
+const cartSuccess = ref(false)
+const cartAlreadyInCart = ref(false)
 
 // Game data state
 const game = ref(null)
@@ -56,6 +61,7 @@ const breadcrumbs = computed(() => [
 // Computed property for discounted price
 const discountedPrice = computed(() => {
   if (!game.value) return 0
+  
   return game.value.price - (game.value.price * (game.value.discount / 100))
 })
 
@@ -65,6 +71,7 @@ const getStatusText = computed(() => {
   if (game.value.libraryStatus === 'owned') {
     return game.value.isInstalled ? 'Installed' : 'Not Installed'
   }
+  
   return 'In Library'
 })
 
@@ -73,6 +80,7 @@ const getStatusColor = computed(() => {
   if (game.value.libraryStatus === 'owned') {
     return game.value.isInstalled ? 'success' : 'info'
   }
+  
   return 'primary'
 })
 
@@ -80,10 +88,14 @@ const getStatusColor = computed(() => {
 const fetchGameDetails = async () => {
   try {
     loading.value = true
+
+    const { default: axios } = await import('axios')
+    
     const response = await axios.get(`/api/games/${gameId.value}`)
     if (response.data.success) {
       game.value = response.data.game
       similarGames.value = response.data.similarGames
+
       // Make sure libraryStatus is set from the API response
       game.value.libraryStatus = response.data.game.libraryStatus || null
     }
@@ -94,22 +106,98 @@ const fetchGameDetails = async () => {
   }
 }
 
+// Add timer function to hide cart success message after 3 seconds
+const hideCartSuccessAfterDelay = () => {
+  setTimeout(() => {
+    cartSuccess.value = false
+  }, 3000)
+}
+
+// Add timer function to hide already in cart message after 3 seconds
+const hideCartAlreadyInCartAfterDelay = () => {
+  setTimeout(() => {
+    cartAlreadyInCart.value = false
+  }, 3000)
+}
+
 const addToCart = async () => {
   try {
-    await axios.post('/api/cart', { gameId: gameId.value })
-    // Add your cart update logic here
+    // Reset any previous messages
+    cartSuccess.value = false
+    cartAlreadyInCart.value = false
+    
+    if (!isLoggedIn.value) {
+      alert('Please log in to add items to your cart.')
+      router.push('/login')
+      
+      return
+    }
+    
+    // Get CSRF cookie
+    await axios.get('/sanctum/csrf-cookie')
+    
+    // Try to add to cart with explicit credentials
+    const response = await axios.post(
+      '/api/cart', 
+      { 
+        gameId: gameId.value,
+        originalPrice: game.value?.price,
+        discount: game.value?.discount,
+      },
+      { 
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+      },
+    )
+    
+    console.log('Cart response:', response.data)
+    
+    // Check for "already in cart" message
+    if (response.data.message && response.data.message.includes('already in your cart')) {
+      cartAlreadyInCart.value = true
+      hideCartAlreadyInCartAfterDelay()
+    } else if (response.data.message) {
+      // Show success message for other successes
+      cartSuccess.value = true
+      
+      // Auto-hide after 3 seconds
+      hideCartSuccessAfterDelay()
+    }
   } catch (error) {
-    console.error('Error adding to cart:', error)
+    console.error('Error adding to cart:', error.response?.data || error.message || error)
+    
+    if (error.response?.status === 401) {
+      alert('Authentication error. Please log in again.')
+      router.push('/login')
+    } else {
+      alert(`Error adding to cart: ${error.response?.data?.error || error.message || 'Unknown error'}`)
+    }
   }
 }
 
 const buyNow = () => {
-  router.push(`/checkout?gameId=${gameId.value}`)
+  // Redirect to checkout with game details as query parameters
+  router.push({
+    path: '/checkout',
+    query: { 
+      gameId: gameId.value,
+      directPurchase: 'true',
+      gameTitle: game.value?.title,
+      gamePrice: game.value?.price,
+      gameDiscount: game.value?.discount,
+      gameImage: game.value?.mainImage,
+    },
+  })
 }
 
 const playGame = async () => {
   try {
     await axios.post(`/api/library/play/${gameId.value}`)
+
     // Add your game launch logic here
   } catch (error) {
     console.error('Error launching game:', error)
@@ -129,10 +217,12 @@ const submitReview = async () => {
     // Validate input
     if (!userRating.value) {
       reviewError.value = 'Please select a rating'
+      
       return
     }
     if (!userReview.value.trim()) {
       reviewError.value = 'Please write a review'
+      
       return
     }
     
@@ -140,7 +230,7 @@ const submitReview = async () => {
     
     const response = await axios.post(`/api/games/${gameId.value}/reviews`, {
       rating: userRating.value,
-      comment: userReview.value.trim()
+      comment: userReview.value.trim(),
     })
     
     if (response.data.success) {
@@ -167,17 +257,18 @@ const submitReview = async () => {
   }
 }
 
-const viewGame = async (id) => {
+
+const viewGame = async id => {
   await router.push(`/games/${id}`)
   await fetchGameDetails()
 }
 
 // Format date helper
-const formatDate = (dateString) => {
+const formatDate = dateString => {
   return new Date(dateString).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
-    day: 'numeric'
+    day: 'numeric',
   })
 }
 
@@ -185,12 +276,13 @@ const formatDate = (dateString) => {
 const installGame = async () => {
   try {
     const response = await axios.put(`/api/library/${gameId.value}/status`, {
-      status: 'installed'
+      status: 'installed',
     })
     
     if (response.data.success) {
       // Update the local game status
       game.value.libraryStatus = 'installed'
+
       // Show success message or handle UI updates
     } else {
       throw new Error(response.data.message || 'Failed to install game')
@@ -204,12 +296,13 @@ const installGame = async () => {
 const uninstallGame = async () => {
   try {
     const response = await axios.put(`/api/library/${gameId.value}/status`, {
-      status: 'owned'
+      status: 'owned',
     })
     
     if (response.data.success) {
       // Update the local game status
       game.value.libraryStatus = 'owned'
+
       // Refresh the game details to ensure sync with server
       await fetchGameDetails()
     } else {
@@ -229,11 +322,11 @@ onMounted(async () => {
 // Watch for route changes
 watch(
   () => route.params.id,
-  async (newId) => {
+  async newId => {
     if (newId) {
       await fetchGameDetails()
     }
-  }
+  },
 )
 </script>
 
@@ -244,11 +337,15 @@ watch(
       class="pa-0 mb-4"
     />
     
-    <VCard v-if="loading" class="pa-6 d-flex justify-center">
+    <VCard
+      v-if="loading"
+      class="pa-6 d-flex justify-center"
+    >
       <VProgressCircular indeterminate />
     </VCard>
     
     <template v-else-if="game">
+
     <VRow>
       <!-- Game Image and Gallery Section -->
         <VCol cols="12" md="5">
@@ -269,6 +366,7 @@ watch(
             :key="index"
             cols="3"
           >
+
             <VImg
               :src="image || '/images/placeholder.jpg'"
               height="80"
@@ -276,6 +374,7 @@ watch(
               class="rounded cursor-pointer"
               :alt="`${game.title} screenshot ${index + 1}`"
             />
+
           </VCol>
         </VRow>
       </VCol>
@@ -289,6 +388,7 @@ watch(
                 {{ game.title }}
               </h1>
               <VSpacer />
+
                 <WishlistButton 
                   :game-id="Number(gameId)" 
                   :is-wishlisted="game.isWishlisted"
@@ -307,16 +407,20 @@ watch(
               <VSpacer />
               <VChip
                   v-if="game.category"
-                color="success"
-                class="ml-2"
-                size="small"
-              >
-                {{ game.category }}
-              </VChip>
-                <template v-for="(feature, index) in game.features" :key="index">
+                  color="success"
+                  class="ms-2"
+                  size="small"
+                >
+                  {{ game.category }}
+                </VChip>
+                <template
+                  v-for="(feature, index) in game.features"
+                  :key="index"
+                >
+
                   <VChip
                     color="info"
-                    class="ml-2"
+                    class="ms-2"
                     size="small"
                   >
                     {{ feature }}
@@ -382,22 +486,58 @@ watch(
               <!-- Game Status Section -->
               <template v-if="isLoggedIn">
                 <!-- Not in library - Show purchase buttons -->
-                <VRow v-if="!game.libraryStatus" class="mt-4">
-                  <VCol cols="12" md="6">
-                <VBtn
-                  block
-                  size="large"
-                  color="primary"
-                      prepend-icon="mdi-cart"
-                  @click="addToCart"
+
+                <VRow
+                  v-if="!game.libraryStatus"
+                  class="mt-4"
                 >
-                  Add to Cart
-                </VBtn>
-              </VCol>
-                  <VCol cols="12" md="6">
-                <VBtn
-                  block
-                  size="large"
+                  <!-- Add success messages -->
+                  <VCol
+                    v-if="cartSuccess || cartAlreadyInCart"
+                    cols="12"
+                  >
+                    <VAlert
+                      v-if="cartSuccess"
+                      type="success"
+                      closable
+                      class="mb-2"
+                      @click:close="cartSuccess = false"
+                    >
+                      Game added to your cart successfully!
+                    </VAlert>
+                    
+                    <VAlert
+                      v-if="cartAlreadyInCart"
+                      type="info"
+                      closable
+                      class="mb-2"
+                      @click:close="cartAlreadyInCart = false"
+                    >
+                      This game is already in your cart.
+                    </VAlert>
+                  </VCol>
+                  
+                  <VCol
+                    cols="12"
+                    md="6"
+                  >
+                    <VBtn
+                      block
+                      size="large"
+                      color="primary"
+                      prepend-icon="mdi-cart"
+                      @click="addToCart"
+                    >
+                      Add to Cart
+                    </VBtn>
+                  </VCol>
+                  <VCol
+                    cols="12"
+                    md="6"
+                  >
+                    <VBtn
+                      block
+                      size="large"
                       color="success"
                   @click="buyNow"
                 >
@@ -407,7 +547,10 @@ watch(
             </VRow>
 
                 <!-- Owned or Installed -->
-                <VCard v-else class="mb-4">
+                <VCard
+                  v-else
+                  class="mb-4"
+                >
                   <VCardText>
                     <div class="d-flex align-center justify-space-between">
                       <div>
@@ -593,6 +736,7 @@ watch(
                     >
                       Your review has been submitted successfully!
                     </VAlert>
+
             <div class="d-flex align-center mb-2">
                       <div class="me-4">Your Rating:</div>
               <VRating
@@ -622,19 +766,28 @@ watch(
             </div>
           </div>
                 </template>
-                <VAlert v-else type="info" class="mb-6">
-            <div class="d-flex align-center">
-              <span>Please log in to write a review</span>
-              <VSpacer />
-                    <VBtn color="primary" to="/login" :href="null">
-                Log In
-              </VBtn>
-            </div>
-          </VAlert>
-          
-          <VDivider class="mb-4" />
-          
-          <!-- Review List -->
+                <VAlert
+                  v-else
+                  type="info"
+                  class="mb-6"
+                >
+                  <div class="d-flex align-center">
+                    <span>Please log in to write a review</span>
+                    <VSpacer />
+                    <VBtn
+                      color="primary"
+                      to="/login"
+                      :href="null"
+                    >
+                      Log In
+                    </VBtn>
+                  </div>
+                </VAlert>
+                
+                <VDivider class="mb-4" />
+                
+                <!-- Review List -->
+
                 <div v-if="game.reviews?.length">
           <div
             v-for="(review, index) in game.reviews"
@@ -664,6 +817,7 @@ watch(
                             {{ formatDate(review.date) }}
                   </div>
                 </div>
+
                 <p class="text-body-2 mb-0 mt-1">
                   {{ review.comment }}
                 </p>
@@ -754,58 +908,66 @@ watch(
       </template>
 
       <!-- Game Actions -->
-      <!-- <VCard class="mt-4" v-if="isLoggedIn">
+      <!--
+        <VCard class="mt-4" v-if="isLoggedIn">
         <VCardText>
-          <div class="d-flex align-center justify-space-between">
-            <div>
-              <VChip
-                :color="gameStatus === 'ready' ? 'success' : 
-                       gameStatus === 'downloading' ? 'info' : 'warning'"
-                class="me-2"
-              >
-                {{ gameStatus === 'ready' ? 'Ready to Play' :
-                   gameStatus === 'downloading' ? 'Downloading...' : 'Not Installed' }}
-              </VChip>
-              <template v-if="lastPlayed">
-                <span class="text-caption">Last played: {{ new Date(lastPlayed).toLocaleDateString() }}</span>
-              </template>
-              <template v-if="playTime > 0">
-                <span class="text-caption ms-2">
-                  Play time: {{ Math.floor(playTime) }}h
-                </span>
-              </template>
-            </div> -->
+        <div class="d-flex align-center justify-space-between">
+        <div>
+        <VChip
+        :color="gameStatus === 'ready' ? 'success' : 
+        gameStatus === 'downloading' ? 'info' : 'warning'"
+        class="me-2"
+        >
+        {{ gameStatus === 'ready' ? 'Ready to Play' :
+        gameStatus === 'downloading' ? 'Downloading...' : 'Not Installed' }}
+        </VChip>
+        <template v-if="lastPlayed">
+        <span class="text-caption">Last played: {{ new Date(lastPlayed).toLocaleDateString() }}</span>
+        </template>
+        <template v-if="playTime > 0">
+        <span class="text-caption ms-2">
+        Play time: {{ Math.floor(playTime) }}h
+        </span>
+        </template>
+        </div> 
+      -->
             
-            <!-- <div class="d-flex align-center">
-              <template v-if="gameStatus === 'downloading'">
-                <VProgressLinear
-                  v-model="downloadProgress"
-                  color="primary"
-                  height="8"
-                  class="me-4"
-                  style="width: 200px"
-                >
-                  <template v-slot:default="{ value }">
-                    <span class="text-caption">{{ Math.ceil(value) }}%</span>
-                  </template>
-                </VProgressLinear>
-              </template>
+      <!--
+        <div class="d-flex align-center">
+        <template v-if="gameStatus === 'downloading'">
+        <VProgressLinear
+        v-model="downloadProgress"
+        color="primary"
+        height="8"
+        class="me-4"
+        style="width: 200px"
+        >
+        <template v-slot:default="{ value }">
+        <span class="text-caption">{{ Math.ceil(value) }}%</span>
+        </template>
+        </VProgressLinear>
+        </template>
               
-              <VBtn
-                :color="gameStatus === 'ready' ? 'success' : 'primary'"
-                :disabled="gameStatus === 'downloading'"
-                @click="gameStatus === 'ready' ? playGame() : downloadGame()"
-              >
-                {{ gameStatus === 'ready' ? 'Play Now' : 
-                   gameStatus === 'downloading' ? 'Downloading...' : 'Download' }}
-              </VBtn>
-            </div>
-          </div>
+        <VBtn
+        :color="gameStatus === 'ready' ? 'success' : 'primary'"
+        :disabled="gameStatus === 'downloading'"
+        @click="gameStatus === 'ready' ? playGame() : downloadGame()"
+        >
+        {{ gameStatus === 'ready' ? 'Play Now' : 
+        gameStatus === 'downloading' ? 'Downloading...' : 'Download' }}
+        </VBtn>
+        </div>
+        </div>
         </VCardText>
-      </VCard> -->
+        </VCard> 
+      -->
     </template> 
     
-    <VAlert v-else type="error" class="mt-4">
+    <VAlert
+      v-else
+      type="error"
+      class="mt-4"
+    >
       Game not found
     </VAlert>
   </div>

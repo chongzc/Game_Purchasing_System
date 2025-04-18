@@ -16,8 +16,8 @@ export const getHeaderNavigationItems = user => {
         to: '/game-library',
       },
       {
-        title: 'My Wishlist',
-        to: '/user-wishlist',
+        title: 'My Cart',
+        to: '/cart',
       },
     ],
     developer: [

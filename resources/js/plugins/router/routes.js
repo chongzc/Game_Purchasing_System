@@ -18,8 +18,8 @@ export const routes = [
       },
       {
         path: 'cart',
-        component: () => import('@/pages/user/shopping-cart.vue'),
-        meta: { requiresAuth: true, roles: ['user', 'developer', 'admin'] },
+        component: () => import('@/pages/user/cart.vue'),
+        meta: { requiresAuth: true, roles: ['user'] },
       },
       {
         path: 'checkout',

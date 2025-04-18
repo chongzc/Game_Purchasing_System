@@ -125,4 +125,56 @@ class UserLibraryController extends Controller
             'current_status' => $userLib->ul_status
         ], 400);
     }
+
+    /**
+     * Add multiple games to user's library
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function addToLibrary(Request $request)
+    {
+        if (!Auth::check()) {
+            return response()->json([
+                'success' => false, 
+                'message' => 'User not authenticated'
+            ], 401);
+        }
+        
+        $validated = $request->validate([
+            'games' => 'required|array',
+            'games.*.ul_gameId' => 'required|exists:games,g_id',
+            'games.*.ul_name' => 'required|string',
+            'games.*.ul_status' => ['required', Rule::in(['owned', 'installed'])],
+        ]);
+        
+        $userId = Auth::user()->u_id;
+        $games = $validated['games'];
+        $addedCount = 0;
+        
+        foreach ($games as $game) {
+            // Check if game already exists in library
+            $existingEntry = UserLib::where('ul_userId', $userId)
+                ->where('ul_gameId', $game['ul_gameId'])
+                ->first();
+                
+            if (!$existingEntry) {
+                // Add game to library
+                UserLib::create([
+                    'ul_name' => $game['ul_name'],
+                    'ul_gameId' => $game['ul_gameId'],
+                    'ul_userId' => $userId,
+                    'ul_status' => $game['ul_status'],
+                ]);
+                
+                $addedCount++;
+            }
+        }
+        
+        return response()->json([
+            'success' => true,
+            'message' => $addedCount . ' game(s) added to library',
+            'count' => $addedCount
+        ]);
+    }
 } 

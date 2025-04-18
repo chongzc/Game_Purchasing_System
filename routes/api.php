@@ -9,6 +9,10 @@ use App\Http\Controllers\GameController;
 use App\Http\Controllers\UserLibraryController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\WishlistController;
+use App\Http\Controllers\AdminGameController;
+use App\Http\Controllers\CartController;
+use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\GameStoreController;
 
@@ -109,12 +113,42 @@ Route::middleware(['auth:sanctum'])->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/library', [UserLibraryController::class, 'getLibraryGames']);
     Route::put('/library/{game}/status', [UserLibraryController::class, 'updateLibraryStatus']);
+    Route::post('/user-library', [UserLibraryController::class, 'addToLibrary']);
 });
 
 // Review Routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/games/{id}/user-review', [ReviewController::class, 'getUserReview']);
     Route::post('/games/{id}/reviews', [ReviewController::class, 'submitReview']);
+});
+
+// Test authentication route
+Route::get('/auth-check', function (Request $request) {
+    return response()->json([
+        'authenticated' => Auth::check(),
+        'user' => Auth::user(),
+        'id' => Auth::id()
+    ]);
+});
+
+// Cart Routes for testing without middleware
+Route::get('/cart-test', [CartController::class, 'index']);
+Route::post('/cart-test', [CartController::class, 'addToCart']);
+Route::delete('/cart-test/clear', [CartController::class, 'clearCart']);
+
+// Cart Routes with authentication middleware
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/cart', [CartController::class, 'index']);
+    Route::post('/cart', [CartController::class, 'addToCart']);
+    Route::delete('/cart/clear', [CartController::class, 'clearCart']);
+    Route::delete('/cart/{id}', [CartController::class, 'removeFromCart']);
+    Route::get('/cart/checkout', [CartController::class, 'checkout']);
+});
+
+// Purchase Routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/purchases', [PurchaseController::class, 'store']);
+    Route::get('/purchases', [PurchaseController::class, 'getUserPurchases']);
 });
 
 // Game Store Routes
