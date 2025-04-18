@@ -31,6 +31,7 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // Protected routes
 Route::middleware(['auth'])->group(function () {
+    // User routes
     Route::get('/cart', function () {
         if (!Gate::allows('is-user')) {
             abort(403, 'Unauthorized action.');
@@ -101,7 +102,7 @@ Route::middleware(['auth'])->group(function () {
         if (!Gate::allows('is-admin')) {
             abort(403, 'Unauthorized action.');
         }
-        
+
         return view('application');
     })->name('admin.games');
 });
