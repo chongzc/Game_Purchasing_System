@@ -9,9 +9,11 @@ use App\Http\Controllers\GameController;
 use App\Http\Controllers\UserLibraryController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\WishlistController;
+use App\Http\Controllers\AdminGameController;
 use App\Http\Controllers\CartController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\PurchaseController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -42,7 +44,7 @@ Route::get('/browseGames', [GameController::class, 'browseGames']);
 Route::get('/games/{id}', [GameController::class, 'show']);
 Route::post('/games', [GameController::class, 'store']);
 Route::get('/games/{id}/edit', [GameController::class, 'getGameForEdit'])->middleware('auth:sanctum');
- Route::put('/games/{id}', [GameController::class, 'update'])->middleware('auth:sanctum');
+Route::put('/games/{id}', [GameController::class, 'update'])->middleware('auth:sanctum');
 Route::get('/games/{id}/reviews', [ReviewController::class, 'getReviews']);
 
 // Wishlist routes
@@ -87,10 +89,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/developer/games', [GameController::class, 'getDeveloperGames']);
 });
 
+// Admin routes
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/admin/games', [AdminGameController::class, 'index']);
+    Route::get('/admin/games/{id}', [AdminGameController::class, 'show']);
+    Route::patch('/admin/games/{id}/status', [AdminGameController::class, 'updateStatus']);
+    Route::delete('/admin/games/{id}', [AdminGameController::class, 'destroy']);
+    Route::get('/admin/statistics', [AdminGameController::class, 'statistics']);
+});
+
 // User Library Routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/library', [UserLibraryController::class, 'getLibraryGames']);
-    Route::patch('/library/{game}/status', [UserLibraryController::class, 'updateLibraryStatus']);
+    Route::put('/library/{game}/status', [UserLibraryController::class, 'updateLibraryStatus']);
 });
 
 // Review Routes

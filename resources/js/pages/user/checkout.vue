@@ -358,12 +358,13 @@
 </template>
 
 <script setup>
-import { calculateDiscountedPrice, calculateFinalTotal, calculateOriginalSubtotal, calculateTotalDiscount } from '@/utils/priceCalculations'
-import axios from 'axios'
-import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router'; // Keep only one instance
+import { setCookie, getCookie } from '@/utils/cookie';
+import { calculateDiscountedPrice, calculateFinalTotal, calculateOriginalSubtotal, calculateTotalDiscount } from '@/utils/priceCalculations';
+import axios from 'axios';
 
-const router = useRouter()
+const router = useRouter();
 
 // Breadcrumbs
 const breadcrumbs = ref([
@@ -381,7 +382,7 @@ const breadcrumbs = ref([
     title: 'Checkout',
     disabled: true,
   },
-])
+]);
 
 const cartItems = ref([])
 const isLoading = ref(false)
@@ -394,7 +395,6 @@ const fetchCartItems = async () => {
   
   try {
     const response = await axios.get('/api/cart')
-
     cartItems.value = response.data.cartItems
   } catch (err) {
     error.value = 'Failed to load cart items'
@@ -404,28 +404,31 @@ const fetchCartItems = async () => {
   }
 }
 
+// Payment method from cookies
+const paymentMethod = ref(getCookie('paymentMethod') || 'credit_card')
+
 // Load cart items when component mounts
 onMounted(fetchCartItems)
 
 // Credit card form
 const creditCardForm = ref({
-  number: '',
-  name: '',
-  expiry: '',
-  cvv: '',
-})
+  number: getCookie('cardNumber') || '',
+  name: getCookie('cardName') || '',
+  expiry: getCookie('cardExpiry') || '',
+  cvv: getCookie('cardCVV') || '',
+});
 
 // Billing information
 const billingInfo = ref({
-  firstName: '',
-  lastName: '',
-  email: '',
-  address: '',
-  city: '',
-  state: '',
-  zip: '',
-  country: 'United States',
-})
+  firstName: getCookie('billingFirstName') || '',
+  lastName: getCookie('billingLastName') || '',
+  email: getCookie('billingEmail') || '',
+  address: getCookie('billingAddress') || '',
+  city: getCookie('billingCity') || '',
+  state: getCookie('billingState') || '',
+  zip: getCookie('billingZip') || '',
+  country: getCookie('billingCountry') || 'United States',
+});
 
 // Countries list (shortened for brevity)
 const countries = [
@@ -438,18 +441,35 @@ const countries = [
   'Japan',
 
   // Add more countries as needed
-]
+];
 
 // Additional information
-const additionalInfo = ref('')
+const additionalInfo = ref('');
 
 // Terms acceptance
-const termsAccepted = ref(false)
+const termsAccepted = ref(false);
 
 // Order processing state
-const isProcessing = ref(false)
-const orderDialog = ref(false)
-const orderNumber = ref('')
+const isProcessing = ref(false);
+const orderDialog = ref(false);
+const orderNumber = ref('');
+
+// Save checkout data to cookies
+const saveCheckoutDataToCookies = () => {
+  setCookie('paymentMethod', paymentMethod.value, 30);
+  setCookie('cardNumber', creditCardForm.value.number, 30);
+  setCookie('cardName', creditCardForm.value.name, 30);
+  setCookie('cardExpiry', creditCardForm.value.expiry, 30);
+  setCookie('cardCVV', creditCardForm.value.cvv, 30);
+  setCookie('billingFirstName', billingInfo.value.firstName, 30);
+  setCookie('billingLastName', billingInfo.value.lastName, 30);
+  setCookie('billingEmail', billingInfo.value.email, 30);
+  setCookie('billingAddress', billingInfo.value.address, 30);
+  setCookie('billingCity', billingInfo.value.city, 30);
+  setCookie('billingState', billingInfo.value.state, 30);
+  setCookie('billingZip', billingInfo.value.zip, 30);
+  setCookie('billingCountry', billingInfo.value.country, 30);
+};
 
 // Order calculations
 const cartTotal = computed(() => calculateOriginalSubtotal(cartItems.value))
@@ -465,9 +485,9 @@ const formValid = computed(() => {
   const { firstName, lastName, email, address, city, state, zip, country } = billingInfo.value
   const hasRequiredFields = firstName && lastName && email && address && city && state && zip && country
   
-  // Validate credit card info
+  // Validate payment method based on cookie selection
   const { number, name, expiry, cvv } = creditCardForm.value
-  const hasValidCardInfo = number && name && expiry && cvv
+  const hasValidCardInfo = paymentMethod.value && number && name && expiry && cvv
   
   return hasRequiredFields && hasValidCardInfo
 })
@@ -475,17 +495,19 @@ const formValid = computed(() => {
 // Place order method
 const placeOrder = async () => {
   if (!formValid.value) {
-    alert('Please fill out all required fields.')
-    
-    return
+    alert('Please fill out all required fields.');
+    return;
   }
-  
-  isProcessing.value = true
+	
+isProcessing.value = true;
   
   try {
+    // Save data to cookies from CookieForLogin branch
+    saveCheckoutDataToCookies();
+    
     // Generate order number/receipt number 
-    const receiptNumber = 'REC-' + Math.random().toString(36).substring(2, 12)
-    const currentDate = new Date().toISOString() // Full ISO format with time
+    const receiptNumber = 'REC-' + Math.random().toString(36).substring(2, 12);
+    const currentDate = new Date().toISOString(); // Full ISO format with time
     
     // Create batch of purchase records for all cart items
     const purchaseBatch = cartItems.value.map(item => ({
@@ -494,7 +516,7 @@ const placeOrder = async () => {
       'p_purchasePrice': calculateDiscountedPrice(item), 
       'p_purchaseDate': currentDate,
       'p_receiptNumber': receiptNumber,
-    }))
+    }));
     
     // Create all purchase records in a single request
     const response = await axios.post('/api/purchases', { purchases: purchaseBatch }, {
@@ -504,13 +526,13 @@ const placeOrder = async () => {
         'Accept': 'application/json',
       },
       withCredentials: true,
-    })
+    });
     
     // Use receipt number from response if available, otherwise use the generated one
     if (response.data && response.data.receiptNumber) {
-      orderNumber.value = response.data.receiptNumber
+      orderNumber.value = response.data.receiptNumber;
     } else {
-      orderNumber.value = receiptNumber
+      orderNumber.value = receiptNumber;
     }
     
     // Clear the cart after successful purchase
@@ -521,25 +543,24 @@ const placeOrder = async () => {
         'Accept': 'application/json',
       },
       withCredentials: true,
-    })
+    });
     
     // Update the UI
-    isProcessing.value = false
-    orderDialog.value = true
+    isProcessing.value = false;
+    orderDialog.value = true;
   } catch (error) {
-    console.error('Error processing order:', error?.response?.data || error)
+    console.error('Error processing order:', error?.response?.data || error);
     
     // Handle authentication errors
     if (error?.response?.status === 401) {
-      alert('You need to be logged in to complete this purchase. Please log in and try again.')
-
+      alert('You need to be logged in to complete this purchase. Please log in and try again.');
       // Optionally redirect to login page
-      // router.push('/login')
+      // router.push('/login');
     } else {
-      alert('There was an error processing your order. Please try again.')
+      alert('There was an error processing your order. Please try again.');
     }
     
-    isProcessing.value = false
+    isProcessing.value = false;
   }
 }
 </script>
@@ -549,4 +570,4 @@ const placeOrder = async () => {
   position: sticky;
   top: 20px;
 }
-</style> 
+</style>

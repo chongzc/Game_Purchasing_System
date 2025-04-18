@@ -9,14 +9,6 @@
       <h1 class="text-h3 font-weight-bold">
         Game Management
       </h1>
-      <VSpacer />
-      <VBtn
-        color="primary"
-        prepend-icon="bx-plus"
-        @click="openAddGameDialog"
-      >
-        Add New Game
-      </VBtn>
     </div>
     
     <!-- Filters -->
@@ -117,7 +109,7 @@
                 width="60"
                 height="40"
                 cover
-                class="rounded mr-3"
+                class="rounded me-3"
               />
             </div>
           </template>
@@ -134,7 +126,7 @@
           
           <!-- Price Column -->
           <template #item.price="{ item }">
-            <div>${{ item.price.toFixed(2) }}</div>
+            <div>${{ item.discountedPrice.toFixed(2) }}</div>
             <div
               v-if="item.originalPrice"
               class="text-caption text-decoration-line-through text-disabled"
@@ -177,571 +169,269 @@
                 icon
                 variant="text"
                 size="small"
-                color="primary"
-                @click="editGame(item)"
-              >
-                <VIcon icon="bx-edit" />
-              </VBtn>
-              <VBtn
-                icon
-                variant="text"
-                size="small"
                 color="success"
+                title="View Game Details"
                 @click="viewGame(item)"
               >
                 <VIcon icon="bx-show" />
               </VBtn>
-              <VBtn
-                icon
-                variant="text"
-                size="small"
-                color="error"
-                @click="confirmDeleteGame(item)"
-              >
-                <VIcon icon="bx-trash" />
-              </VBtn>
+              
+              <!-- Status Update Menu -->
+              <VMenu>
+                <template #activator="{ props }">
+                  <VBtn
+                    icon
+                    variant="text"
+                    size="small"
+                    color="info"
+                    v-bind="props"
+                    title="Update Status"
+                  >
+                    <VIcon icon="bx-dots-vertical" />
+                  </VBtn>
+                </template>
+                <VList density="compact">
+                  <VListItem
+                    v-if="item.status !== 'verified'"
+                    title="Approve Game"
+                    prepend-icon="bx-check-circle"
+                    color="success"
+                    @click="updateGameStatus(item, 'verified')"
+                  />
+                  <VListItem
+                    v-if="item.status !== 'pending'"
+                    title="Set to Pending Review"
+                    prepend-icon="bx-time"
+                    color="warning"
+                    @click="updateGameStatus(item, 'pending')"
+                  />
+                </VList>
+              </VMenu>
             </div>
           </template>
         </VDataTable>
       </VCardText>
     </VCard>
-    
-    <!-- Add/Edit Game Dialog -->
-    <VDialog
-      v-model="gameDialog.show"
-      max-width="800"
-    >
-      <VCard>
-        <VCardTitle class="d-flex align-center pa-4">
-          <h3 class="text-h5 font-weight-bold">
-            {{ gameDialog.isEdit ? 'Edit Game' : 'Add New Game' }}
-          </h3>
-          <VSpacer />
-          <VBtn
-            icon
-            variant="text"
-            @click="gameDialog.show = false"
-          >
-            <VIcon icon="bx-x" />
-          </VBtn>
-        </VCardTitle>
-        
-        <VDivider />
-        
-        <VCardText class="pa-4">
-          <VForm @submit.prevent="saveGame">
-            <VRow>
-              <VCol
-                cols="12"
-                md="8"
-              >
-                <VTextField
-                  v-model="gameDialog.form.title"
-                  label="Game Title"
-                  variant="outlined"
-                  required
-                />
-              </VCol>
-              <VCol
-                cols="12"
-                md="4"
-              >
-                <VSelect
-                  v-model="gameDialog.form.status"
-                  label="Status"
-                  :items="statusOptions"
-                  variant="outlined"
-                  required
-                />
-              </VCol>
-            </VRow>
-            
-            <VRow>
-              <VCol
-                cols="12"
-                md="6"
-              >
-                <VSelect
-                  v-model="gameDialog.form.category"
-                  label="Category"
-                  :items="categoryOptions"
-                  variant="outlined"
-                  required
-                />
-              </VCol>
-              <VCol
-                cols="12"
-                md="3"
-              >
-                <VTextField
-                  v-model="gameDialog.form.price"
-                  label="Price ($)"
-                  type="number"
-                  variant="outlined"
-                  required
-                />
-              </VCol>
-              <VCol
-                cols="12"
-                md="3"
-              >
-                <VTextField
-                  v-model="gameDialog.form.originalPrice"
-                  label="Original Price ($)"
-                  type="number"
-                  variant="outlined"
-                />
-              </VCol>
-            </VRow>
-            
-            <VRow>
-              <VCol
-                cols="12"
-                md="6"
-              >
-                <VTextField
-                  v-model="gameDialog.form.developer"
-                  label="Developer"
-                  variant="outlined"
-                  required
-                />
-              </VCol>
-              <VCol
-                cols="12"
-                md="6"
-              >
-                <VTextField
-                  v-model="gameDialog.form.releaseDate"
-                  label="Release Date"
-                  type="date"
-                  variant="outlined"
-                  required
-                />
-              </VCol>
-            </VRow>
-            
-            <VTextarea
-              v-model="gameDialog.form.description"
-              label="Description"
-              variant="outlined"
-              rows="4"
-              required
-              class="mt-4"
-            />
-            
-            <VTextField
-              v-model="gameDialog.form.imageUrl"
-              label="Image URL"
-              variant="outlined"
-              class="mt-4"
-            />
-            
-            <div class="d-flex justify-end mt-6">
-              <VBtn
-                variant="text"
-                color="default"
-                class="mr-2"
-                @click="gameDialog.show = false"
-              >
-                Cancel
-              </VBtn>
-              <VBtn
-                color="primary"
-                type="submit"
-                :loading="gameDialog.loading"
-              >
-                {{ gameDialog.isEdit ? 'Update Game' : 'Add Game' }}
-              </VBtn>
-            </div>
-          </VForm>
-        </VCardText>
-      </VCard>
-    </VDialog>
-    
-    <!-- Delete Confirmation Dialog -->
-    <VDialog
-      v-model="deleteDialog.show"
-      max-width="500"
-    >
-      <VCard>
-        <VCardTitle class="text-h5 pa-4">
-          Delete Game
-        </VCardTitle>
-        
-        <VCardText>
-          Are you sure you want to delete <strong>{{ deleteDialog.game?.title }}</strong>? This action cannot be undone.
-        </VCardText>
-        
-        <VCardActions class="pa-4">
-          <VSpacer />
-          <VBtn
-            variant="text"
-            color="default"
-            @click="deleteDialog.show = false"
-          >
-            Cancel
-          </VBtn>
-          <VBtn
-            color="error"
-            variant="flat"
-            :loading="deleteDialog.loading"
-            @click="deleteGame"
-          >
-            Delete
-          </VBtn>
-        </VCardActions>
-      </VCard>
-    </VDialog>
   </div>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import axios from 'axios'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-
-// Breadcrumbs
-const breadcrumbs = ref([
-  {
-    title: 'Home',
-    disabled: false,
-    to: '/',
-  },
-  {
-    title: 'Admin',
-    disabled: false,
-    to: '/admin',
-  },
-  {
-    title: 'Game Management',
-    disabled: true,
-  },
-])
-
-// Table headers
-const headers = [
-  { title: 'Image', key: 'image', sortable: false },
-  { title: 'Title', key: 'title', align: 'start' },
-  { title: 'Price', key: 'price' },
-  { title: 'Category', key: 'category' },
-  { title: 'Developer', key: 'developer' },
-  { title: 'Status', key: 'status' },
-  { title: 'Release Date', key: 'releaseDate' },
-  { title: 'Actions', key: 'actions', sortable: false, align: 'center' },
-]
-
-// Pagination
+const loading = ref(false)
+const games = ref([])
+const filteredGames = ref([])
 const itemsPerPage = ref(10)
 
-// Filter options
-const categoryOptions = ['All', 'Action', 'Adventure', 'RPG', 'Strategy', 'Sports', 'Simulation']
-const statusOptions = ['All', 'Active', 'Upcoming', 'On Sale', 'Inactive']
-
-const priceRangeOptions = [
-  { title: 'All Prices', value: 'all' },
-  { title: 'Under $20', value: 'under-20' },
-  { title: '$20 - $40', value: '20-40' },
-  { title: '$40 - $60', value: '40-60' },
-  { title: 'Over $60', value: 'over-60' },
-]
-
-// Filters
+// Filters for the data table
 const filters = ref({
   search: '',
-  category: 'All',
-  status: 'All',
-  priceRange: 'all',
+  category: '',
+  status: '',
+  priceRange: '',
 })
 
-// Games data (in a real app, this would be fetched from an API)
-const games = ref([
-  {
-    id: 1,
-    title: 'Elden Ring',
-    description: 'THE NEW FANTASY ACTION RPG. Rise, Tarnished, and be guided by grace to brandish the power of the Elden Ring and become an Elden Lord in the Lands Between.',
-    price: 59.99,
-    originalPrice: 69.99,
-    category: 'RPG',
-    developer: 'FromSoftware Inc.',
-    releaseDate: '2022-02-25',
-    status: 'Active',
-    image: '/images/placeholder.jpg',
-  },
-  {
-    id: 2,
-    title: 'God of War Ragnarök',
-    description: 'Embark on a journey through the nine realms as Kratos and Atreus struggle with holding on and letting go.',
-    price: 49.99,
-    originalPrice: 69.99,
-    category: 'Action',
-    developer: 'Santa Monica Studio',
-    releaseDate: '2022-11-09',
-    status: 'On Sale',
-    image: '/images/placeholder.jpg',
-  },
-  {
-    id: 3,
-    title: 'FIFA 23',
-    description: 'Experience the excitement of the biggest tournament in soccer with EA SPORTS FIFA 23 and the men\'s FIFA World Cup.',
-    price: 44.99,
-    originalPrice: 59.99,
-    category: 'Sports',
-    developer: 'EA Vancouver',
-    releaseDate: '2022-09-30',
-    status: 'Active',
-    image: '/images/placeholder.jpg',
-  },
-  {
-    id: 4,
-    title: 'Cyberpunk 2077',
-    description: 'Cyberpunk 2077 is an open-world, action-adventure RPG set in the megalopolis of Night City',
-    price: 39.99,
-    originalPrice: 59.99,
-    category: 'RPG',
-    developer: 'CD Projekt Red',
-    releaseDate: '2020-12-10',
-    status: 'Active',
-    image: '/images/placeholder.jpg',
-  },
-  {
-    id: 5,
-    title: 'Starfield',
-    description: 'Starfield is the first new universe in 25 years from Bethesda Game Studios, the award-winning creators of The Elder Scrolls V: Skyrim and Fallout 4.',
-    price: 69.99,
-    originalPrice: null,
-    category: 'RPG',
-    developer: 'Bethesda Game Studios',
-    releaseDate: '2023-09-06',
-    status: 'Active',
-    image: '/images/placeholder.jpg',
-  },
-  {
-    id: 6,
-    title: 'The Last of Us Part II',
-    description: 'Five years after their dangerous journey across the post-pandemic United States, Ellie and Joel have settled down in Jackson, Wyoming.',
-    price: 29.99,
-    originalPrice: 59.99,
-    category: 'Action',
-    developer: 'Naughty Dog',
-    releaseDate: '2020-06-19',
-    status: 'Active',
-    image: '/images/placeholder.jpg',
-  },
-  {
-    id: 7,
-    title: 'Call of Duty: Modern Warfare III',
-    description: 'The ultimate Modern Warfare experience continues, featuring intense first-person shooter action.',
-    price: 69.99,
-    originalPrice: null,
-    category: 'Action',
-    developer: 'Infinity Ward',
-    releaseDate: '2023-11-10',
-    status: 'Upcoming',
-    image: '/images/placeholder.jpg',
-  },
-  {
-    id: 8,
-    title: 'Red Dead Redemption 2',
-    description: 'America, 1899. Arthur Morgan and the Van der Linde gang are outlaws on the run.',
-    price: 39.99,
-    originalPrice: 59.99,
-    category: 'Adventure',
-    developer: 'Rockstar Games',
-    releaseDate: '2018-10-26',
-    status: 'Active',
-    image: '/images/placeholder.jpg',
-  },
-])
+// Data table headers
+const headers = [
+  { title: 'Image', key: 'image', sortable: false },
+  { title: 'Title', key: 'title', sortable: true },
+  { title: 'Developer', key: 'developer.name', sortable: true },
+  { title: 'Price', key: 'price', sortable: true },
+  { title: 'Category', key: 'category', sortable: true },
+  { title: 'Status', key: 'status', sortable: true },
+  { title: 'Date', key: 'releaseDate', sortable: true },
+  { title: 'Actions', key: 'actions', sortable: false, align: 'end' },
+]
 
-// Game dialog
-const gameDialog = ref({
-  show: false,
-  isEdit: false,
-  loading: false,
-  form: {
-    id: null,
-    title: '',
-    description: '',
-    price: null,
-    originalPrice: null,
-    category: '',
-    developer: '',
-    releaseDate: '',
-    status: 'Active',
-    imageUrl: '',
-  },
-})
+// Options for filters
+const categoryOptions = ['All', 'Action', 'Adventure', 'RPG', 'Strategy', 'Sports', 'Racing', 'Simulation', 'Puzzle', 'Platformer', 'Fighting', 'Shooter']
+const statusOptions = ['All', 'pending', 'verified', 'reported', 'removed']
+const priceRangeOptions = ['All', 'Free', 'Under $10', '$10-$30', '$30-$60', 'Over $60']
 
-// Delete dialog
-const deleteDialog = ref({
-  show: false,
-  game: null,
-  loading: false,
-})
+// Breadcrumbs for navigation
+const breadcrumbs = [
+  { title: 'Admin Dashboard', to: '/admin-dashboard' },
+  { title: 'Game Management', disabled: true },
+]
 
-// Filtered games
-const filteredGames = computed(() => {
+// Fetch all games
+const fetchGames = async () => {
+  loading.value = true
+  try {
+    const response = await axios.get('/api/admin/games')
+
+    console.log('Raw API response:', response.data) // Debug log without semicolon
+
+    // Transform the backend data to match our table expectations
+    games.value = response.data.games.map(game => ({
+      id: game.g_id,
+      title: game.g_title,
+      description: game.g_description,
+      price: parseFloat(game.g_price),
+      originalPrice: game.g_discount > 0 ? parseFloat(game.g_price) : null,
+      discountedPrice: game.g_discount > 0 ? 
+        parseFloat(game.g_price) - (parseFloat(game.g_price) * (game.g_discount / 100)) : 
+        parseFloat(game.g_price),
+      discount: game.g_discount,
+      status: game.g_status,
+      category: game.g_category,
+      categories: game.categories ? game.categories.map(cat => cat.gc_category) : [],
+      image: game.g_mainImage,
+      releaseDate: game.created_at,
+      developer: {
+        id: game.developer?.u_id,
+        name: game.developer?.u_name || 'Unknown Developer',
+      },
+    }))
+    
+    console.log('Transformed games data:', games.value) // Debug log without semicolon
+    applyFilters()
+  } catch (error) {
+    console.error('Error fetching games:', error)
+    alert('Failed to load games. Please try again.')
+  } finally {
+    loading.value = false
+  }
+}
+
+// Apply filters to games
+const applyFilters = () => {
   let result = [...games.value]
   
-  // Filter by category
-  if (filters.value.category !== 'All') {
-    result = result.filter(game => game.category === filters.value.category)
+  // Apply search filter
+  if (filters.value.search) {
+    const searchTerm = filters.value.search.toLowerCase()
+
+    result = result.filter(game => 
+      game.title.toLowerCase().includes(searchTerm) || 
+      (game.developer?.name && game.developer.name.toLowerCase().includes(searchTerm)),
+    )
   }
   
-  // Filter by status
-  if (filters.value.status !== 'All') {
+  // Apply category filter
+  if (filters.value.category && filters.value.category !== 'All') {
+    result = result.filter(game => 
+      game.category === filters.value.category || 
+      (Array.isArray(game.categories) && game.categories.includes(filters.value.category)),
+    )
+  }
+  
+  // Apply status filter
+  if (filters.value.status && filters.value.status !== 'All') {
     result = result.filter(game => game.status === filters.value.status)
   }
   
-  // Filter by price range
-  if (filters.value.priceRange !== 'all') {
-    switch (filters.value.priceRange) {
-    case 'under-20':
-      result = result.filter(game => game.price < 20)
+  // Apply price range filter
+  if (filters.value.priceRange && filters.value.priceRange !== 'All') {
+    switch(filters.value.priceRange) {
+    case 'Free':
+      result = result.filter(game => parseFloat(game.price) === 0)
       break
-    case '20-40':
-      result = result.filter(game => game.price >= 20 && game.price <= 40)
+    case 'Under $10':
+      result = result.filter(game => parseFloat(game.price) > 0 && parseFloat(game.price) < 10)
       break
-    case '40-60':
-      result = result.filter(game => game.price > 40 && game.price <= 60)
+    case '$10-$30':
+      result = result.filter(game => parseFloat(game.price) >= 10 && parseFloat(game.price) <= 30)
       break
-    case 'over-60':
-      result = result.filter(game => game.price > 60)
+    case '$30-$60':
+      result = result.filter(game => parseFloat(game.price) > 30 && parseFloat(game.price) <= 60)
+      break
+    case 'Over $60':
+      result = result.filter(game => parseFloat(game.price) > 60)
       break
     }
   }
   
-  return result
-})
-
-// Methods
-const applyFilters = () => {
-  // This function would normally send a request to the server
-  // In this case, we're just using the computed filteredGames property
+  filteredGames.value = result
 }
 
+// Reset all filters
 const resetFilters = () => {
   filters.value = {
     search: '',
-    category: 'All',
-    status: 'All',
-    priceRange: 'all',
-  }
-}
-
-const openAddGameDialog = () => {
-  gameDialog.value.isEdit = false
-  gameDialog.value.form = {
-    id: null,
-    title: '',
-    description: '',
-    price: null,
-    originalPrice: null,
     category: '',
-    developer: '',
-    releaseDate: new Date().toISOString().slice(0, 10),
-    status: 'Active',
-    imageUrl: '',
+    status: '',
+    priceRange: '',
   }
-  gameDialog.value.show = true
+  applyFilters()
 }
 
-const editGame = game => {
-  gameDialog.value.isEdit = true
-  gameDialog.value.form = { ...game }
-  gameDialog.value.show = true
-}
-
+// View game details
 const viewGame = game => {
   router.push(`/games/${game.id}`)
 }
 
-const saveGame = () => {
-  gameDialog.value.loading = true
-  
-  // Simulate API call with a timeout
-  setTimeout(() => {
-    if (gameDialog.value.isEdit) {
-      // Find and update the game
-      const index = games.value.findIndex(g => g.id === gameDialog.value.form.id)
-      if (index !== -1) {
-        games.value[index] = { ...gameDialog.value.form }
+// Update a game's status
+const updateGameStatus = async (game, newStatus) => {
+  try {
+    const response = await axios.patch(`/api/admin/games/${game.id}/status`, { status: newStatus })
+    if (response.data.success) {
+      // Update the game status locally to avoid a full refresh
+      const gameIndex = games.value.findIndex(g => g.id === game.id)
+      if (gameIndex !== -1) {
+        games.value[gameIndex].status = newStatus
+        applyFilters() // Reapply filters to update the view
       }
-    } else {
-      // Add new game with a new ID
-      const newId = Math.max(...games.value.map(g => g.id)) + 1
-
-      games.value.push({
-        ...gameDialog.value.form,
-        id: newId,
-        image: gameDialog.value.form.imageUrl || '/images/placeholder.jpg',
-      })
+      
+      // Show success toast or notification
+      alert(`Game "${game.title}" has been ${getStatusActionText(newStatus)}`)
     }
-    
-    gameDialog.value.loading = false
-    gameDialog.value.show = false
-  }, 1000)
+  } catch (error) {
+    console.error('Error updating game status:', error)
+    alert('Failed to update game status. Please try again.')
+  }
 }
 
-const confirmDeleteGame = game => {
-  deleteDialog.value.game = game
-  deleteDialog.value.show = true
+// Helper function to get appropriate status action text
+const getStatusActionText = status => {
+  switch(status) {
+  case 'verified': return 'approved'
+  case 'pending': return 'set to pending review'
+  default: return 'updated'
+  }
 }
 
-const deleteGame = () => {
-  if (!deleteDialog.value.game) return
-  
-  deleteDialog.value.loading = true
-  
-  // Simulate API call with a timeout
-  setTimeout(() => {
-    // Remove game from array
-    const index = games.value.findIndex(g => g.id === deleteDialog.value.game.id)
-    if (index !== -1) {
-      games.value.splice(index, 1)
-    }
-    
-    deleteDialog.value.loading = false
-    deleteDialog.value.show = false
-    deleteDialog.value.game = null
-  }, 1000)
-}
-
-// Utility functions
-const formatDate = dateString => {
-  if (!dateString) return ''
-  
-  const date = new Date(dateString)
-  
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
-}
-
+// Helper functions for UI
 const getCategoryColor = category => {
   const colors = {
-    'Action': 'error',
-    'Adventure': 'success',
-    'RPG': 'primary',
-    'Strategy': 'warning',
-    'Sports': 'info',
-    'Simulation': 'grey',
+    'Action': 'red',
+    'Adventure': 'green',
+    'RPG': 'blue',
+    'Strategy': 'orange',
+    'Sports': 'lime',
+    'Racing': 'indigo',
+    'Simulation': 'cyan',
+    'Puzzle': 'purple',
+    'Platformer': 'amber',
+    'Fighting': 'pink',
+    'Shooter': 'teal',
   }
   
-  return colors[category] || 'default'
+  return colors[category] || 'grey'
 }
 
 const getStatusColor = status => {
   const colors = {
-    'Active': 'success',
-    'Upcoming': 'info',
-    'On Sale': 'error',
-    'Inactive': 'grey',
+    'pending': 'warning',
+    'verified': 'success',
+    'reported': 'error',
+    'removed': 'grey',
   }
   
-  return colors[status] || 'default'
+  return colors[status] || 'grey'
 }
+
+const formatDate = dateString => {
+  const options = { year: 'numeric', month: 'short', day: 'numeric' }
+  
+  return new Date(dateString).toLocaleDateString(undefined, options)
+}
+
+// Load data when component mounts
+onMounted(() => {
+  fetchGames()
+})
 </script> 
