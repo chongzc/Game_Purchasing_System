@@ -315,6 +315,7 @@
 <script setup>
 import WishlistButton from '@/components/WishlistButton.vue'
 import axios from 'axios'
+import { debounce } from 'lodash'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -349,12 +350,29 @@ const router = useRouter()
 const searchQuery = ref('')
 const hideLibraryGames = ref(false)
 const priceRange = ref(500)
+const debouncedPriceRange = ref(500)
 const loading = ref(true)
 const games = ref([])
 const categories = ref([])
 const languages = ref([])
 const selectedCategory = ref(null)
 const selectedLanguage = ref(null)
+
+// Create a debounced function to update the price range
+const debouncedUpdatePrice = debounce((value) => {
+  debouncedPriceRange.value = value
+}, 500)
+
+// Watch for price range changes
+watch(priceRange, (newValue) => {
+  debouncedUpdatePrice(newValue)
+})
+
+// Update URL and load games when debounced price changes
+watch(debouncedPriceRange, () => {
+  loadGames()
+  updateURL()
+})
 
 // Load categories
 const loadCategories = async () => {
@@ -384,7 +402,7 @@ const loadGames = async () => {
       params: {
         tab: activeTab.value,
         search: searchQuery.value,
-        maxPrice: priceRange.value,
+        maxPrice: debouncedPriceRange.value,
         category: selectedCategory.value,
         language: selectedLanguage.value
       }
@@ -409,20 +427,20 @@ const clearFilters = () => {
   router.replace({ query: {} })
 }
 
-// Update URL when filters change
+// Update URL and load games when debounced price changes
 const updateURL = () => {
   const query = {}
   if (activeTab.value !== 'all') query.tab = activeTab.value
   if (searchQuery.value) query.search = searchQuery.value
   if (selectedCategory.value) query.category = selectedCategory.value
   if (selectedLanguage.value) query.language = selectedLanguage.value
-  if (priceRange.value !== 500) query.maxPrice = priceRange.value
+  if (debouncedPriceRange.value !== 500) query.maxPrice = debouncedPriceRange.value
 
   router.replace({ query })
 }
 
 // Watch for filter changes
-watch([activeTab, searchQuery, priceRange, selectedCategory, selectedLanguage], () => {
+watch([activeTab, searchQuery, selectedCategory, selectedLanguage], () => {
   loadGames()
   updateURL()
 }, { deep: true })
@@ -431,7 +449,6 @@ watch([activeTab, searchQuery, priceRange, selectedCategory, selectedLanguage], 
 watch(
   () => route.query,
   (newQuery) => {
-    // Only update if the change wasn't triggered by our own updateURL
     if (newQuery.category !== selectedCategory.value) {
       selectedCategory.value = newQuery.category || null
     }
@@ -444,8 +461,10 @@ watch(
     if (newQuery.search !== searchQuery.value) {
       searchQuery.value = newQuery.search || ''
     }
-    if (newQuery.maxPrice !== priceRange.value?.toString()) {
-      priceRange.value = parseInt(newQuery.maxPrice) || 500
+    if (newQuery.maxPrice !== debouncedPriceRange.value?.toString()) {
+      const newPrice = parseInt(newQuery.maxPrice) || 500
+      priceRange.value = newPrice
+      debouncedPriceRange.value = newPrice
     }
   },
   { immediate: true }
@@ -453,13 +472,16 @@ watch(
 
 // Lifecycle hooks
 onMounted(() => {
-  // Initialize filters from URL parameters
   const { category, language, tab, search, maxPrice } = route.query
   if (category) selectedCategory.value = category
   if (language) selectedLanguage.value = language
   if (tab) activeTab.value = tab
   if (search) searchQuery.value = search
-  if (maxPrice) priceRange.value = parseInt(maxPrice)
+  if (maxPrice) {
+    const price = parseInt(maxPrice)
+    priceRange.value = price
+    debouncedPriceRange.value = price
+  }
 
   loadCategories()
   loadLanguages()

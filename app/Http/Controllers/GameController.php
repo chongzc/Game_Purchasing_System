@@ -481,7 +481,7 @@ class GameController extends Controller
                         ->orderBy('reviews_count', 'desc');
                     break;
                 case 'top-rated':
-                    $query->where('g_overallRate', '>=', 4);
+                    $query->orderBy('g_overallRate', 'desc');
                     break;
             }
 

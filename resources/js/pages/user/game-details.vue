@@ -45,7 +45,7 @@ const breadcrumbs = computed(() => [
   {
     title: 'Games',
     disabled: false,
-    to: '/games',
+    to: '/browse-games',
   },
   {
     title: game.value?.title || 'Loading...',
