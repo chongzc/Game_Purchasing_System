@@ -46,7 +46,7 @@ const accountDataLocal = ref({
   avatarImg: userProfileImage.value,
   name: authStore.user?.u_name || '',
   email: authStore.user?.u_email || '',
-  birthdate: authStore.user?.u_birthdate || null,
+  birthdate: authStore.user?.u_birthdate ? new Date(authStore.user.u_birthdate) : null,
 })
 
 const refInputEl = ref()
@@ -64,7 +64,7 @@ const resetForm = () => {
     avatarImg: fetchUserProfile(),
     name: authStore.user?.u_name || '',
     email: authStore.user?.u_email || '',
-    birthdate: authStore.user?.u_birthdate || null,
+    birthdate: userData.birthdate ? new Date(userData.birthdate) : null,
   }
 }
 
@@ -114,7 +114,7 @@ const handleSubmit = async () => {
     formData.append('name', accountDataLocal.value.name)
     formData.append('email', accountDataLocal.value.email)
     if (accountDataLocal.value.birthdate) {
-      formData.append('birthdate', accountDataLocal.value.birthdate)
+      formData.append('birthdate', formatBirthDate(accountDataLocal.value.birthdate))
     }
     
     // Get CSRF token
@@ -165,7 +165,6 @@ const handleSubmit = async () => {
   } finally {
     isSubmitting.value = false
   }
-
 }
 
 onMounted(() => {
@@ -268,10 +267,8 @@ onMounted(() => {
               </VCol>
 
               <!-- Birth Date -->
-              <VCol
-                cols="12"
-                md="6"
-              >
+              <!-- Birth Date -->
+              <VCol cols="12" md="6">
                 <VMenu
                   v-model="birthDateMenu"
                   :close-on-content-click="false"
@@ -281,12 +278,11 @@ onMounted(() => {
                 >
                   <template #activator="{ props }">
                     <VTextField
-                      v-model="accountDataLocal.birthdate"
+                      :model-value="formatBirthDate(accountDataLocal.birthdate)"
                       label="Birth Date"
                       prepend-inner-icon="bx-calendar"
                       readonly
                       v-bind="props"
-                      :model-value="formatBirthDate(accountDataLocal.birthdate)"
                     />
                   </template>
                   <VDatePicker
