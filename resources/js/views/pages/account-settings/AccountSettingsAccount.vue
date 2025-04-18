@@ -1,28 +1,35 @@
 <script setup>
-import { useAuthStore } from '@/stores/auth';
-import { useUserProfileStore } from '@/stores/userProfile';
-import avatar1 from '@images/avatars/avatar-1.png';
-import axios from 'axios';
-import { ref } from 'vue';
+import avatar1 from '@images/avatars/avatar-1.png'
+import axios from 'axios'
+import { onMounted, ref } from 'vue'
 
-const authStore = useAuthStore()
-const userProfileStore = useUserProfileStore()
-
-// Add getUserProfileImage function
-const userProfileImage = ref(''); // Reactive variable to hold the profile image URL
+// Reactive variable to hold the profile image URL
+const userProfileImage = ref('')
+const userData = ref({})
 
 const fetchUserProfile = async () => {
   try {
-    const response = await axios.get('/api/profile'); // Fetch user profile data
-    const userData = response.data; // Assuming the response contains user data
-    console.log('User profile data:', userData);
-    userProfileImage.value = userData.profilePic; // Set the profile image
-    console.log('User profile image:', userProfileImage.value);
+    const response = await axios.get('/api/profile') // Fetch user profile data
+
+    userData.value = response.data // Store the complete user data
+
+    console.log('User profile data:', userData.value)
+    userProfileImage.value = userData.value.profilePic // Set the profile image
+    
+    // Initialize account data with user data
+    accountDataLocal.value = {
+      avatarImg: userProfileImage.value,
+      name: userData.value.u_name || '',
+      email: userData.value.u_email || '',
+      birthdate: userData.value.u_birthdate ? new Date(userData.value.u_birthdate) : null,
+    }
+    
+    console.log('User profile image:', userProfileImage.value)
   } catch (error) {
-    console.error('Error fetching user profile:', error);
-    userProfileImage.value = avatar1; // Fallback to default avatar on error
+    console.error('Error fetching user profile:', error)
+    userProfileImage.value = avatar1 // Fallback to default avatar on error
   }
-};
+}
 
 // Function to get profile image source with proper URL handling
 const getUserProfileImage = imageSource => {
@@ -43,34 +50,31 @@ const getUserProfileImage = imageSource => {
 }
 
 const accountDataLocal = ref({
-  avatarImg: userProfileImage.value,
-  name: authStore.user?.u_name || '',
-  email: authStore.user?.u_email || '',
-  birthdate: authStore.user?.u_birthdate ? new Date(authStore.user.u_birthdate) : null,
+  avatarImg: '',
+  name: '',
+  email: '',
+  birthdate: null,
 })
 
 const refInputEl = ref()
-const isAccountDeactivated = ref(false)
 const birthDateMenu = ref(false)
 const isSubmitting = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
-const users = ref([])
-const isLoadingUsers = ref(false)
-const usersFetchError = ref('')
 
 const resetForm = () => {
+  // Reset form data to original values from the server
   accountDataLocal.value = {
-    avatarImg: fetchUserProfile(),
-    name: authStore.user?.u_name || '',
-    email: authStore.user?.u_email || '',
-    birthdate: userData.birthdate ? new Date(userData.birthdate) : null,
+    avatarImg: userProfileImage.value,
+    name: userData.value.u_name || '',
+    email: userData.value.u_email || '',
+    birthdate: userData.value.u_birthdate ? new Date(userData.value.u_birthdate) : null,
   }
 }
 
 const formatBirthDate = date => {
   if (!date) return ''
-
+  
   return new Date(date).toISOString().split('T')[0]
 }
 
@@ -85,17 +89,6 @@ const changeAvatar = event => {
     }
     fileReader.readAsDataURL(file)
   }
-}
-
-// Function to get CSRF token from cookie
-const getCsrfToken = () => {
-  const cookies = document.cookie.split(';')
-
-  const csrfToken = cookies
-    .find(cookie => cookie.trim().startsWith('XSRF-TOKEN='))
-    ?.split('=')[1]
-  
-  return csrfToken ? decodeURIComponent(csrfToken) : null
 }
 
 const handleSubmit = async () => {
@@ -117,59 +110,41 @@ const handleSubmit = async () => {
       formData.append('birthdate', formatBirthDate(accountDataLocal.value.birthdate))
     }
     
-    // Get CSRF token
-    const csrfToken = getCsrfToken()
-    
-    // Use fetch API for simplicity
-    const response = await fetch('/api/profile', {
-      method: 'POST',
-      body: formData,
-      credentials: 'same-origin', // Include cookies
+    // Use axios for the request
+    const response = await axios.post('/api/profile', formData, {
       headers: {
-        'X-Requested-With': 'XMLHttpRequest',
+        'Content-Type': 'multipart/form-data',
         'Accept': 'application/json',
-        ...(csrfToken ? { 'X-XSRF-TOKEN': csrfToken } : {}),
       },
     })
     
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => 'Unknown error')
-
-      console.error('Server response:', errorText)
-      throw new Error(`Upload failed with status ${response.status}: ${response.statusText}`)
-    }
-    
-    const data = await response.json()
-    
     // Update UI with success
-    successMessage.value = data.message || 'Profile updated successfully'
+    successMessage.value = response.data.message || 'Profile updated successfully'
     
-    // Update auth store manually
-    if (data.user?.profilePic) {
-      // Update the user object with the new profile picture
-      authStore.user = {
-        ...authStore.user,
-        profilePic: data.user.profilePic,
+    // Update the local data with the new profile data
+    if (response.data.user?.profilePic) {
+      userData.value = {
+        ...userData.value,
+        profilePic: response.data.user.profilePic,
       }
       
-      // Important: Update localStorage to persist the profile picture
-      localStorage.setItem('user', JSON.stringify(authStore.user))
-      
       // Update the display image with proper URL formatting
-      accountDataLocal.value.avatarImg = getUserProfileImage(data.user.profilePic)
+      userProfileImage.value = getUserProfileImage(response.data.user.profilePic)
     }
+    
+    // Refresh page to reflect changes
     window.location.reload()
   } catch (error) {
     console.error('Error updating profile:', error)
-    errorMessage.value = error.message || 'Failed to update profile'
+    errorMessage.value = error.response?.data?.message || error.message || 'Failed to update profile'
   } finally {
     isSubmitting.value = false
   }
 }
 
 onMounted(() => {
-    fetchUserProfile(); // Call the function to fetch user profile on component mount
-  });
+  fetchUserProfile() // Call the function to fetch user profile on component mount
+})
 </script>
 
 <template>
@@ -227,7 +202,7 @@ onMounted(() => {
             </div>
 
             <p class="text-body-1 mb-0">
-              Allowed JPG, GIF or PNG. Max size of 800K
+              Allowed JPG or PNG
             </p>
           </form>
         </VCardText>
@@ -267,8 +242,10 @@ onMounted(() => {
               </VCol>
 
               <!-- Birth Date -->
-              <!-- Birth Date -->
-              <VCol cols="12" md="6">
+              <VCol
+                cols="12"
+                md="6"
+              >
                 <VMenu
                   v-model="birthDateMenu"
                   :close-on-content-click="false"
