@@ -14,6 +14,27 @@
     <!-- Filters -->
     <VCard class="mb-6">
       <VCardText>
+        <!-- Success and Error Messages -->
+        <VAlert
+          v-if="successMessage"
+          type="success"
+          variant="tonal"
+          closable
+          class="mb-4"
+        >
+          {{ successMessage }}
+        </VAlert>
+        
+        <VAlert
+          v-if="errorMessage"
+          type="error"
+          variant="tonal"
+          closable
+          class="mb-4"
+        >
+          {{ errorMessage }}
+        </VAlert>
+      
         <VRow>
           <VCol
             cols="12"
@@ -247,7 +268,7 @@ const headers = [
 ]
 
 // Options for filters
-const categoryOptions = ['All', 'Action', 'Adventure', 'RPG', 'Strategy', 'Sports', 'Racing', 'Simulation', 'Puzzle', 'Platformer', 'Fighting', 'Shooter']
+const categoryOptions = ['All', 'Action', 'Adventure', 'RPG', 'Strategy', 'Sports', 'Racing', 'Simulation', 'Puzzle', 'Horror', 'Fighting']
 const statusOptions = ['All', 'pending', 'verified', 'reported', 'removed']
 const priceRangeOptions = ['All', 'Free', 'Under $10', '$10-$30', '$30-$60', 'Over $60']
 
@@ -257,9 +278,14 @@ const breadcrumbs = [
   { title: 'Game Management', disabled: true },
 ]
 
+// Add refs for messages
+const successMessage = ref('')
+const errorMessage = ref('')
+
 // Fetch all games
 const fetchGames = async () => {
   loading.value = true
+  errorMessage.value = ''
   try {
     const response = await axios.get('/api/admin/games')
 
@@ -291,7 +317,7 @@ const fetchGames = async () => {
     applyFilters()
   } catch (error) {
     console.error('Error fetching games:', error)
-    alert('Failed to load games. Please try again.')
+    errorMessage.value = 'Failed to load games. Please try again.'
   } finally {
     loading.value = false
   }
@@ -366,6 +392,8 @@ const viewGame = game => {
 
 // Update a game's status
 const updateGameStatus = async (game, newStatus) => {
+  successMessage.value = ''
+  errorMessage.value = ''
   try {
     const response = await axios.patch(`/api/admin/games/${game.id}/status`, { status: newStatus })
     if (response.data.success) {
@@ -376,12 +404,12 @@ const updateGameStatus = async (game, newStatus) => {
         applyFilters() // Reapply filters to update the view
       }
       
-      // Show success toast or notification
-      alert(`Game "${game.title}" has been ${getStatusActionText(newStatus)}`)
+      // Show success message
+      successMessage.value = `Game "${game.title}" has been ${getStatusActionText(newStatus)}`
     }
   } catch (error) {
     console.error('Error updating game status:', error)
-    alert('Failed to update game status. Please try again.')
+    errorMessage.value = 'Failed to update game status. Please try again.'
   }
 }
 

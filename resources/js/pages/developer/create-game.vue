@@ -74,7 +74,7 @@ onMounted(async () => {
       }
     } catch (error) {
       console.error('Failed to load game data:', error)
-      alert('Failed to load game data for editing')
+      errorMessage.value = 'Failed to load game data for editing'
     }
   }
 })
@@ -88,7 +88,15 @@ const handleImageUpload = (event, type) => {
   }
 }
 
+// Add message state refs
+const successMessage = ref('')
+const errorMessage = ref('')
+
 const handleSubmit = async () => {
+  // Clear previous messages
+  successMessage.value = ''
+  errorMessage.value = ''
+  
   try {
     console.log('Game data:', gameData.value)
     
@@ -147,29 +155,29 @@ const handleSubmit = async () => {
         
         // Send to update endpoint
         response = await axios.post(`/api/games/${gameId.value}`, formData)
-        alert('Game updated successfully! It will be reviewed by an admin.')
+        successMessage.value = 'Game updated successfully! It will be reviewed by an admin.'
       } else {
         // Create new game
         response = await axios.post('/api/games', formData)
-        alert('Game submitted successfully! It will be reviewed by an admin.')
+        successMessage.value = 'Game submitted successfully! It will be reviewed by an admin.'
       }
       
       console.log('Game action completed successfully:', response.data)
       
-      // Redirect to developer dashboard
-      router.push('/developer-dashboard')
+      // Redirect to developer dashboard after a short delay to show the success message
+      setTimeout(() => {
+        router.push('/developer-dashboard')
+      }, 2000)
     } catch (axiosError) {
       console.error('Server response:', axiosError.response?.data)
       
-      const errorMessage = axiosError.response?.data?.error || 
-                          axiosError.response?.data?.message || 
-                          axiosError.message
-      
-      alert(`Failed to ${isEditing.value ? 'update' : 'create'} game: ${errorMessage}`)
+      errorMessage.value = axiosError.response?.data?.error || 
+                         axiosError.response?.data?.message || 
+                         axiosError.message
     }
   } catch (error) {
     console.error('General error:', error)
-    alert(`Error: ${error.message}`)
+    errorMessage.value = error.message
   }
 }
 
@@ -197,6 +205,27 @@ const navigateToDashboard = () => {
           </VCardTitle>
 
           <VCardText>
+            <!-- Success and Error Messages -->
+            <VAlert
+              v-if="successMessage"
+              type="success"
+              variant="tonal"
+              closable
+              class="mb-4"
+            >
+              {{ successMessage }}
+            </VAlert>
+            
+            <VAlert
+              v-if="errorMessage"
+              type="error"
+              variant="tonal"
+              closable
+              class="mb-4"
+            >
+              {{ errorMessage }}
+            </VAlert>
+            
             <VForm @submit.prevent="handleSubmit">
               <VRow>
                 <!-- Basic Information -->

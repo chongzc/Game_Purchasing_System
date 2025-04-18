@@ -7,6 +7,7 @@ import { computed, onMounted, ref } from 'vue'
 const users = ref([])
 const loading = ref(false)
 const error = ref(null)
+const successMessage = ref('')
 const searchQuery = ref('')
 const showBannedOnly = ref(false)
 
@@ -120,6 +121,8 @@ const updateUserBanStatus = async () => {
   if (!userToUpdate.value) return
   
   actionLoading.value = true
+  error.value = null
+  successMessage.value = ''
   
   try {
     const willBeBanned = userToUpdate.value.action === 'ban'
@@ -136,13 +139,13 @@ const updateUserBanStatus = async () => {
       }
       
       // Show success message
-      alert(response.data.message || `User has been ${willBeBanned ? 'banned' : 'unbanned'} successfully`)
+      successMessage.value = response.data.message || `User has been ${willBeBanned ? 'banned' : 'unbanned'} successfully`
     } else {
-      alert(response.data.message || 'Failed to update user status')
+      error.value = response.data.message || 'Failed to update user status'
     }
   } catch (err) {
     console.error('Error updating user status:', err)
-    alert(err.response?.data?.message || 'An error occurred')
+    error.value = err.response?.data?.message || 'An error occurred'
   } finally {
     actionLoading.value = false
     confirmDialog.value = false
@@ -275,6 +278,16 @@ onMounted(() => {
         class="mb-4"
       >
         {{ error }}
+      </VAlert>
+      
+      <VAlert
+        v-if="successMessage"
+        type="success"
+        variant="tonal"
+        closable
+        class="mb-4"
+      >
+        {{ successMessage }}
       </VAlert>
       
       <!-- Users Table -->

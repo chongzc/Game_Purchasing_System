@@ -15,6 +15,27 @@
     <!-- Search and Filter -->
     <VCard class="mb-6">
       <VCardText>
+        <!-- Messages -->
+        <VAlert
+          v-if="successMessage"
+          type="success"
+          variant="tonal"
+          closable
+          class="mb-4"
+        >
+          {{ successMessage }}
+        </VAlert>
+        
+        <VAlert
+          v-if="errorMessage"
+          type="error"
+          variant="tonal"
+          closable
+          class="mb-4"
+        >
+          {{ errorMessage }}
+        </VAlert>
+        
         <VRow>
           <VCol
             cols="12"
@@ -92,9 +113,16 @@
             class="game-image"
             :alt="game.title"
           >
-            <template v-slot:placeholder>
-              <VRow class="fill-height ma-0" align="center" justify="center">
-                <VProgressCircular indeterminate color="grey-lighten-5"></VProgressCircular>
+            <template #placeholder>
+              <VRow
+                class="fill-height ma-0"
+                align="center"
+                justify="center"
+              >
+                <VProgressCircular
+                  indeterminate
+                  color="grey-lighten-5"
+                />
               </VRow>
             </template>
             <div class="image-overlay d-flex align-center justify-center">
@@ -124,15 +152,30 @@
             
             <div class="text-caption text-grey">
               <div class="mb-1">
-                <v-icon size="small" icon="bx-calendar" class="mr-1" />
+                <VIcon
+                  size="small"
+                  icon="bx-calendar"
+                  class="mr-1"
+                />
                 Added: {{ formatDate(game.purchaseDate) }}
               </div>
               <div class="mb-1">
-                <v-icon size="small" icon="bx-purchase-tag" class="mr-1" />
+                <VIcon
+                  size="small"
+                  icon="bx-purchase-tag"
+                  class="mr-1"
+                />
                 Price: ${{ game.price }}
               </div>
-              <div v-if="game.developer" class="mb-1">
-                <v-icon size="small" icon="bx-code-alt" class="mr-1" />
+              <div
+                v-if="game.developer"
+                class="mb-1"
+              >
+                <VIcon
+                  size="small"
+                  icon="bx-code-alt"
+                  class="mr-1"
+                />
                 Developer: {{ game.developer.u_name }}
               </div>
             </div>
@@ -230,12 +273,12 @@ const sortOption = ref('title-asc')
 const statusOptions = [
   { title: 'All Games', value: 'all' },
   { title: 'Owned Games', value: 'owned' },
-  { title: 'Installed Games', value: 'installed' }
+  { title: 'Installed Games', value: 'installed' },
 ]
 
 const sortOptions = [
   { title: 'Title (A-Z)', value: 'title-asc' },
-  { title: 'Title (Z-A)', value: 'title-desc' }
+  { title: 'Title (Z-A)', value: 'title-desc' },
 ]
 
 // Filter and sort library
@@ -245,6 +288,7 @@ const filteredGames = computed(() => {
   // Filter by search query
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
+
     result = result.filter(game => game.title.toLowerCase().includes(query))
   }
   
@@ -256,12 +300,12 @@ const filteredGames = computed(() => {
   // Sort
   result.sort((a, b) => {
     switch (sortOption.value) {
-      case 'title-asc':
-        return a.title.localeCompare(b.title)
-      case 'title-desc':
-        return b.title.localeCompare(a.title)
-      default:
-        return 0
+    case 'title-asc':
+      return a.title.localeCompare(b.title)
+    case 'title-desc':
+      return b.title.localeCompare(a.title)
+    default:
+      return 0
     }
   })
   
@@ -272,10 +316,13 @@ const filteredGames = computed(() => {
 const fetchAllGames = async () => {
   try {
     const response = await axios.get('/api/browseGames')
+
     allGames.value = response.data
+    
     return response.data
   } catch (error) {
     console.error('Error fetching games:', error)
+    
     return []
   }
 }
@@ -283,10 +330,11 @@ const fetchAllGames = async () => {
 const fetchLibraryGames = async () => {
   try {
     loading.value = true
+
     const response = await axios.get('/api/library', {
       params: {
-        status: filterStatus.value
-      }
+        status: filterStatus.value,
+      },
     })
     
     console.log('API Response:', response.data)
@@ -300,7 +348,7 @@ const fetchLibraryGames = async () => {
       purchaseDate: item.ul_createdAt || new Date().toISOString(),
       price: item.game?.g_price || 0,
       description: item.game?.g_description || '',
-      developer: item.game?.developer || 'Unknown Developer'
+      developer: item.game?.developer || 'Unknown Developer',
     }))
 
     console.log('Transformed Library:', library.value)
@@ -312,45 +360,55 @@ const fetchLibraryGames = async () => {
   }
 }
 
-const toggleInstallation = async (game) => {
+// Add refs for message states
+const successMessage = ref('')
+const errorMessage = ref('')
+
+const toggleInstallation = async game => {
+  successMessage.value = ''
+  errorMessage.value = ''
   try {
     if (game.status === 'installed') {
       // If game is installed, launch it
-      alert(`Launching ${game.title}...`)
+      successMessage.value = `Launching ${game.title}...`
     } else {
       // If game is not installed, update status to installed
       const response = await axios.put(`/api/library/${game.id}/status`, {
-        status: 'installed'
+        status: 'installed',
       })
       
       if (response.data.success) {
         // Update local state
         game.status = 'installed'
+        successMessage.value = `${game.title} has been installed successfully`
       } else {
         throw new Error(response.data.message || 'Failed to update game status')
       }
     }
   } catch (error) {
     console.error('Error updating game status:', error)
-    alert('Failed to update game status. Please try again.')
+    errorMessage.value = 'Failed to update game status. Please try again.'
   }
 }
 
-const uninstallGame = async (game) => {
+const uninstallGame = async game => {
+  successMessage.value = ''
+  errorMessage.value = ''
   try {
     const response = await axios.put(`/api/library/${game.id}/status`, {
-      status: 'owned'
+      status: 'owned',
     })
     
     if (response.data.success) {
       // Update local state
       game.status = 'owned'
+      successMessage.value = `${game.title} has been uninstalled`
     } else {
       throw new Error(response.data.message || 'Failed to uninstall game')
     }
   } catch (error) {
     console.error('Error uninstalling game:', error)
-    alert('Failed to uninstall game. Please try again.')
+    errorMessage.value = 'Failed to uninstall game. Please try again.'
   }
 }
 
@@ -361,23 +419,24 @@ const clearFilters = () => {
 }
 
 // Add new helper functions
-const formatDate = (date) => {
+const formatDate = date => {
   if (!date) return 'N/A'
+  
   return new Date(date).toLocaleDateString()
 }
 
-const getStatusColor = (status) => {
+const getStatusColor = status => {
   switch ((status || 'owned').toLowerCase()) {
-    case 'installed':
-      return 'success'
-    case 'owned':
-      return 'info'
-    case 'downloading':
-      return 'warning'
-    case 'update-available':
-      return 'error'
-    default:
-      return 'grey'
+  case 'installed':
+    return 'success'
+  case 'owned':
+    return 'info'
+  case 'downloading':
+    return 'warning'
+  case 'update-available':
+    return 'error'
+  default:
+    return 'grey'
   }
 }
 
@@ -392,8 +451,10 @@ const getEmptyStateMessage = computed(() => {
     if (searchQuery.value || filterStatus.value !== 'all') {
       return "No games match your current filters."
     }
+    
     return "You haven't added any games to your library yet."
   }
+  
   return ""
 })
 
