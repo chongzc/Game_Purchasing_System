@@ -100,26 +100,19 @@ const handleSubmit = async () => {
   if (!gameData.value.title || 
       !gameData.value.description || 
       !gameData.value.price || 
-      !gameData.value.discount ||
       !gameData.value.genre || 
       !gameData.value.language ||
-      !gameData.value.coverImage ||
-      !gameData.value.screenshots) {
+      !gameData.value.coverImage) {
     errorMessage.value = 'Please fill in all required fields'
     
-    return // Stop the submission process
+    return
   }
 
   try {
-    console.log('Game data:', gameData.value)
-    
-    // Get a fresh CSRF token before submitting
     await axios.get('/sanctum/csrf-cookie')
     
-    // Create FormData object to handle file uploads
     const formData = new FormData()
     
-    // Use the correct field names that match the backend expectations
     formData.append('g_title', gameData.value.title)
     formData.append('g_description', gameData.value.description)
     formData.append('g_price', gameData.value.price)
@@ -128,23 +121,18 @@ const handleSubmit = async () => {
     formData.append('g_status', 'pending')
     formData.append('g_category', gameData.value.genre)
     
-    // Get the authenticated user's ID from the session/auth system
-    // Since we're using a hardcoded value for now, make sure it's sent as a number, not null
-    const developerId = 1 // In a real app, this would come from the auth system
+    const developerId = 1
 
     formData.append('g_developerId', developerId)
     
-    // Category for the relationship table
     const categoryId = genres.indexOf(gameData.value.genre) + 1
 
     formData.append('categories[]', categoryId)
     
-    // Add cover image
     if (gameData.value.coverImage) {
       formData.append('g_mainImage', gameData.value.coverImage)
     }
     
-    // Add screenshots as extra images
     if (gameData.value.screenshots.length > 0) {
       if (gameData.value.screenshots[0]) {
         formData.append('g_exImg1', gameData.value.screenshots[0])
@@ -157,40 +145,25 @@ const handleSubmit = async () => {
       }
     }
     
-    console.log('Game data ready for submission:', Object.fromEntries(formData.entries()))
+    let response
     
-    try {
-      let response
-      
-      if (isEditing.value) {
-        // Add a _method field to simulate a PUT request
-        formData.append('_method', 'PUT')
-        
-        // Send to update endpoint
-        response = await axios.post(`/api/games/${gameId.value}`, formData)
-        successMessage.value = 'Game updated successfully! It will be reviewed by an admin.'
-      } else {
-        // Create new game
-        response = await axios.post('/api/games', formData)
-        successMessage.value = 'Game submitted successfully! It will be reviewed by an admin.'
-      }
-      
-      console.log('Game action completed successfully:', response.data)
-      
-      // Redirect to developer dashboard after a short delay to show the success message
-      setTimeout(() => {
-        router.push('/developer-dashboard')
-      }, 2000)
-    } catch (axiosError) {
-      console.error('Server response:', axiosError.response?.data)
-      
-      errorMessage.value = axiosError.response?.data?.error || 
-                         axiosError.response?.data?.message || 
-                         axiosError.message
+    if (isEditing.value) {
+      formData.append('_method', 'PUT')
+      response = await axios.post(`/api/games/${gameId.value}`, formData)
+      successMessage.value = 'Game updated successfully! It will be reviewed by an admin.'
+    } else {
+      response = await axios.post('/api/games', formData)
+      successMessage.value = 'Game submitted successfully! It will be reviewed by an admin.'
     }
+    
+    setTimeout(() => {
+      router.push('/developer-dashboard')
+    }, 2000)
   } catch (error) {
-    console.error('General error:', error)
-    errorMessage.value = error.message
+    console.error('Error:', error)
+    errorMessage.value = error.response?.data?.error || 
+                       error.response?.data?.message || 
+                       error.message
   }
 }
 
@@ -329,7 +302,7 @@ const navigateToDashboard = () => {
                     label="Cover Image"
                     accept="image/*"
                     :required="!isEditing"
-                    :rules="[v => isEditing ? true : !!v || 'Cover image is required']"
+                    :rules="[v => isEditing ? true : (v.length > 0 && v.length <= 1) || 'Cover image is required']"
                     @change="handleImageUpload($event, 'cover')"
                   />
                 </VCol>
@@ -344,7 +317,7 @@ const navigateToDashboard = () => {
                     accept="image/*"
                     multiple
                     :required="!isEditing"
-                    :rules="[v => isEditing ? true : v.length > 0 || 'At least one screenshot is required']"
+                    :rules="[v => isEditing ? true : (v.length > 0 && v.length <= 3) || 'At least one screenshot is required']"
                     @change="handleImageUpload($event, 'screenshots')"
                   />
                 </VCol>
