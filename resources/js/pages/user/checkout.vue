@@ -21,114 +21,66 @@
               Payment Method
             </h2>
             
-            <VRadioGroup
-              v-model="paymentMethod"
-              inline
-            >
-              <VRadio
-                value="credit_card"
-                label="Credit Card"
+            <div class="d-flex align-center mb-4">
+              <VIcon
+                icon="bx-credit-card"
+                style="margin-right: 8px;"
               />
-              <VRadio
-                value="paypal"
-                label="PayPal"
-              />
-              <VRadio
-                value="crypto"
-                label="Cryptocurrency"
-              />
-            </VRadioGroup>
+              <span class="text-subtitle-1 font-weight-medium">Credit Card</span>
+            </div>
             
-            <!-- Credit Card Form -->
-            <VExpandTransition>
-              <div
-                v-if="paymentMethod === 'credit_card'"
-                class="mt-4"
-              >
-                <VRow>
-                  <VCol cols="12">
-                    <VTextField
-                      v-model="creditCardForm.number"
-                      label="Card Number"
-                      placeholder="0000 0000 0000 0000"
-                      variant="outlined"
-                      required
-                    />
-                  </VCol>
-                </VRow>
-                <VRow>
-                  <VCol
-                    cols="12"
-                    md="6"
-                  >
-                    <VTextField
-                      v-model="creditCardForm.name"
-                      label="Cardholder Name"
-                      placeholder="John Doe"
-                      variant="outlined"
-                      required
-                    />
-                  </VCol>
-                  <VCol
-                    cols="6"
-                    md="3"
-                  >
-                    <VTextField
-                      v-model="creditCardForm.expiry"
-                      label="Expiry Date"
-                      placeholder="MM/YY"
-                      variant="outlined"
-                      required
-                    />
-                  </VCol>
-                  <VCol
-                    cols="6"
-                    md="3"
-                  >
-                    <VTextField
-                      v-model="creditCardForm.cvv"
-                      label="CVV"
-                      placeholder="123"
-                      variant="outlined"
-                      required
-                      type="password"
-                    />
-                  </VCol>
-                </VRow>
-              </div>
-            </VExpandTransition>
-            
-            <!-- PayPal Info -->
-            <VExpandTransition>
-              <div
-                v-if="paymentMethod === 'paypal'"
-                class="mt-4"
-              >
-                <VAlert
-                  type="info"
-                  border="start"
-                  prominent
+            <div class="mt-4">
+              <VRow>
+                <VCol cols="12">
+                  <VTextField
+                    v-model="creditCardForm.number"
+                    label="Card Number"
+                    placeholder="0000 0000 0000 0000"
+                    variant="outlined"
+                    required
+                  />
+                </VCol>
+              </VRow>
+              <VRow>
+                <VCol
+                  cols="12"
+                  md="6"
                 >
-                  You will be redirected to PayPal to complete your payment.
-                </VAlert>
-              </div>
-            </VExpandTransition>
-            
-            <!-- Crypto Info -->
-            <VExpandTransition>
-              <div
-                v-if="paymentMethod === 'crypto'"
-                class="mt-4"
-              >
-                <VAlert
-                  type="info"
-                  border="start"
-                  prominent
+                  <VTextField
+                    v-model="creditCardForm.name"
+                    label="Cardholder Name"
+                    placeholder="John Doe"
+                    variant="outlined"
+                    required
+                  />
+                </VCol>
+                <VCol
+                  cols="6"
+                  md="3"
                 >
-                  You will be redirected to our cryptocurrency payment processor.
-                </VAlert>
-              </div>
-            </VExpandTransition>
+                  <VTextField
+                    v-model="creditCardForm.expiry"
+                    label="Expiry Date"
+                    placeholder="MM/YY"
+                    variant="outlined"
+                    required
+                  />
+                </VCol>
+                <VCol
+                  cols="6"
+                  md="3"
+                >
+                  <VTextField
+                    v-model="creditCardForm.cvv"
+                    label="CVV"
+                    placeholder="123"
+                    variant="outlined"
+                    required
+                    type="password"
+                  />
+                </VCol>
+              </VRow>
+            </div>
           </VCardText>
         </VCard>
         
@@ -278,23 +230,24 @@
               class="mb-4"
             >
               <div class="d-flex">
-                <VImg
-                  :src="item.image || '/images/placeholder.jpg'"
-                  width="60"
-                  height="60"
-                  cover
-                  class="rounded mr-3"
-                />
+                <div
+                  class="image-container"
+                  style="width: 80px; height: 60px; overflow: hidden; border-radius: 4px; margin-right: 12px;"
+                >
+                  <VImg
+                    :src="item.game?.g_mainImage || item.image || '/images/placeholder.jpg'"
+                    cover
+                    width="100%"
+                    height="100%"
+                  />
+                </div>
                 <div>
                   <div class="font-weight-medium">
-                    {{ item.name }}
+                    {{ item.game?.g_title || item.name }}
                   </div>
                   <div class="d-flex align-center">
-                    <div class="text-caption text-disabled">
-                      Qty: {{ item.quantity }}
-                    </div>
-                    <div class="text-caption ml-2">
-                      ${{ (item.price * item.quantity).toFixed(2) }}
+                    <div class="text-caption">
+                      ${{ (parseFloat(item.c_price || item.price)).toFixed(2) }}
                     </div>
                   </div>
                 </div>
@@ -310,12 +263,7 @@
             
             <div class="d-flex justify-space-between mb-2">
               <div>Discount</div>
-              <div>-${{ discount.toFixed(2) }}</div>
-            </div>
-            
-            <div class="d-flex justify-space-between mb-4">
-              <div>Tax</div>
-              <div>${{ tax.toFixed(2) }}</div>
+              <div>-${{ totalDiscount.toFixed(2) }}</div>
             </div>
             
             <VDivider class="mb-4" />
@@ -411,8 +359,10 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter } from 'vue-router'; // Keep only one instance
 import { setCookie, getCookie } from '@/utils/cookie';
+import { calculateDiscountedPrice, calculateFinalTotal, calculateOriginalSubtotal, calculateTotalDiscount } from '@/utils/priceCalculations';
+import axios from 'axios';
 
 const router = useRouter();
 
@@ -434,28 +384,31 @@ const breadcrumbs = ref([
   },
 ]);
 
-// Cart items (in a real app, this would be fetched from a store or API)
-const cartItems = ref([
-  {
-    id: 1,
-    name: 'Elden Ring',
-    price: 59.99,
-    quantity: 1,
-    platform: 'PC Digital Download',
-    image: '/images/placeholder.jpg',
-  },
-  {
-    id: 3,
-    name: 'FIFA 23',
-    price: 44.99,
-    quantity: 1,
-    platform: 'PS5 Digital Download',
-    image: '/images/placeholder.jpg',
-  },
-]);
+const cartItems = ref([])
+const isLoading = ref(false)
+const error = ref(null)
 
-// Payment method
-const paymentMethod = ref(getCookie('paymentMethod') || 'credit_card');
+// Fetch cart items
+const fetchCartItems = async () => {
+  isLoading.value = true
+  error.value = null
+  
+  try {
+    const response = await axios.get('/api/cart')
+    cartItems.value = response.data.cartItems
+  } catch (err) {
+    error.value = 'Failed to load cart items'
+    console.error(err)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Payment method from cookies
+const paymentMethod = ref(getCookie('paymentMethod') || 'credit_card')
+
+// Load cart items when component mounts
+onMounted(fetchCartItems)
 
 // Credit card form
 const creditCardForm = ref({
@@ -519,64 +472,97 @@ const saveCheckoutDataToCookies = () => {
 };
 
 // Order calculations
-const cartTotal = computed(() => {
-  return cartItems.value.reduce((total, item) => {
-    return total + (item.price * item.quantity);
-  }, 0);
-});
-
-const discount = ref(10); // Example discount amount
-const tax = computed(() => cartTotal.value * 0.08); // Example 8% tax
-const orderTotal = computed(() => cartTotal.value - discount.value + tax.value);
+const cartTotal = computed(() => calculateOriginalSubtotal(cartItems.value))
+const totalDiscount = computed(() => calculateTotalDiscount(cartItems.value))
+const orderTotal = computed(() => calculateFinalTotal(cartTotal.value, totalDiscount.value))
 
 // Form validation
 const formValid = computed(() => {
-  if (!termsAccepted.value) return false;
-
+  // Check terms acceptance
+  if (!termsAccepted.value) return false
+  
   // Basic validation for required fields
-  const { number, name, expiry, cvv } = creditCardForm.value;
-  const { firstName, lastName, email, address, city, state, zip, country } = billingInfo.value;
-
-  return (
-    paymentMethod.value &&
-    number &&
-    name &&
-    expiry &&
-    cvv &&
-    firstName &&
-    lastName &&
-    email &&
-    address &&
-    city &&
-    state &&
-    zip &&
-    country
-  );
-});
+  const { firstName, lastName, email, address, city, state, zip, country } = billingInfo.value
+  const hasRequiredFields = firstName && lastName && email && address && city && state && zip && country
+  
+  // Validate payment method based on cookie selection
+  const { number, name, expiry, cvv } = creditCardForm.value
+  const hasValidCardInfo = paymentMethod.value && number && name && expiry && cvv
+  
+  return hasRequiredFields && hasValidCardInfo
+})
 
 // Place order method
-const placeOrder = () => {
+const placeOrder = async () => {
   if (!formValid.value) {
     alert('Please fill out all required fields.');
     return;
   }
-
-  isProcessing.value = true;
-
-  // Simulate API call with a timeout
-  setTimeout(() => {
-    // Save data to cookies
+	
+isProcessing.value = true;
+  
+  try {
+    // Save data to cookies from CookieForLogin branch
     saveCheckoutDataToCookies();
-
-    // Generate random order number
-    orderNumber.value = 'ORD-' + Date.now().toString().substring(3) + '-' + Math.floor(Math.random() * 1000);
-
+    
+    // Generate order number/receipt number 
+    const receiptNumber = 'REC-' + Math.random().toString(36).substring(2, 12);
+    const currentDate = new Date().toISOString(); // Full ISO format with time
+    
+    // Create batch of purchase records for all cart items
+    const purchaseBatch = cartItems.value.map(item => ({
+      'p_gameId': item.c_gameId || item.game?.g_id,
+      'p_gameName': item.game?.g_title || 'Unknown Game',
+      'p_purchasePrice': calculateDiscountedPrice(item), 
+      'p_purchaseDate': currentDate,
+      'p_receiptNumber': receiptNumber,
+    }));
+    
+    // Create all purchase records in a single request
+    const response = await axios.post('/api/purchases', { purchases: purchaseBatch }, {
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      withCredentials: true,
+    });
+    
+    // Use receipt number from response if available, otherwise use the generated one
+    if (response.data && response.data.receiptNumber) {
+      orderNumber.value = response.data.receiptNumber;
+    } else {
+      orderNumber.value = receiptNumber;
+    }
+    
+    // Clear the cart after successful purchase
+    await axios.delete('/api/cart/clear', {
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      withCredentials: true,
+    });
+    
+    // Update the UI
     isProcessing.value = false;
     orderDialog.value = true;
-
-    // In a real app, you would clear the cart here or redirect to a confirmation page
-  }, 2000);
-};
+  } catch (error) {
+    console.error('Error processing order:', error?.response?.data || error);
+    
+    // Handle authentication errors
+    if (error?.response?.status === 401) {
+      alert('You need to be logged in to complete this purchase. Please log in and try again.');
+      // Optionally redirect to login page
+      // router.push('/login');
+    } else {
+      alert('There was an error processing your order. Please try again.');
+    }
+    
+    isProcessing.value = false;
+  }
+}
 </script>
 
 <style scoped>

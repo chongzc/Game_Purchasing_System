@@ -24,6 +24,16 @@ axiosInstance.interceptors.request.use(
       config.headers['X-XSRF-TOKEN'] = decodeURIComponent(token)
     }
     
+    // Add X-Requested-With header for all requests
+    config.headers['X-Requested-With'] = 'XMLHttpRequest'
+    
+    // Log request for debugging
+    console.log(`Request to ${config.url}:`, { 
+      headers: config.headers,
+      method: config.method,
+      data: config.data,
+    })
+    
     return config
   },
   error => {
