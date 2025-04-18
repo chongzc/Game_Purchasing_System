@@ -13,6 +13,8 @@ use App\Http\Controllers\AdminGameController;
 use App\Http\Controllers\CartController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\GameStoreController;
 
 
 /*
@@ -32,8 +34,7 @@ Route::post('/register', [RegisterController::class, 'register']);
 Route::post('/logout', [LoginController::class, 'logout']);
 Route::get('/user', [LoginController::class, 'getUser']);
 
-// Profile routes - no authentication required for assignment/demo
-Route::get('/profile', [UserController::class, 'profile']);
+// Profile routes
 Route::post('/profile', [UserController::class, 'updateProfile']);
 Route::get('/users', [UserController::class, 'getUsers']);
 
@@ -91,11 +92,21 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // Admin routes
 Route::middleware(['auth:sanctum'])->group(function () {
-    Route::get('/admin/games', [AdminGameController::class, 'index']);
-    Route::get('/admin/games/{id}', [AdminGameController::class, 'show']);
-    Route::patch('/admin/games/{id}/status', [AdminGameController::class, 'updateStatus']);
-    Route::delete('/admin/games/{id}', [AdminGameController::class, 'destroy']);
-    Route::get('/admin/statistics', [AdminGameController::class, 'statistics']);
+    // Game management routes
+    Route::get('/admin/games', [AdminController::class, 'getAllGames']);
+    Route::get('/admin/games/{id}', [AdminController::class, 'getGame']);
+    Route::patch('/admin/games/{id}/status', [AdminController::class, 'updateGameStatus']);
+    Route::delete('/admin/games/{id}', [AdminController::class, 'deleteGame']);
+    
+    // User management routes
+    Route::get('/admin/users', [AdminController::class, 'getAllUsers']);
+    Route::get('/admin/users/{id}', [AdminController::class, 'getUser']);
+    Route::patch('/admin/users/{id}/ban-status', [AdminController::class, 'updateUserBanStatus']);
+    Route::post('/admin/users/find-by-name', [AdminController::class, 'findUserByName']);
+    
+    // Statistics routes
+    Route::get('/admin/statistics/games', [AdminController::class, 'getGameStatistics']);
+    Route::get('/admin/statistics', [AdminController::class, 'getAllStatistics']);
 });
 
 // User Library Routes
@@ -139,3 +150,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/purchases', [PurchaseController::class, 'store']);
     Route::get('/purchases', [PurchaseController::class, 'getUserPurchases']);
 });
+
+// Game Store Routes
+Route::get('/store/featured', [GameStoreController::class, 'getRandomFeaturedGames']);
+Route::get('/store/flash-sales', [GameStoreController::class, 'getFlashSales']);
+Route::get('/store/categories', [GameStoreController::class, 'getCategories']);
+Route::get('/store/best-selling', [GameStoreController::class, 'getBestSelling']);
+Route::get('/store/explore', [GameStoreController::class, 'getExploreProducts']);

@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- Header Banner with Game Promotion -->
-    <VCard class="mb-6">
+    <!-- <VCard class="mb-6">
       <VCarousel
         show-arrows="hover"
         hide-delimiter-background
@@ -50,230 +50,198 @@
           </VImg>
         </VCarouselItem>
       </VCarousel>
-    </VCard>
+    </VCard> -->
+
+    <!-- Featured Games Carousel -->
+    <v-carousel
+      v-if="!loading.featured && featuredGames.length > 0"
+      cycle
+      height="400"
+      hide-delimiter-background
+      show-arrows="hover"
+    >
+      <v-carousel-item
+        v-for="game in featuredGames"
+        :key="game.id"
+      >
+        <v-img
+          :src="game.banner_image || game.cover_image || '/images/placeholder-game.jpg'"
+          height="400"
+          cover
+          :alt="game.title"
+        >
+          <template v-slot:placeholder>
+            <v-row class="fill-height ma-0" align="center" justify="center">
+              <v-progress-circular indeterminate color="grey-lighten-5"></v-progress-circular>
+            </v-row>
+          </template>
+          <v-sheet
+            class="fill-height"
+            gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)"
+          >
+            <v-container class="fill-height">
+              <v-row align="end" class="fill-height">
+                <v-col cols="12" class="text-white">
+                  <h2 class="text-h4 font-weight-bold mb-2">{{ game.title }}</h2>
+                  <p class="text-h6">{{ game.short_description }}</p>
+                  <v-btn
+                    color="primary"
+                    class="mt-4"
+                    :to="'/games/' + game.id"
+                    :href="null"
+                  >
+                    Learn More
+                  </v-btn>
+                </v-col>
+              </v-row>
+            </v-container>
+          </v-sheet>
+        </v-img>
+      </v-carousel-item>
+    </v-carousel>
+
+    <!-- Loading State for Carousel -->
+    <v-card
+      v-else-if="loading.featured"
+      height="400"
+      class="d-flex align-center justify-center"
+    >
+      <v-progress-circular indeterminate color="primary"></v-progress-circular>
+    </v-card>
+
+    <!-- Empty State for Carousel -->
+    <v-card
+      v-else
+      height="400"
+      class="d-flex align-center justify-center"
+    >
+      <div class="text-center">
+        <v-icon icon="bx-image" size="64" color="grey-lighten-1"></v-icon>
+        <div class="text-h6 mt-2">No featured games available</div>
+      </div>
+    </v-card>
 
     <!-- Flash Sales Section -->
-    <section class="mb-8">
-      <div class="d-flex align-center mb-4">
-        <div class="bg-primary py-1 px-2 mr-4">
-          <span class="text-white font-weight-bold">Flash Sales</span>
-        </div>
-        <div class="ml-auto d-flex align-center">
-          <div
-            v-for="(value, key) in countdown"
-            :key="key"
-            class="countdown-item mx-2"
+    <section class="section-container dark-section">
+      <v-container>
+        <h2 class="section-title">Flash Sales</h2>
+        <div v-if="!loading.flashSales" class="game-grid">
+          <v-card
+            v-for="game in flashSales"
+            :key="game.id"
+            :to="'/games/' + game.id"
+            class="game-card"
+            elevation="0"
           >
-            <div class="text-center">
-              <span class="text-h5 font-weight-bold">{{ value }}</span>
-              <div class="text-caption">
-                {{ key }}
+            <v-img
+              :src="game.cover_image || '/images/placeholder-game.jpg'"
+              :alt="game.title"
+              class="game-card-image"
+            >
+              <template v-slot:placeholder>
+                <VRow class="fill-height ma-0" align="center" justify="center">
+                  <VProgressCircular indeterminate color="grey-lighten-5"></VProgressCircular>
+                </VRow>
+              </template>
+            </v-img>
+            <v-card-title>{{ game.title }}</v-card-title>
+            <v-card-text>
+              <div class="price-container">
+                <span v-if="game.discount > 0" class="discount-badge">-{{ game.discount }}%</span>
+                <div class="text-right">
+                  <span v-if="game.discount > 0" class="original-price">${{ game.price.toFixed(2) }}</span>
+                  <span class="final-price">${{ getDiscountedPrice(game.price, game.discount).toFixed(2) }}</span>
+                </div>
               </div>
-            </div>
-          </div>
+            </v-card-text>
+          </v-card>
         </div>
-      </div>
-
-      <VRow>
-        <VCol
-          v-for="item in flashSales"
-          :key="item.id"
-          cols="12"
-          sm="6"
-          md="3"
-        >
-          <VCard>
-            <VCardItem class="pa-0">
-              <div class="position-relative">
-                <VImg
-                  src="/images/placeholder.jpg"
-                  height="180"
-                  cover
-                />
-                <div class="position-absolute bottom-0 start-0 bg-primary px-1">
-                  <span class="text-white text-caption">-{{ item.discount }}%</span>
-                </div>
-                <VBtn
-                  icon
-                  variant="text"
-                  color="default"
-                  size="small"
-                  class="position-absolute top-0 end-0 mt-1 me-1"
-                >
-                  <VIcon icon="bx-heart" />
-                </VBtn>
-              </div>
-            </VCardItem>
-
-            <VCardText class="pt-2 pb-0">
-              <div class="text-subtitle-2 mb-1">
-                <RouterLink
-                  :to="`/games/${item.id}`"
-                  class="text-decoration-none"
-                >
-                  {{ item.name }}
-                </RouterLink>
-              </div>
-              <div class="d-flex align-center">
-                <div class="text-decoration-line-through text-disabled me-2">
-                  ${{ item.originalPrice }}
-                </div>
-                <div class="text-primary font-weight-medium">
-                  ${{ item.price }}
-                </div>
-                <div class="ms-auto">
-                  <VRating
-                    :model-value="item.rating"
-                    color
-                    size="x-small"
-                    readonly
-                    dense
-                  />
-                </div>
-              </div>
-            </VCardText>
-
-            <VCardActions>
-              <VBtn
-                block
-                color="primary"
-                variant="flat"
-                :to="`/games/${item.id}`"
-              >
-                VIEW DETAILS
-              </VBtn>
-            </VCardActions>
-          </VCard>
-        </VCol>
-      </VRow>
+        <v-skeleton-loader
+          v-else
+          type="article, article, article, article"
+          class="mt-4"
+        ></v-skeleton-loader>
+      </v-container>
     </section>
 
     <!-- Browse By Category -->
-    <section class="mb-8">
-      <div class="d-flex align-center mb-4">
-        <div class="bg-primary py-1 px-2">
-          <span class="text-white font-weight-bold">Browse By Category</span>
+    <section class="section-container">
+      <v-container>
+        <h2 class="section-title">Browse by Category</h2>
+        <div v-if="!loading.categories" class="categories-grid">
+          <v-card
+            v-for="category in categories"
+            :key="category.name"
+            :to="'/browse-games?category=' + category.name"
+            class="category-card"
+            elevation="0"
+          >
+            <v-icon color="primary" size="x-large">
+              {{ category.icon }}
+            </v-icon>
+            <div class="category-title">{{ category.name }}</div>
+          </v-card>
         </div>
-        <div class="ml-auto">
-          <VBtn
-            size="small"
-            icon
-            variant="text"
-          >
-            <VIcon icon="bx-chevron-left" />
-          </VBtn>
-          <VBtn
-            size="small"
-            icon
-            variant="text"
-          >
-            <VIcon icon="bx-chevron-right" />
-          </VBtn>
-        </div>
-      </div>
-
-      <VRow>
-        <VCol
-          v-for="category in categories"
-          :key="category.id"
-          cols="4"
-          sm="4"
-          md="2"
-        >
-          <VCard
-            flat
-            class="text-center pa-2"
-          >
-            <VIcon
-              :icon="category.icon"
-              size="36"
-              color="primary"
-            />
-            <div class="mt-2">
-              {{ category.name }}
-            </div>
-          </VCard>
-        </VCol>
-      </VRow>
+        <v-skeleton-loader
+          v-else
+          type="article, article, article, article, article"
+          class="mt-4"
+        ></v-skeleton-loader>
+      </v-container>
     </section>
 
-    <!-- Best Selling Products -->
-    <section class="mb-8">
-      <div class="d-flex align-center mb-4">
-        <div class="bg-primary py-1 px-2">
-          <span class="text-white font-weight-bold">Best Selling Products</span>
-        </div>
-        <div class="ml-auto">
-          <VBtn
-            color="primary"
-            variant="outlined"
-            size="small"
+    <!-- Top Rated Products -->
+    <section class="section-container dark-section">
+      <v-container>
+        <h2 class="section-title">Top Rated</h2>
+        <div v-if="!loading.bestSelling" class="game-grid">
+          <v-card
+            v-for="game in bestSelling"
+            :key="game.id"
+            :to="'/games/' + game.id"
+            class="game-card"
+            elevation="0"
           >
-            VIEW ALL
-          </VBtn>
-        </div>
-      </div>
-
-      <VRow>
-        <VCol
-          v-for="product in bestSelling"
-          :key="product.id"
-          cols="12"
-          sm="6"
-          md="3"
-        >
-          <VCard>
-            <VCardItem class="pa-0">
-              <div class="position-relative">
-                <VImg
-                  src="/images/placeholder.jpg"
-                  height="180"
-                  cover
-                />
-                <VBtn
-                  icon
-                  variant="text"
-                  color="default"
+            <v-img
+              :src="game.cover_image || '/images/placeholder-game.jpg'"
+              :alt="game.title"
+              class="game-card-image"
+            >
+              <template v-slot:placeholder>
+                <VRow class="fill-height ma-0" align="center" justify="center">
+                  <VProgressCircular indeterminate color="grey-lighten-5"></VProgressCircular>
+                </VRow>
+              </template>
+            </v-img>
+            <v-card-title>{{ game.title }}</v-card-title>
+            <v-card-text>
+              <div class="price-container">
+                <div class="d-flex align-center">
+                  <v-rating
+                    :model-value="game.rating"
+                    color="amber"
+                    density="compact"
                   size="small"
-                  class="position-absolute top-0 end-0 mt-1 me-1"
-                >
-                  <VIcon icon="bx-heart" />
-                </VBtn>
-              </div>
-            </VCardItem>
-
-            <VCardText class="pt-2 pb-1">
-              <div class="text-subtitle-2 mb-1">
-                <RouterLink
-                  :to="`/games/${product.id}`"
-                  class="text-decoration-none"
-                >
-                  {{ product.name }}
-                </RouterLink>
-              </div>
-              <div class="d-flex align-center">
-                <div class="text-decoration-line-through text-disabled me-2">
-                  ${{ product.originalPrice }}
-                </div>
-                <div class="text-primary font-weight-medium">
-                  ${{ product.price }}
-                </div>
-                <div class="ms-auto">
-                  <VRating
-                    :model-value="product.rating"
-                    size="x-small"
                     readonly
-                    dense
-                  />
+                  ></v-rating>
+                </div>
+                <div class="text-right">
+                  <span v-if="game.discount > 0" class="original-price">${{ game.price.toFixed(2) }}</span>
+                  <span class="final-price">${{ getDiscountedPrice(game.price, game.discount).toFixed(2) }}</span>
                 </div>
               </div>
-            </VCardText>
-          </VCard>
-        </VCol>
-      </VRow>
+            </v-card-text>
+          </v-card>
+        </div>
+        <v-skeleton-loader
+          v-else
+          type="article, article, article, article"
+          class="mt-4"
+        ></v-skeleton-loader>
+      </v-container>
     </section>
 
-    <!-- Featured Section - Music Experience -->
+    <!-- Explore More Section -->
     <section class="mb-8">
       <VCard
         color="#151516"
@@ -286,31 +254,35 @@
             md="8"
           >
             <h3 class="text-h5 mb-2">
-              Enhance Your Gaming Experience
+              Explore More Games
             </h3>
+            <p class="mb-4">
+              Discover a vast collection of games across different genres. From action-packed adventures to mind-bending puzzles, find your next favorite game today.
+            </p>
             <div class="d-flex mb-4">
-              <VIcon
-                icon="bx-headphone"
-                class="rounded-circle bg-white text-black p-2 mr-2"
-              />
               <VIcon
                 icon="bx-joystick"
                 class="rounded-circle bg-white text-black p-2 mr-2"
               />
               <VIcon
-                icon="bx-desktop"
+                icon="bx-game"
                 class="rounded-circle bg-white text-black p-2 mr-2"
               />
               <VIcon
-                icon="bx-mouse"
+                icon="bx-rocket"
+                class="rounded-circle bg-white text-black p-2 mr-2"
+              />
+              <VIcon
+                icon="bx-trophy"
                 class="rounded-circle bg-white text-black p-2"
               />
             </div>
             <VBtn
               color="primary"
               class="rounded-0"
+              to="/browse-games"
             >
-              SHOP GAMING GEAR
+              BROWSE ALL GAMES
             </VBtn>
           </VCol>
           <VCol
@@ -327,95 +299,59 @@
       </VCard>
     </section>
 
-    <!-- Explore Our Products -->
-    <section class="mb-8">
-      <div class="d-flex align-center mb-4">
-        <div class="bg-primary py-1 px-2">
-          <span class="text-white font-weight-bold">Explore Our Products</span>
-        </div>
-        <div class="ml-auto">
-          <VBtn
-            size="small"
-            icon
-            variant="text"
+    <!-- Explore Products -->
+    <section class="section-container">
+      <v-container>
+        <h2 class="section-title">Explore Our Products</h2>
+        <div v-if="!loading.explore" class="game-grid">
+          <v-card
+            v-for="game in exploreProducts"
+            :key="game.id"
+            :to="'/games/' + game.id"
+            class="game-card"
+            elevation="0"
           >
-            <VIcon icon="bx-chevron-left" />
-          </VBtn>
-          <VBtn
-            size="small"
-            icon
-            variant="text"
-          >
-            <VIcon icon="bx-chevron-right" />
-          </VBtn>
-        </div>
-      </div>
-
-      <VRow>
-        <VCol
-          v-for="product in exploreProducts"
-          :key="product.id"
-          cols="12"
-          sm="6"
-          md="3"
-        >
-          <VCard>
-            <VCardItem class="pa-0">
-              <div class="position-relative">
-                <VImg
-                  src="/images/placeholder.jpg"
-                  height="180"
-                  cover
-                />
-                <VBtn
-                  icon
-                  variant="text"
-                  color="default"
+            <v-img
+              :src="game.cover_image || '/images/placeholder-game.jpg'"
+              :alt="game.title"
+              class="game-card-image"
+            >
+              <template v-slot:placeholder>
+                <VRow class="fill-height ma-0" align="center" justify="center">
+                  <VProgressCircular indeterminate color="grey-lighten-5"></VProgressCircular>
+                </VRow>
+              </template>
+            </v-img>
+            <v-card-title>{{ game.title }}</v-card-title>
+            <v-card-text>
+              <div class="price-container">
+                <div class="d-flex align-center">
+                  <v-rating
+                    :model-value="game.rating"
+                    color="amber"
+                    density="compact"
                   size="small"
-                  class="position-absolute top-0 end-0 mt-1 me-1"
-                >
-                  <VIcon icon="bx-heart" />
-                </VBtn>
-              </div>
-            </VCardItem>
-
-            <VCardText class="pt-2 pb-1">
-              <div class="text-subtitle-2 mb-1">
-                <RouterLink
-                  :to="`/games/${product.id}`"
-                  class="text-decoration-none"
-                >
-                  {{ product.name }}
-                </RouterLink>
-              </div>
-              <div class="d-flex align-center">
-                <div class="ms-auto">
-                  <VRating
-                    :model-value="product.rating"
-                    size="x-small"
                     readonly
-                    dense
-                  />
+                  ></v-rating>
+                </div>
+                <div class="text-right">
+                  <span v-if="game.discount > 0" class="original-price">RM{{ game.price.toFixed(2) }}</span>
+                  <span class="final-price">RM{{ getDiscountedPrice(game.price, game.discount).toFixed(2) }}</span>
                 </div>
               </div>
-            </VCardText>
-          </VCard>
-        </VCol>
-      </VRow>
-
-      <div class="text-center">
-        <VBtn
-          color="primary"
-          variant="flat"
+            </v-card-text>
+          </v-card>
+        </div>
+        <v-skeleton-loader
+          v-else
+          type="article, article, article, article"
           class="mt-4"
-        >
-          SHOW ALL PRODUCTS
-        </VBtn>
-      </div>
+        ></v-skeleton-loader>
+      </v-container>
     </section>
 
     <!-- New Arrivals -->
-    <section class="mb-8">
+    <!-- <section class="mb-8">
       <div class="d-flex align-center mb-4">
         <div class="bg-primary py-1 px-2">
           <span class="text-white font-weight-bold">New Arrival</span>
@@ -552,7 +488,7 @@
           </VRow>
         </VCol>
       </VRow>
-    </section>
+    </section> -->
 
     <!-- Features Section -->
     <section class="mb-8">
@@ -560,61 +496,70 @@
         flat
         class="bg-grey-lighten-5 pa-4"
       >
-        <VRow>
+        <VRow class="justify-center">
           <VCol
             cols="12"
             md="4"
-            class="d-flex align-center"
+            class="d-flex align-center justify-center text-center"
           >
+            <div class="feature-item">
             <VIcon
-              icon="bx-package"
+                icon="bx-download"
               size="x-large"
-              class="mr-2"
+                class="mb-2"
+                color="primary"
             />
             <div>
               <div class="font-weight-bold">
-                FREE AND FAST DELIVERY
+                  INSTANT DIGITAL DELIVERY
               </div>
               <div class="text-caption">
-                Free delivery for all orders over $100
+                  Download and play immediately after purchase
+                </div>
               </div>
             </div>
           </VCol>
           <VCol
             cols="12"
             md="4"
-            class="d-flex align-center"
+            class="d-flex align-center justify-center text-center"
           >
+            <div class="feature-item">
             <VIcon
-              icon="bx-headphone"
+                icon="bx-support"
               size="x-large"
-              class="mr-2"
+                class="mb-2"
+                color="primary"
             />
             <div>
               <div class="font-weight-bold">
-                24/7 CUSTOMER SERVICE
+                  24/7 GAMING SUPPORT
               </div>
               <div class="text-caption">
-                Friendly 24/7 customer support
+                  Expert gaming assistance anytime you need
+                </div>
               </div>
             </div>
           </VCol>
           <VCol
             cols="12"
             md="4"
-            class="d-flex align-center"
+            class="d-flex align-center justify-center text-center"
           >
+            <div class="feature-item">
             <VIcon
-              icon="bx-shield-quarter"
+                icon="bx-refresh"
               size="x-large"
-              class="mr-2"
+                class="mb-2"
+                color="primary"
             />
             <div>
               <div class="font-weight-bold">
-                MONEY BACK GUARANTEE
+                  SATISFACTION GUARANTEE
               </div>
               <div class="text-caption">
-                We return money within 30 days
+                  2-hour playtime refund policy
+                </div>
               </div>
             </div>
           </VCol>
@@ -625,7 +570,133 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import axios from 'axios';
+import { onMounted, ref } from 'vue';
+
+const loading = ref({
+  featured: true,
+  flashSales: true,
+  categories: true,
+  bestSelling: true,
+  explore: true
+});
+
+const featuredGames = ref([]);
+const flashSales = ref([]);
+const categories = ref([]);
+const bestSelling = ref([]);
+const exploreProducts = ref([]);
+
+// Computed function for calculating discounted price
+const getDiscountedPrice = (price, discount) => {
+  return price - (price * (discount / 100));
+};
+
+const fetchFeaturedGames = async () => {
+  try {
+    loading.value.featured = true;
+    const response = await axios.get('/api/store/featured');
+    console.log('Featured games response:', response.data); // Debug log
+
+    featuredGames.value = response.data.map(game => {
+      const bannerImage = game.g_mainImage ? `/storage/${game.g_mainImage}` : null;
+      console.log('Processing game:', game.g_title, 'Image path:', bannerImage); // Debug log
+      
+      return {
+        id: game.g_id,
+        title: game.g_title,
+        short_description: game.g_description,
+        banner_image: bannerImage,
+        cover_image: bannerImage,
+        price: game.g_price,
+        discount: game.g_discount
+      };
+    });
+
+    console.log('Processed featured games:', featuredGames.value); // Debug log
+  } catch (error) {
+    console.error('Error fetching featured games:', error);
+    featuredGames.value = []; // Reset on error
+  } finally {
+    loading.value.featured = false;
+  }
+};
+
+const fetchFlashSales = async () => {
+  try {
+    loading.value.flashSales = true;
+    const response = await axios.get('/api/store/flash-sales');
+    flashSales.value = response.data.map(game => ({
+      id: game.g_id,
+      title: game.g_title,
+      price: game.g_price,
+      discount: game.discount,
+      cover_image: game.g_mainImage ? `/storage/${game.g_mainImage}` : null
+    }));
+  } catch (error) {
+    console.error('Error fetching flash sales:', error);
+  } finally {
+    loading.value.flashSales = false;
+  }
+};
+
+const fetchCategories = async () => {
+  try {
+    loading.value.categories = true;
+    const response = await axios.get('/api/store/categories');
+    categories.value = response.data;
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+  } finally {
+    loading.value.categories = false;
+  }
+};
+
+const fetchBestSelling = async () => {
+  try {
+    loading.value.bestSelling = true;
+    const response = await axios.get('/api/store/best-selling');
+    bestSelling.value = response.data.map(game => ({
+      id: game.g_id,
+      title: game.g_title,
+      price: game.g_price,
+      rating: game.g_overallRate || 0,
+      discount: game.g_discount || 0,
+      cover_image: game.g_mainImage ? `/storage/${game.g_mainImage}` : null
+    }));
+  } catch (error) {
+    console.error('Error fetching top rated games:', error);
+  } finally {
+    loading.value.bestSelling = false;
+  }
+};
+
+const fetchExploreProducts = async () => {
+  try {
+    loading.value.explore = true;
+    const response = await axios.get('/api/store/explore');
+    exploreProducts.value = response.data.map(game => ({
+      id: game.g_id,
+      title: game.g_title,
+      price: game.g_price,
+      rating: game.g_overallRate || 0,
+      discount: game.g_discount || 0,
+      cover_image: game.g_mainImage ? `/storage/${game.g_mainImage}` : null
+    }));
+  } catch (error) {
+    console.error('Error fetching explore products:', error);
+  } finally {
+    loading.value.explore = false;
+  }
+};
+
+onMounted(() => {
+  fetchFeaturedGames();
+  fetchFlashSales();
+  fetchCategories();
+  fetchBestSelling();
+  fetchExploreProducts();
+});
 
 // Countdown data for Flash Sale
 const countdown = ref({
@@ -634,109 +705,173 @@ const countdown = ref({
   'Min': '19',
   'Sec': '56',
 })
-
-// Categories
-const categories = ref([
-  { id: 1, name: 'Action', icon: 'bx-run' },
-  { id: 2, name: 'Adventure', icon: 'bx-map' },
-  { id: 3, name: 'RPG', icon: 'bx-diamond' },
-  { id: 4, name: 'Strategy', icon: 'bx-chess' },
-  { id: 5, name: 'Sports', icon: 'bx-baseball' },
-  { id: 6, name: 'Simulation', icon: 'bx-city' },
-])
-
-// Best Selling Products
-const bestSelling = ref([
-  { 
-    id: 1, 
-    name: 'Cyberpunk 2077', 
-    originalPrice: '59.99', 
-    price: '39.99', 
-    rating: 4.5,
-    image: 'placeholder.jpg',
-  },
-  { 
-    id: 2, 
-    name: 'Elden Ring', 
-    originalPrice: '69.99', 
-    price: '59.99', 
-    rating: 5,
-    image: 'placeholder.jpg',
-  },
-  { 
-    id: 3, 
-    name: 'FIFA 23', 
-    originalPrice: '59.99', 
-    price: '44.99', 
-    rating: 4,
-    image: 'placeholder.jpg',
-  },
-  { 
-    id: 4, 
-    name: 'Minecraft', 
-    originalPrice: '29.99', 
-    price: '24.99', 
-    rating: 5,
-    image: 'placeholder.jpg',
-  },
-])
-
-// Explore Products
-const exploreProducts = ref([
-  { id: 1, name: 'Call of Duty: Modern Warfare III', rating: 4.5, image: 'placeholder.jpg' },
-  { id: 2, name: 'The Legend of Zelda: Tears of the Kingdom', rating: 5, image: 'placeholder.jpg' },
-  { id: 3, name: 'Starfield', rating: 4, image: 'placeholder.jpg' },
-  { id: 4, name: 'Baldur\'s Gate 3', rating: 5, image: 'placeholder.jpg' },
-  { id: 5, name: 'Hogwarts Legacy', rating: 4.5, image: 'placeholder.jpg' },
-  { id: 6, name: 'Red Dead Redemption 2', rating: 5, image: 'placeholder.jpg' },
-  { id: 7, name: 'Diablo IV', rating: 4, image: 'placeholder.jpg' },
-  { id: 8, name: 'The Witcher 3: Wild Hunt', rating: 5, image: 'placeholder.jpg' },
-])
-
-// Flash Sales data
-const flashSales = ref([
-  { 
-    id: 1, 
-    name: 'God of War Ragnarök', 
-    originalPrice: '69.99', 
-    price: '49.99', 
-    discount: 29, 
-    rating: 5,
-    image: 'placeholder.jpg',
-  },
-  { 
-    id: 2, 
-    name: 'Assassin\'s Creed Valhalla', 
-    originalPrice: '59.99', 
-    price: '29.99', 
-    discount: 50, 
-    rating: 4,
-    image: 'placeholder.jpg',
-  },
-  { 
-    id: 3, 
-    name: 'Resident Evil 4 Remake', 
-    originalPrice: '59.99', 
-    price: '39.99', 
-    discount: 33, 
-    rating: 5,
-    image: 'placeholder.jpg',
-  },
-  { 
-    id: 4, 
-    name: 'Spider-Man 2', 
-    originalPrice: '69.99', 
-    price: '49.99', 
-    discount: 29, 
-    rating: 4.5,
-    image: 'placeholder.jpg',
-  },
-])
 </script>
 
 <style scoped>
 .countdown-item {
   text-align: center;
   min-width: 40px;
+}
+
+.game-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: rgb(36, 37, 47) !important;
+}
+
+.game-card .v-img {
+  aspect-ratio: 16/9 !important;
+  width: 100%;
+  object-fit: cover;
+}
+
+.game-card .v-card-title {
+  font-size: 1.1rem;
+  line-height: 1.4;
+  padding: 12px 16px;
+  color: white;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  background-color: rgba(30, 31, 40, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.game-card .v-card-text {
+  padding: 12px 16px;
+  background-color: rgba(30, 31, 40, 0.95);
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.category-card {
+  height: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+  background-color: rgb(36, 37, 47) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.category-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.category-card .v-icon {
+  margin-bottom: 16px;
+  font-size: 36px;
+}
+
+.category-title {
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.price-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.discount-badge {
+  background-color: rgb(0, 200, 83);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.original-price {
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: line-through;
+  font-size: 0.9rem;
+  margin-right: 8px;
+}
+
+.final-price {
+  color: white;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.section-title {
+  color: white;
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+
+.section-container {
+  padding: 48px 0;
+}
+
+.dark-section {
+  background-color: rgb(30, 31, 40);
+}
+
+/* Update the grid layout for game cards */
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+  width: 100%;
+}
+
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 24px;
+  width: 100%;
+}
+
+@media (max-width: 1264px) {
+  .categories-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 960px) {
+  .categories-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .categories-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.feature-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  width: 100%;
+  max-width: 300px;
+}
+
+.feature-item .v-icon {
+  margin-bottom: 1rem;
+  font-size: 2.5rem;
+}
+
+.feature-item .font-weight-bold {
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.feature-item .text-caption {
+  color: rgba(0, 0, 0, 0.6);
+  line-height: 1.4;
 }
 </style>

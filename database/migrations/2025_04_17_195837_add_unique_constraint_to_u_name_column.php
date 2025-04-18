@@ -12,8 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->unsignedBigInteger('u_profileImageId')->nullable()->after('u_profileImagePath');
-            $table->foreign('u_profileImageId')->references('img_id')->on('images')->onDelete('set null');
+            $table->string('u_name')->unique()->change();
         });
     }
 
@@ -23,8 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropForeign(['u_profileImageId']);
-            $table->dropColumn('u_profileImageId');
+            $table->string('u_name')->change();
         });
     }
-}; 
+};

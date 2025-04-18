@@ -66,7 +66,7 @@ export const routes = [
           },
           {
             path: 'users',
-            component: () => import('@/pages/admin/users-list.vue'),
+            component: () => import('@/pages/admin/user-management.vue'),
           },
 
           // More admin routes can be added here

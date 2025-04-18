@@ -37,8 +37,8 @@ const routes = [
     meta: { requiresAuth: true, role: 'admin' },
   },
   {
-    path: '/admin/users-list',
-    component: () => import('@/pages/admin/users-list.vue'),
+    path: '/admin/user-management',
+    component: () => import('@/pages/admin/user-management.vue'),
     meta: { requiresAuth: true, role: 'admin' },
   },
 ]

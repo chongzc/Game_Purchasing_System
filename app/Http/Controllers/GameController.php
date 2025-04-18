@@ -42,7 +42,7 @@ class GameController extends Controller
             });
 
         $bestSelling = Game::with('developer')
-            ->orderBy('g_downloadCount', 'desc')
+            ->orderBy('g_overallRate', 'desc')
             ->take(40)
             ->paginate(4)
             ->map(function ($game) {
@@ -130,8 +130,9 @@ class GameController extends Controller
                     'id' => $game->g_id,
                     'title' => $game->g_title,
                     'price' => $game->g_price,
+                    'discount' => $game->g_discount,
                     'rating' => $game->g_overallRate,
-                    'image' => $game->g_mainImage
+                    'image' => $game->g_mainImage ? asset('storage/' . $game->g_mainImage) : null
                 ];
             });
 
@@ -150,19 +151,19 @@ class GameController extends Controller
                 'developer' => $game->developer->u_name,
                 'releaseDate' => $game->created_at->format('M d, Y'),
                 'platform' => 'PC',
-                'mainImage' => $game->g_mainImage,
+                'mainImage' => $game->g_mainImage ? asset('storage/' . $game->g_mainImage) : null,
                 'gallery' => array_filter([
-                    $game->g_mainImage,
-                    $game->g_exImg1,
-                    $game->g_exImg2,
-                    $game->g_exImg3
+                    $game->g_mainImage ? asset('storage/' . $game->g_mainImage) : null,
+                    $game->g_exImg1 ? asset('storage/' . $game->g_exImg1) : null,
+                    $game->g_exImg2 ? asset('storage/' . $game->g_exImg2) : null,
+                    $game->g_exImg3 ? asset('storage/' . $game->g_exImg3) : null
                 ]),
                 'features' => $game->categories->pluck('gc_category')->toArray(),
                 'ratingBreakdown' => $ratingBreakdown,
                 'reviews' => $game->reviews->map(function ($review) {
                     return [
                         'userName' => $review->user->u_name,
-                        'userAvatar' => $review->user->u_profileImagePath,
+                        'userProfileImage' => $review->user->u_profileImagePath ? asset($review->user->u_profileImagePath) : null,
                         'rating' => $review->r_rating,
                         'date' => $review->created_at->format('M d, Y'),
                         'comment' => $review->r_reviewText
@@ -202,7 +203,7 @@ class GameController extends Controller
                     'id' => $lib->game->g_id,
                     'title' => $lib->game->g_title,
                     'status' => $lib->ul_status,
-                    'image' => $lib->game->g_mainImage,
+                    'image' => $lib->game->g_mainImage ? asset('storage/' . $lib->game->g_mainImage) : null,
                 ];
             });
 
@@ -277,7 +278,6 @@ class GameController extends Controller
                 'g_exImg2' => $exImg2Path,
                 'g_exImg3' => $exImg3Path,
                 'g_developerId' => $request->user()->u_id,
-                'g_downloadCount' => 0,
                 'g_overallRate' => 0,
             ]);
             
@@ -366,8 +366,7 @@ class GameController extends Controller
                         'price' => $game->g_price,
                         'discount' => $game->g_discount,
                         'status' => $game->g_status,
-                        'mainImage' => $game->g_mainImage,
-                        'downloadCount' => $game->g_downloadCount,
+                        'mainImage' => $game->g_mainImage ? asset('storage/' . $game->g_mainImage) : null,
                         'overallRate' => $game->g_overallRate,
                         'categories' => $game->categories->pluck('gc_category'),
                         'created_at' => $game->created_at
@@ -477,11 +476,12 @@ class GameController extends Controller
                 case 'trending':
                     $query->where('created_at', '>', now()->subDays(90))->orderBy("created_at", "desc");
                     break;
-                case 'top-sellers':
-                    $query->orderBy('g_downloadCount', 'desc');
+                case 'most-review':
+                    $query->withCount('reviews')
+                        ->orderBy('reviews_count', 'desc');
                     break;
                 case 'top-rated':
-                    $query->where('g_overallRate', '>=', 4);
+                    $query->orderBy('g_overallRate', 'desc');
                     break;
             }
 
@@ -513,17 +513,18 @@ class GameController extends Controller
                 });
             }
 
+            // Get the games
             $games = $query->get()->map(function ($game) use ($userLibraryGameIds) {
                 return [
                     'id' => $game->g_id,
                     'title' => $game->g_title,
-                    'image' => $game->g_mainImage,
+                    'image' => $game->g_mainImage ? asset('storage/' . $game->g_mainImage) : null,
                     'price' => $game->g_price,
                     'originalPrice' => $game->g_price,
                     'discount' => $game->g_discount,
                     'onSale' => $game->g_discount > 0,
                     'reviewStatus' => ReviewController::getReviewStatus($game->g_overallRate),
-                    'reviewCount' => $game->g_downloadCount,
+                    'reviewCount' => Review::where('r_gameId', $game->g_id)->count(),
                     'releaseDate' => $game->created_at,
                     'multiPlayer' => true,
                     'openWorld' => false,
@@ -591,11 +592,11 @@ class GameController extends Controller
                   'language' => $game->g_language,
                   'releaseDate' => $game->created_at->format('Y-m-d'),
                   'status' => $game->g_status,
-                  'mainImage' => $game->g_mainImage,
+                  'mainImage' => $game->g_mainImage ? asset('storage/' . $game->g_mainImage) : null,
                   'screenshots' => array_filter([
-                      $game->g_exImg1,
-                      $game->g_exImg2,
-                      $game->g_exImg3
+                      $game->g_exImg1 ? asset('storage/' . $game->g_exImg1) : null,
+                      $game->g_exImg2 ? asset('storage/' . $game->g_exImg2) : null,
+                      $game->g_exImg3 ? asset('storage/' . $game->g_exImg3) : null
                   ]),
                   'categoryIds' => $categoryIds
               ];

@@ -16,6 +16,7 @@ const statistics = ref({
   totalDevelopers: 0,
   totalUsers: 0,
   totalAdmins: 0,
+  bannedUsers: 0,
 })
 
 // Fetch statistics for the dashboard
@@ -40,6 +41,7 @@ const fetchStatistics = async () => {
           totalDevelopers: response.data.statistics.top_categories?.length || 0,
           totalUsers: 0,
           totalAdmins: 0,
+          bannedUsers: 0,
         }
       }
     }
@@ -194,6 +196,33 @@ onMounted(() => {
               @click="navigateToGameManagement"
             >
               Review Pending Games
+            </VBtn>
+          </VCardText>
+        </VCard>
+      </VCol>
+      
+      <VCol cols="12">
+        <VCard
+          v-if="statistics.bannedUsers > 0"
+          class="border-error"
+        >
+          <VCardTitle class="bg-error-lighten-5 text-error">
+            <VIcon
+              icon="mdi-account-cancel"
+              color="error"
+              class="me-2"
+            />
+            Banned Users
+          </VCardTitle>
+          <VCardText>
+            <p>There are currently {{ statistics.bannedUsers }} banned users in the system.</p>
+            <VBtn
+              color="error"
+              variant="outlined"
+              class="mt-2"
+              @click="router.push('/admin/users?filter=banned')"
+            >
+              Manage Banned Users
             </VBtn>
           </VCardText>
         </VCard>

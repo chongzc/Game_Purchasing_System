@@ -65,7 +65,7 @@ class UserLibraryController extends Controller
                 'game' => [
                     'g_id' => $game->g_id,
                     'g_title' => $game->g_title,
-                    'g_image' => $game->g_mainImage,
+                    'g_image' => $game->g_mainImage ? asset('storage/' . $game->g_mainImage) : null,
                     'g_price' => $game->g_price,
                     'g_description' => $game->g_description,
                     'developer' => $game->developer
