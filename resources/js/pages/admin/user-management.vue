@@ -283,6 +283,7 @@ onMounted(() => {
         hover
         class="elevation-1"
         :item-class="item => item.isBanned === 'true' ? 'bg-error-lighten-5' : ''"
+        :sort-by="[{key: 'id', order: 'asc'}]"
       >
         <!-- ID Column -->
         <template #item.id="{ item }">
