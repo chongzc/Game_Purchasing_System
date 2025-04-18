@@ -35,11 +35,17 @@
         >
           <VCard>
             <VImg
-              :src="game.image"
+              :src="game.image || '/images/placeholder-game.jpg'"
               height="200"
               cover
               class="position-relative"
+              :alt="game.title"
             >
+              <template v-slot:placeholder>
+                <VRow class="fill-height ma-0" align="center" justify="center">
+                  <VProgressCircular indeterminate color="grey-lighten-5"></VProgressCircular>
+                </VRow>
+              </template>
               <!-- Wishlist Button -->
               <WishlistButton
                 :game-id="game.id"
@@ -134,7 +140,15 @@ const fetchWishlist = async () => {
     const response = await axios.get('/api/wishlist')
     console.log('Wishlist response:', response.data) // Debug log
     if (response.data.success) {
-      wishlistGames.value = response.data.wishlist || []
+      wishlistGames.value = (response.data.wishlist || []).map(game => ({
+        id: game.id,
+        title: game.title,
+        image: game.image ? `/storage/${game.image}` : '/images/placeholder-game.jpg',
+        price: game.price || 0,
+        discount: game.discount || 0,
+        rating: game.rating || 0,
+        addedAt: game.addedAt
+      }))
     }
   } catch (error) {
     console.error('Error fetching wishlist:', error)

@@ -6,6 +6,23 @@ import { useRouter } from 'vue-router'
 const authStore = useAuthStore()
 const router = useRouter()
 
+// Add getUserProfileImage function
+const getUserProfileImage = imageSource => {
+  if (!imageSource) return avatar1
+  
+  // If it's already a complete URL, return it
+  if (imageSource.startsWith('http://') || imageSource.startsWith('https://')) {
+    return imageSource
+  }
+  
+  // If it's a relative path, convert it to absolute URL
+  if (imageSource.startsWith('/')) {
+    return window.location.origin + imageSource
+  }
+  
+  // For paths without leading slash
+  return window.location.origin + '/' + imageSource
+}
 
 const logout = async () => {
   await authStore.logout()

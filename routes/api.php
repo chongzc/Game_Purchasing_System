@@ -10,6 +10,8 @@ use App\Http\Controllers\UserLibraryController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\GameStoreController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -28,8 +30,7 @@ Route::post('/register', [RegisterController::class, 'register']);
 Route::post('/logout', [LoginController::class, 'logout']);
 Route::get('/user', [LoginController::class, 'getUser']);
 
-// Profile routes - no authentication required for assignment/demo
-Route::get('/profile', [UserController::class, 'profile']);
+// Profile routes
 Route::post('/profile', [UserController::class, 'updateProfile']);
 Route::get('/users', [UserController::class, 'getUsers']);
 
@@ -115,3 +116,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/games/{id}/user-review', [ReviewController::class, 'getUserReview']);
     Route::post('/games/{id}/reviews', [ReviewController::class, 'submitReview']);
 });
+
+// Game Store Routes
+Route::get('/store/featured', [GameStoreController::class, 'getRandomFeaturedGames']);
+Route::get('/store/flash-sales', [GameStoreController::class, 'getFlashSales']);
+Route::get('/store/categories', [GameStoreController::class, 'getCategories']);
+Route::get('/store/best-selling', [GameStoreController::class, 'getBestSelling']);
+Route::get('/store/explore', [GameStoreController::class, 'getExploreProducts']);
