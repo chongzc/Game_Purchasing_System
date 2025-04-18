@@ -1,7 +1,7 @@
 <script setup>
 import avatar1 from '@images/avatars/avatar-1.png'
 import axios from 'axios'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 // Reactive variable to hold the profile image URL
 const userProfileImage = ref('')
@@ -9,14 +9,11 @@ const userData = ref({})
 
 const fetchUserProfile = async () => {
   try {
-    const response = await axios.get('/api/profile') // Fetch user profile data
-
-    userData.value = response.data // Store the complete user data
-
-    console.log('User profile data:', userData.value)
-    userProfileImage.value = userData.value.profilePic // Set the profile image
+    const response = await axios.get('/api/profile')
+ 
+    userData.value = response.data 
+    userProfileImage.value = getUserProfileImage(userData.value.profilePic)
     
-    // Initialize account data with user data
     accountDataLocal.value = {
       avatarImg: userProfileImage.value,
       name: userData.value.u_name || '',
@@ -24,10 +21,8 @@ const fetchUserProfile = async () => {
       birthdate: userData.value.u_birthdate ? new Date(userData.value.u_birthdate) : null,
     }
     
-    console.log('User profile image:', userProfileImage.value)
   } catch (error) {
-    console.error('Error fetching user profile:', error)
-    userProfileImage.value = avatar1 // Fallback to default avatar on error
+    userProfileImage.value = avatar1 
   }
 }
 
@@ -70,6 +65,9 @@ const resetForm = () => {
     email: userData.value.u_email || '',
     birthdate: userData.value.u_birthdate ? new Date(userData.value.u_birthdate) : null,
   }
+  
+  // Reload the screen
+  window.location.reload()
 }
 
 const formatBirthDate = date => {
@@ -85,9 +83,12 @@ const changeAvatar = event => {
 
     fileReader.onload = () => {
       if (typeof fileReader.result === 'string')
-        userProfileImage.value = fileReader.result
+        userProfileImage.value = fileReader.result // This is a data URL which is a valid path
     }
     fileReader.readAsDataURL(file)
+  } else {
+    // If no file is selected, use default avatar
+    userProfileImage.value = avatar1
   }
 }
 
@@ -130,6 +131,9 @@ const handleSubmit = async () => {
       
       // Update the display image with proper URL formatting
       userProfileImage.value = getUserProfileImage(response.data.user.profilePic)
+    } else {
+      // If no profile picture is returned, use default avatar
+      userProfileImage.value = avatar1
     }
     
     // Refresh page to reflect changes
@@ -141,6 +145,11 @@ const handleSubmit = async () => {
     isSubmitting.value = false
   }
 }
+
+// Computed property to ensure we always have a valid image source
+const displayProfileImage = computed(() => {
+  return userProfileImage.value || avatar1
+})
 
 onMounted(() => {
   fetchUserProfile() // Call the function to fetch user profile on component mount
@@ -159,7 +168,7 @@ onMounted(() => {
             class="me-6"
           >
             <VImg
-              :src="userProfileImage"
+              :src="displayProfileImage"
               alt="Profile Picture"
             /> 
           </VAvatar>

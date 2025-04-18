@@ -33,19 +33,11 @@ export const getHeaderNavigationItems = user => {
         title: 'Developer Create Game',
         to: '/create-game', 
       },
-      {
-        title: 'Coming Soon',
-        to: '#',
-      },
     ],
     admin: [
       {
         title: 'Admin Dashboard',
         to: '/admin-dashboard',
-      },
-      {
-        title: 'Coming Soon',
-        to: '#',
       },
     ],
   }
