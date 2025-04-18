@@ -1,28 +1,30 @@
 <script setup>
-import { useAuthStore } from '@/stores/auth';
-import avatar1 from '@images/avatars/avatar-1.png';
-import axios from 'axios';
-import { onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores/auth'
+import avatar1 from '@images/avatars/avatar-1.png'
+import axios from 'axios'
+import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 
 const authStore = useAuthStore()
 const router = useRouter()
 
 // Add getUserProfileImage function
-const userProfileImage = ref(avatar1); // Initialize with default avatar
+const userProfileImage = ref(avatar1) // Initialize with default avatar
+
 const fetchUserProfile = async () => {
   try {
-    const response = await axios.get('/api/profile'); // Fetch user profile data
-    const userData = response.data; // Assuming the response contains user data
-    console.log('User profile data:', userData);
-    userProfileImage.value = userData.profilePic ? userData.profilePic : avatar1; // Set the profile image
-    console.log('User profile image:', userProfileImage.value);
+    const response = await axios.get('/api/profile') // Fetch user profile data
+    const userData = response.data // Assuming the response contains user data
+
+    console.log('User profile data:', userData)
+    userProfileImage.value = userData.profilePic ? userData.profilePic : avatar1 // Set the profile image
+    console.log('User profile image:', userProfileImage.value)
   } catch (error) {
-    console.error('Error fetching user profile:', error);
-    userProfileImage.value = avatar1; // Fallback to default avatar on error
+    console.error('Error fetching user profile:', error)
+    userProfileImage.value = avatar1 // Fallback to default avatar on error
   }
-};
+}
 
 const logout = async () => {
   await authStore.logout()
@@ -37,9 +39,8 @@ const getUserRoleText = role => {
 }
 
 onMounted(() => {
-  fetchUserProfile(); // Call the function to fetch user profile on component mount
-});
-
+  fetchUserProfile() // Call the function to fetch user profile on component mount
+})
 </script>
 
 <template>
