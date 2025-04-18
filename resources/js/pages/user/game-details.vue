@@ -258,6 +258,7 @@ watch(
             height="400"
             cover
             class="rounded"
+            :alt="game.title"
           />
         </VCard>
         
@@ -273,6 +274,7 @@ watch(
               height="80"
               cover
               class="rounded cursor-pointer"
+              :alt="`${game.title} screenshot ${index + 1}`"
             />
           </VCol>
         </VRow>
@@ -698,6 +700,7 @@ watch(
                 :src="relatedGame.image || '/images/placeholder.jpg'"
                 height="180"
                 cover
+                :alt="relatedGame.title"
               />
                   <WishlistButton
                     :game-id="relatedGame.id"

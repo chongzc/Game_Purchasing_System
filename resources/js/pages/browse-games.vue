@@ -186,8 +186,9 @@
                   height="151"
                   cover
                   class="rounded"
-                    style="margin-right: 20px;"
-                  />
+                  style="margin-right: 20px;"
+                  :alt="game.title"
+                />
                   <WishlistButton
                     :game-id="game.id"
                     class="position-absolute top-0 end-0 ma-2"

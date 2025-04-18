@@ -132,7 +132,7 @@ class GameController extends Controller
                     'price' => $game->g_price,
                     'discount' => $game->g_discount,
                     'rating' => $game->g_overallRate,
-                    'image' => $game->g_mainImage
+                    'image' => $game->g_mainImage ? asset('storage/' . $game->g_mainImage) : null
                 ];
             });
 
@@ -151,12 +151,12 @@ class GameController extends Controller
                 'developer' => $game->developer->u_name,
                 'releaseDate' => $game->created_at->format('M d, Y'),
                 'platform' => 'PC',
-                'mainImage' => $game->g_mainImage,
+                'mainImage' => $game->g_mainImage ? asset('storage/' . $game->g_mainImage) : null,
                 'gallery' => array_filter([
-                    $game->g_mainImage,
-                    $game->g_exImg1,
-                    $game->g_exImg2,
-                    $game->g_exImg3
+                    $game->g_mainImage ? asset('storage/' . $game->g_mainImage) : null,
+                    $game->g_exImg1 ? asset('storage/' . $game->g_exImg1) : null,
+                    $game->g_exImg2 ? asset('storage/' . $game->g_exImg2) : null,
+                    $game->g_exImg3 ? asset('storage/' . $game->g_exImg3) : null
                 ]),
                 'features' => $game->categories->pluck('gc_category')->toArray(),
                 'ratingBreakdown' => $ratingBreakdown,
@@ -203,7 +203,7 @@ class GameController extends Controller
                     'id' => $lib->game->g_id,
                     'title' => $lib->game->g_title,
                     'status' => $lib->ul_status,
-                    'image' => $lib->game->g_mainImage,
+                    'image' => $lib->game->g_mainImage ? asset('storage/' . $lib->game->g_mainImage) : null,
                 ];
             });
 
@@ -366,7 +366,7 @@ class GameController extends Controller
                         'price' => $game->g_price,
                         'discount' => $game->g_discount,
                         'status' => $game->g_status,
-                        'mainImage' => $game->g_mainImage,
+                        'mainImage' => $game->g_mainImage ? asset('storage/' . $game->g_mainImage) : null,
                         'overallRate' => $game->g_overallRate,
                         'categories' => $game->categories->pluck('gc_category'),
                         'created_at' => $game->created_at
@@ -518,7 +518,7 @@ class GameController extends Controller
                 return [
                     'id' => $game->g_id,
                     'title' => $game->g_title,
-                    'image' => $game->g_mainImage,
+                    'image' => $game->g_mainImage ? asset('storage/' . $game->g_mainImage) : null,
                     'price' => $game->g_price,
                     'originalPrice' => $game->g_price,
                     'discount' => $game->g_discount,
@@ -592,11 +592,11 @@ class GameController extends Controller
                   'language' => $game->g_language,
                   'releaseDate' => $game->created_at->format('Y-m-d'),
                   'status' => $game->g_status,
-                  'mainImage' => $game->g_mainImage,
+                  'mainImage' => $game->g_mainImage ? asset('storage/' . $game->g_mainImage) : null,
                   'screenshots' => array_filter([
-                      $game->g_exImg1,
-                      $game->g_exImg2,
-                      $game->g_exImg3
+                      $game->g_exImg1 ? asset('storage/' . $game->g_exImg1) : null,
+                      $game->g_exImg2 ? asset('storage/' . $game->g_exImg2) : null,
+                      $game->g_exImg3 ? asset('storage/' . $game->g_exImg3) : null
                   ]),
                   'categoryIds' => $categoryIds
               ];

@@ -63,31 +63,63 @@
       <v-carousel-item
         v-for="game in featuredGames"
         :key="game.id"
-        :src="game.banner_image || game.cover_image"
-        cover
       >
-        <v-sheet
-          class="fill-height"
-          gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)"
+        <v-img
+          :src="game.banner_image || game.cover_image || '/images/placeholder-game.jpg'"
+          height="400"
+          cover
+          :alt="game.title"
         >
-          <v-container class="fill-height">
-            <v-row align="end" class="fill-height">
-              <v-col cols="12" class="text-white">
-                <h2 class="text-h4 font-weight-bold mb-2">{{ game.title }}</h2>
-                <p class="text-h6">{{ game.short_description }}</p>
-                <v-btn
-                  color="primary"
-                  class="mt-4"
-                  :to="'/games/' + game.id"
-        >
-                  Learn More
-                </v-btn>
-              </v-col>
+          <template v-slot:placeholder>
+            <v-row class="fill-height ma-0" align="center" justify="center">
+              <v-progress-circular indeterminate color="grey-lighten-5"></v-progress-circular>
             </v-row>
-          </v-container>
-        </v-sheet>
+          </template>
+          <v-sheet
+            class="fill-height"
+            gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)"
+          >
+            <v-container class="fill-height">
+              <v-row align="end" class="fill-height">
+                <v-col cols="12" class="text-white">
+                  <h2 class="text-h4 font-weight-bold mb-2">{{ game.title }}</h2>
+                  <p class="text-h6">{{ game.short_description }}</p>
+                  <v-btn
+                    color="primary"
+                    class="mt-4"
+                    :to="'/games/' + game.id"
+                    :href="null"
+                  >
+                    Learn More
+                  </v-btn>
+                </v-col>
+              </v-row>
+            </v-container>
+          </v-sheet>
+        </v-img>
       </v-carousel-item>
     </v-carousel>
+
+    <!-- Loading State for Carousel -->
+    <v-card
+      v-else-if="loading.featured"
+      height="400"
+      class="d-flex align-center justify-center"
+    >
+      <v-progress-circular indeterminate color="primary"></v-progress-circular>
+    </v-card>
+
+    <!-- Empty State for Carousel -->
+    <v-card
+      v-else
+      height="400"
+      class="d-flex align-center justify-center"
+    >
+      <div class="text-center">
+        <v-icon icon="bx-image" size="64" color="grey-lighten-1"></v-icon>
+        <div class="text-h6 mt-2">No featured games available</div>
+      </div>
+    </v-card>
 
     <!-- Flash Sales Section -->
     <section class="section-container dark-section">
@@ -102,10 +134,16 @@
             elevation="0"
           >
             <v-img
-              :src="game.cover_image"
+              :src="game.cover_image || '/images/placeholder-game.jpg'"
               :alt="game.title"
               class="game-card-image"
-            ></v-img>
+            >
+              <template v-slot:placeholder>
+                <VRow class="fill-height ma-0" align="center" justify="center">
+                  <VProgressCircular indeterminate color="grey-lighten-5"></VProgressCircular>
+                </VRow>
+              </template>
+            </v-img>
             <v-card-title>{{ game.title }}</v-card-title>
             <v-card-text>
               <div class="price-container">
@@ -165,10 +203,16 @@
             elevation="0"
           >
             <v-img
-              :src="game.cover_image"
+              :src="game.cover_image || '/images/placeholder-game.jpg'"
               :alt="game.title"
               class="game-card-image"
-            ></v-img>
+            >
+              <template v-slot:placeholder>
+                <VRow class="fill-height ma-0" align="center" justify="center">
+                  <VProgressCircular indeterminate color="grey-lighten-5"></VProgressCircular>
+                </VRow>
+              </template>
+            </v-img>
             <v-card-title>{{ game.title }}</v-card-title>
             <v-card-text>
               <div class="price-container">
@@ -268,10 +312,16 @@
             elevation="0"
           >
             <v-img
-              :src="game.cover_image"
+              :src="game.cover_image || '/images/placeholder-game.jpg'"
               :alt="game.title"
               class="game-card-image"
-            ></v-img>
+            >
+              <template v-slot:placeholder>
+                <VRow class="fill-height ma-0" align="center" justify="center">
+                  <VProgressCircular indeterminate color="grey-lighten-5"></VProgressCircular>
+                </VRow>
+              </template>
+            </v-img>
             <v-card-title>{{ game.title }}</v-card-title>
             <v-card-text>
               <div class="price-container">
@@ -546,17 +596,27 @@ const fetchFeaturedGames = async () => {
   try {
     loading.value.featured = true;
     const response = await axios.get('/api/store/featured');
-    featuredGames.value = response.data.map(game => ({
-      id: game.g_id,
-      title: game.g_title,
-      short_description: game.g_description,
-      banner_image: game.g_mainImage,
-      cover_image: game.g_mainImage,
-      price: game.g_price,
-      discount: game.g_discount
-    }));
+    console.log('Featured games response:', response.data); // Debug log
+
+    featuredGames.value = response.data.map(game => {
+      const bannerImage = game.g_mainImage ? `/storage/${game.g_mainImage}` : null;
+      console.log('Processing game:', game.g_title, 'Image path:', bannerImage); // Debug log
+      
+      return {
+        id: game.g_id,
+        title: game.g_title,
+        short_description: game.g_description,
+        banner_image: bannerImage,
+        cover_image: bannerImage,
+        price: game.g_price,
+        discount: game.g_discount
+      };
+    });
+
+    console.log('Processed featured games:', featuredGames.value); // Debug log
   } catch (error) {
     console.error('Error fetching featured games:', error);
+    featuredGames.value = []; // Reset on error
   } finally {
     loading.value.featured = false;
   }
@@ -571,7 +631,7 @@ const fetchFlashSales = async () => {
       title: game.g_title,
       price: game.g_price,
       discount: game.discount,
-      cover_image: game.g_mainImage
+      cover_image: game.g_mainImage ? `/storage/${game.g_mainImage}` : null
     }));
   } catch (error) {
     console.error('Error fetching flash sales:', error);
@@ -602,7 +662,7 @@ const fetchBestSelling = async () => {
       price: game.g_price,
       rating: game.g_overallRate || 0,
       discount: game.g_discount || 0,
-      cover_image: game.g_mainImage
+      cover_image: game.g_mainImage ? `/storage/${game.g_mainImage}` : null
     }));
   } catch (error) {
     console.error('Error fetching top rated games:', error);
@@ -621,7 +681,7 @@ const fetchExploreProducts = async () => {
       price: game.g_price,
       rating: game.g_overallRate || 0,
       discount: game.g_discount || 0,
-      cover_image: game.g_mainImage
+      cover_image: game.g_mainImage ? `/storage/${game.g_mainImage}` : null
     }));
   } catch (error) {
     console.error('Error fetching explore products:', error);

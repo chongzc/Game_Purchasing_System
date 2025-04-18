@@ -84,7 +84,7 @@ const handleImageUpload = (event, type) => {
   if (type === 'cover') {
     gameData.value.coverImage = file
   } else if (type === 'screenshots') {
-    gameData.value.screenshots.push(file)
+    gameData.value.screenshots.append(file)
   }
 }
 

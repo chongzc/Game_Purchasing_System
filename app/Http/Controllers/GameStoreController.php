@@ -14,6 +14,7 @@ class GameStoreController extends Controller
         // Get 5 random games for the carousel
         return Game::inRandomOrder()
             ->with('developer')
+            ->where('g_status', 'verified')
             ->take(5)
             ->get();
     }
@@ -24,6 +25,7 @@ class GameStoreController extends Controller
         return Game::select('*')
             ->with('developer')
             ->where('g_discount', '>', 0)
+            ->where('g_status', 'verified')
             ->orderBy('g_discount', 'desc')
             ->take(4)
             ->get()
@@ -52,6 +54,7 @@ class GameStoreController extends Controller
         // Get 4 games with highest ratings
         return Game::select('games.*')
             ->with('developer')
+            ->where('g_status', 'verified')
             ->orderBy('g_overallRate', 'desc')
             ->take(4)
             ->get();
@@ -60,6 +63,7 @@ class GameStoreController extends Controller
     public function getExploreProducts(Request $request)
     {
         return Game::with('developer')
+            ->where('g_status', 'verified')
             ->inRandomOrder()
             ->take(8)
             ->get();
@@ -69,15 +73,15 @@ class GameStoreController extends Controller
     {
         $icons = [
             'Action' => 'bx-run',
-            'Adventure' => 'bx-map',
+            'Adventure' => 'bx-compass',
             'RPG' => 'bx-diamond',
             'Strategy' => 'bx-brain',
             'Sports' => 'bx-baseball',
-            'Simulation' => 'bx-city',
-            'Racing' => 'bx-car',
-            'Puzzle' => 'bx-brain',
+            'Simulation' => 'bx-cube-alt',
+            'Racing' => 'bx-tachometer',
+            'Puzzle' => 'bx-grid-alt',
             'Horror' => 'bx-ghost',
-            'Fighting' => 'bx-boxing',
+            'Fighting' => 'bxs-shield',
             // Add more mappings as needed
         ];
 

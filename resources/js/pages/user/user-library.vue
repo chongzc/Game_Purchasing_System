@@ -86,11 +86,17 @@
       >
         <VCard>
           <VImg
-            :src="game.image || '/images/placeholder.jpg'"
+            :src="game.image || '/images/placeholder-game.jpg'"
             height="200"
             cover
             class="game-image"
+            :alt="game.title"
           >
+            <template v-slot:placeholder>
+              <VRow class="fill-height ma-0" align="center" justify="center">
+                <VProgressCircular indeterminate color="grey-lighten-5"></VProgressCircular>
+              </VRow>
+            </template>
             <div class="image-overlay d-flex align-center justify-center">
               <VBtn
                 icon="bx-play-circle"
@@ -289,7 +295,7 @@ const fetchLibraryGames = async () => {
     library.value = response.data.map(item => ({
       id: item.game?.g_id || 0,
       title: item.game?.g_title || 'Unknown Game',
-      image: item.game?.g_image || '/images/placeholder.jpg',
+      image: item.game?.g_image || '/images/placeholder-game.jpg',
       status: item.ul_status || 'owned',
       purchaseDate: item.ul_createdAt || new Date().toISOString(),
       price: item.game?.g_price || 0,
