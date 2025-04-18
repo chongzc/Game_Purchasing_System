@@ -140,7 +140,7 @@
               class="mb-4"
             >
               <template #thumb-label="{ modelValue }">
-                RM{{ modelValue }}
+                ${{ modelValue }}
               </template>
             </VSlider>
           </VCardText>
@@ -261,10 +261,10 @@
                       -{{ game.discount }}%
                     </VChip>
                     <div class="text-decoration-line-through text-caption mr-2">
-                      RM{{ game.originalPrice.toFixed(2) }}
+                      ${{ game.originalPrice.toFixed(2) }}
                     </div>
                     <div class="text-primary font-weight-bold">
-                      RM{{ (game.originalPrice - (game.originalPrice * (game.discount / 100))).toFixed(2) }}
+                      ${{ (game.originalPrice - (game.originalPrice * (game.discount / 100))).toFixed(2) }}
                     </div>
                   </div>
                   <div
@@ -277,7 +277,7 @@
                     v-else
                     class="font-weight-bold text-primary"
                   >
-                    RM{{ game.originalPrice.toFixed(2) }}
+                    ${{ game.originalPrice.toFixed(2) }}
                   </div>
                 </div>
               </template>

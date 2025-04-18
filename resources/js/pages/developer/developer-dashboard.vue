@@ -113,7 +113,7 @@ onMounted(() => {
                       />
                     </td>
                     <td>{{ game.title }}</td>
-                    <td>RM {{ game.price.toFixed(2) }}</td>
+                    <td>$ {{ game.price.toFixed(2) }}</td>
                     <td>
                       <VChip
                         :color="getStatusColor(game.status)"

@@ -1,99 +1,86 @@
 <template>
   <div class="game-store-page">
     <!-- Featured Games Carousel -->
-    <VCarousel
-      v-if="!loading.featured && featuredGames.length > 0"
-      cycle
-      height="400"
-      hide-delimiter-background
-      show-arrows="hover"
-    >
-      <VCarouselItem
-        v-for="game in featuredGames"
-        :key="game.id"
-      >
-        <VImg
-          :src="game.banner_image || game.cover_image || '/images/placeholder-game.jpg'"
-          height="400"
-          cover
-          :alt="game.title"
+    <div class="carousel-container">
+      <VCard v-if="!loading.featured && featuredGames.length > 0" class="carousel-card">
+        <VCarousel
+          cycle
+          height="500"
+          hide-delimiter-background
+          show-arrows="hover"
+          interval="5000"
         >
-          <template #placeholder>
-            <VRow
-              class="fill-height ma-0"
-              align="center"
-              justify="center"
-            >
-              <VProgressCircular
-                indeterminate
-                color="grey-lighten-5"
-              />
-            </VRow>
-          </template>
-          <VSheet
-            class="fill-height"
-            gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)"
+          <VCarouselItem
+            v-for="game in featuredGames"
+            :key="game.id"
           >
-            <VContainer class="fill-height">
-              <VRow
-                align="end"
-                class="fill-height"
+            <div class="carousel-content">
+              <VImg
+                :src="`/storage/${game.g_mainImage}`"
+                height="500"
+                cover
+                class="carousel-image"
               >
-                <VCol
-                  cols="12"
-                  class="text-white"
-                >
-                  <h2 class="text-h4 font-weight-bold mb-2">
-                    {{ game.title }}
-                  </h2>
-                  <p class="text-h6">
-                    {{ game.short_description }}
-                  </p>
-                  <VBtn
-                    color="primary"
-                    class="mt-4"
-                    :to="'/games/' + game.id"
-                    :href="null"
-                  >
-                    Learn More
-                  </VBtn>
-                </VCol>
-              </VRow>
-            </VContainer>
-          </VSheet>
-        </VImg>
-      </VCarouselItem>
-    </VCarousel>
+                <template #placeholder>
+                  <div class="d-flex align-center justify-center fill-height">
+                    <VProgressCircular
+                      indeterminate
+                      color="grey-lighten-5"
+                    />
+                  </div>
+                </template>
+                
+                <div class="carousel-overlay">
+                  <VContainer>
+                    <div class="carousel-text">
+                      <h2 class="text-h3 font-weight-bold mb-4">{{ game.g_title }}</h2>
+                      <p class="text-h6 mb-6">{{ game.g_description }}</p>
+                      <VBtn
+                        color="primary"
+                        size="large"
+                        :to="`/games/${game.g_id}`"
+                      >
+                        Learn More
+                      </VBtn>
+                    </div>
+                  </VContainer>
+                </div>
+              </VImg>
+            </div>
+          </VCarouselItem>
+        </VCarousel>
+      </VCard>
 
-    <!-- Loading State for Carousel -->
-    <VCard
-      v-else-if="loading.featured"
-      height="400"
-      class="d-flex align-center justify-center"
-    >
-      <VProgressCircular
-        indeterminate
-        color="primary"
-      />
-    </VCard>
-
-    <!-- Empty State for Carousel -->
-    <VCard
-      v-else
-      height="400"
-      class="d-flex align-center justify-center"
-    >
-      <div class="text-center">
-        <VIcon
-          icon="bx-image"
-          size="64"
-          color="grey-lighten-1"
+      <!-- Loading State -->
+      <VCard
+        v-else-if="loading.featured"
+        height="500"
+        class="d-flex align-center justify-center"
+      >
+        <VProgressCircular
+          indeterminate
+          color="primary"
         />
-        <div class="text-h6 mt-2">
-          No featured games available
+      </VCard>
+
+      <!-- Empty State -->
+      <VCard
+        v-else
+        height="500"
+        class="d-flex align-center justify-center"
+      >
+        <div class="text-center">
+          <VIcon
+            icon="bx-image"
+            size="64"
+            color="grey-lighten-1"
+          />
+          <div class="text-h6 mt-2">
+            No featured games available
+          </div>
         </div>
-      </div>
-    </VCard>
+      </VCard>
+    </div>
 
     <!-- Flash Sales Section -->
     <section class="section-container dark-section">
@@ -308,8 +295,9 @@
             class="d-flex align-center justify-center"
           >
             <VImg
-              src="/images/placeholder.jpg"
+              src="/images/staticImg.PNG"
               width="150"
+              class="glitch-effect"
             />
           </VCol>
         </VRow>
@@ -367,8 +355,8 @@
                   <span
                     v-if="game.discount > 0"
                     class="original-price"
-                  >RM{{ game.price.toFixed(2) }}</span>
-                  <span class="final-price">RM{{ getDiscountedPrice(game.price, game.discount).toFixed(2) }}</span>
+                  >${{ game.price.toFixed(2) }}</span>
+                  <span class="final-price">${{ getDiscountedPrice(game.price, game.discount).toFixed(2) }}</span>
                 </div>
               </div>
             </VCardText>
@@ -381,8 +369,6 @@
         />
       </VContainer>
     </section>
-
-
 
     <!-- Features Section -->
     <section class="mb-8">
@@ -489,31 +475,12 @@ const getDiscountedPrice = (price, discount) => {
 const fetchFeaturedGames = async () => {
   try {
     loading.value.featured = true
-
     const response = await axios.get('/api/store/featured')
-
-    console.log('Featured games response:', response.data) // Debug log
-
-    featuredGames.value = response.data.map(game => {
-      const bannerImage = game.g_mainImage ? `/storage/${game.g_mainImage}` : null
-
-      console.log('Processing game:', game.g_title, 'Image path:', bannerImage) // Debug log
-      
-      return {
-        id: game.g_id,
-        title: game.g_title,
-        short_description: game.g_description,
-        banner_image: bannerImage,
-        cover_image: bannerImage,
-        price: game.g_price,
-        discount: game.g_discount,
-      }
-    })
-
-    console.log('Processed featured games:', featuredGames.value) // Debug log
+    featuredGames.value = response.data
+    console.log('Featured games:', featuredGames.value)
   } catch (error) {
     console.error('Error fetching featured games:', error)
-    featuredGames.value = [] // Reset on error
+    featuredGames.value = []
   } finally {
     loading.value.featured = false
   }
@@ -734,14 +701,14 @@ const countdown = ref({
 /* Update the grid layout for game cards */
 .game-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(5, 1fr);
   gap: 24px;
   width: 100%;
 }
 
 .categories-grid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 24px;
   width: 100%;
 }
@@ -762,7 +729,7 @@ const countdown = ref({
   }
   
   .game-grid {
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(5, 1fr);
   }
 }
 
@@ -793,10 +760,6 @@ const countdown = ref({
 }
 
 @media (max-width: 960px) {
-  .categories-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  
   .game-grid {
     grid-template-columns: repeat(3, 1fr);
   }
@@ -809,10 +772,6 @@ const countdown = ref({
 }
 
 @media (max-width: 600px) {
-  .categories-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
   .game-grid {
     grid-template-columns: repeat(1, 1fr);
   }
@@ -840,5 +799,57 @@ const countdown = ref({
 .feature-item .text-caption {
   color: rgba(0, 0, 0, 0.6);
   line-height: 1.4;
+}
+
+.carousel-container {
+  margin-bottom: 48px;
+}
+
+.carousel-card {
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.carousel-content {
+  position: relative;
+  height: 500px;
+}
+
+.carousel-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.carousel-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0) 100%);
+  padding: 48px 0;
+}
+
+.carousel-text {
+  color: white;
+  max-width: 600px;
+  padding: 0 24px;
+}
+
+.glitch-effect {
+  filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.5));
+  animation: glitch 3s infinite;
+}
+
+@keyframes glitch {
+  0% {
+    filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.5));
+  }
+  50% {
+    filter: drop-shadow(0 0 15px rgba(255, 0, 255, 0.5));
+  }
+  100% {
+    filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.5));
+  }
 }
 </style>

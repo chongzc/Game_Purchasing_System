@@ -243,7 +243,7 @@ const navigateToDashboard = () => {
                     v-model="gameData.price"
                     label="Price"
                     type="number"
-                    prefix="RM"
+                    prefix="$"
                     required
                     :rules="[v => !!v || 'Price is required']"
                   />

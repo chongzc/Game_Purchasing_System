@@ -27,7 +27,7 @@ class GameStoreController extends Controller
             ->where('g_discount', '>', 0)
             ->where('g_status', 'verified')
             ->orderBy('g_discount', 'desc')
-            ->take(4)
+            ->take(5)
             ->get()
             ->map(function ($game) {
                 $discount = $game->g_discount;
@@ -56,7 +56,7 @@ class GameStoreController extends Controller
             ->with('developer')
             ->where('g_status', 'verified')
             ->orderBy('g_overallRate', 'desc')
-            ->take(4)
+            ->take(5)
             ->get();
     }
 
@@ -65,7 +65,7 @@ class GameStoreController extends Controller
         return Game::with('developer')
             ->where('g_status', 'verified')
             ->inRandomOrder()
-            ->take(8)
+            ->take(10)
             ->get();
     }
 
