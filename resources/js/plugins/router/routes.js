@@ -62,7 +62,7 @@ export const routes = [
         children: [
           {
             path: 'games',
-            component: () => import('@/pages/admin/GameManagement.vue'),
+            component: () => import('@/pages/admin/game-management.vue'),
           },
           {
             path: 'users',

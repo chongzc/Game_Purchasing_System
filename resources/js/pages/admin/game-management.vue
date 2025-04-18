@@ -1,14 +1,9 @@
 <template>
   <div>
-    <VBreadcrumbs
-      :items="breadcrumbs"
-      class="pa-0 mb-6"
-    />
-    
     <div class="d-flex align-center mb-6">
-      <h1 class="text-h3 font-weight-bold">
+      <h2 class="text-h3 font-weight-bold">
         Game Management
-      </h1>
+      </h2>
     </div>
     
     <!-- Filters -->
