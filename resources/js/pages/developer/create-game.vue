@@ -20,6 +20,7 @@ const gameData = ref({
   language: '',
   coverImage: null,
   screenshots: [],
+  status: 'pending',
 })
 
 const genres = [
@@ -68,6 +69,7 @@ onMounted(async () => {
         gameData.value.discount = game.discount
         gameData.value.genre = game.genre
         gameData.value.language = game.language
+        gameData.value.status = game.status
         
         // We don't set the cover image and screenshots because they're files
         // and we can't load them back into input elements
@@ -112,7 +114,13 @@ const handleSubmit = async () => {
     formData.append('g_price', gameData.value.price)
     formData.append('g_discount', gameData.value.discount || 0)
     formData.append('g_language', gameData.value.language)
-    formData.append('g_status', 'pending')
+  
+    if (!isEditing.value || gameData.value.status !== 'verified') {
+      formData.append('g_status', 'pending')
+    } else {
+      formData.append('g_status', gameData.value.status)
+    }
+    
     formData.append('g_category', gameData.value.genre)
     
     // Get the authenticated user's ID from the session/auth system

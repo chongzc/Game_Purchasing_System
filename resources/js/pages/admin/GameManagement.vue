@@ -190,7 +190,7 @@
                 icon
                 variant="text"
                 size="small"
-                color="success"
+                color="white"
                 title="View Game Details"
                 @click="viewGame(item)"
               >
@@ -204,7 +204,7 @@
                     icon
                     variant="text"
                     size="small"
-                    color="info"
+                    color="white"
                     v-bind="props"
                     title="Update Status"
                   >
@@ -216,7 +216,7 @@
                     v-if="item.status !== 'verified'"
                     title="Approve Game"
                     prepend-icon="bx-check-circle"
-                    color="success"
+                    color="white"
                     @click="updateGameStatus(item, 'verified')"
                   />
                   <VListItem
