@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 
 class UserController extends Controller
@@ -128,7 +130,8 @@ class UserController extends Controller
                 'u_name' => $user->u_name,
                 'u_email' => $user->u_email,
                 'u_birthdate' => $user->u_birthdate,
-                'u_profileImagePath' => $user->u_profileImagePath
+                'u_profileImagePath' => $user->u_profileImagePath,
+                'u_password' => $user->u_password
             ]);
             
             // Log successful update
@@ -158,6 +161,43 @@ class UserController extends Controller
         }
     }
 
+    /**
+     * Get the authenticated user's profile information
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getProfile()
+    {
+        try {
+            // Get the authenticated user
+            $user = Auth::user();
+            
+            if (!$user) {
+                return response()->json(['message' => 'User not authenticated'], 401);
+            }
+            
+            // Return user profile data
+            return response()->json([
+                'u_id' => $user->u_id,
+                'u_name' => $user->u_name,
+                'name' => $user->u_name,
+                'u_email' => $user->u_email,
+                'email' => $user->u_email,
+                'u_birthdate' => $user->u_birthdate,
+                'birthdate' => $user->u_birthdate,
+                'u_role' => $user->u_role,
+                'role' => $user->u_role,
+                'profilePic' => $user->u_profileImagePath ? asset($user->u_profileImagePath) : null
+            ]);
+        } catch (\Exception $e) {
+            // Log the exception
+            Log::error('Get profile error: ' . $e->getMessage());
+            
+            return response()->json([
+                'message' => 'Failed to retrieve profile: ' . $e->getMessage()
+            ], 500);
+        }
+    }
     /**
      * Get all users from the database
      */

@@ -37,6 +37,7 @@ Route::get('/user', [LoginController::class, 'getUser']);
 // Profile routes
 Route::post('/profile', [UserController::class, 'updateProfile']);
 Route::get('/users', [UserController::class, 'getUsers']);
+Route::get('/profile', [UserController::class, 'getProfile']);
 
 // Game routes
 Route::get('/languages', [GameController::class, 'getLanguages']);
