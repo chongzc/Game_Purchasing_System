@@ -641,7 +641,10 @@ watch(
           >
             <div class="d-flex">
               <VAvatar class="me-4">
-                <VImg :src="review.userAvatar || '/images/placeholder.jpg'" />
+                <VImg 
+                  :src="review.userProfileImage ? review.userProfileImage : '/images/avatars/default.png'"
+                  :alt="review.userName"
+                />
               </VAvatar>
               <div class="flex-grow-1">
                 <div class="d-flex align-center">

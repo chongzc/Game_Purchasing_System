@@ -280,7 +280,7 @@
                     :model-value="game.rating"
                     color="amber"
                     density="compact"
-                    size="small"
+                  size="small"
                     readonly
                   ></v-rating>
                 </div>
@@ -453,17 +453,17 @@
             class="d-flex align-center justify-center text-center"
           >
             <div class="feature-item">
-              <VIcon
+            <VIcon
                 icon="bx-download"
-                size="x-large"
+              size="x-large"
                 class="mb-2"
                 color="primary"
-              />
-              <div>
-                <div class="font-weight-bold">
+            />
+            <div>
+              <div class="font-weight-bold">
                   INSTANT DIGITAL DELIVERY
-                </div>
-                <div class="text-caption">
+              </div>
+              <div class="text-caption">
                   Download and play immediately after purchase
                 </div>
               </div>
@@ -475,17 +475,17 @@
             class="d-flex align-center justify-center text-center"
           >
             <div class="feature-item">
-              <VIcon
+            <VIcon
                 icon="bx-support"
-                size="x-large"
+              size="x-large"
                 class="mb-2"
                 color="primary"
-              />
-              <div>
-                <div class="font-weight-bold">
+            />
+            <div>
+              <div class="font-weight-bold">
                   24/7 GAMING SUPPORT
-                </div>
-                <div class="text-caption">
+              </div>
+              <div class="text-caption">
                   Expert gaming assistance anytime you need
                 </div>
               </div>
@@ -497,17 +497,17 @@
             class="d-flex align-center justify-center text-center"
           >
             <div class="feature-item">
-              <VIcon
+            <VIcon
                 icon="bx-refresh"
-                size="x-large"
+              size="x-large"
                 class="mb-2"
                 color="primary"
-              />
-              <div>
-                <div class="font-weight-bold">
+            />
+            <div>
+              <div class="font-weight-bold">
                   SATISFACTION GUARANTEE
-                </div>
-                <div class="text-caption">
+              </div>
+              <div class="text-caption">
                   2-hour playtime refund policy
                 </div>
               </div>

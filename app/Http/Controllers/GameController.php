@@ -163,7 +163,7 @@ class GameController extends Controller
                 'reviews' => $game->reviews->map(function ($review) {
                     return [
                         'userName' => $review->user->u_name,
-                        'userAvatar' => $review->user->u_profileImagePath,
+                        'userProfileImage' => $review->user->u_profileImagePath ? asset($review->user->u_profileImagePath) : null,
                         'rating' => $review->r_rating,
                         'date' => $review->created_at->format('M d, Y'),
                         'comment' => $review->r_reviewText

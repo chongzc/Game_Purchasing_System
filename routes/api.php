@@ -28,8 +28,7 @@ Route::post('/register', [RegisterController::class, 'register']);
 Route::post('/logout', [LoginController::class, 'logout']);
 Route::get('/user', [LoginController::class, 'getUser']);
 
-// Profile routes - no authentication required for assignment/demo
-Route::get('/profile', [UserController::class, 'profile']);
+// Profile routes
 Route::post('/profile', [UserController::class, 'updateProfile']);
 Route::get('/users', [UserController::class, 'getUsers']);
 
