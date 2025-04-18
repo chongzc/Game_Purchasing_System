@@ -6,6 +6,8 @@ use App\Models\Game;
 use App\Models\GameCategory;
 use App\Models\UserLib;
 use App\Models\User;
+use App\Models\Review;
+use App\Models\Wishlist;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -40,7 +42,7 @@ class GameController extends Controller
             });
 
         $bestSelling = Game::with('developer')
-            ->orderBy('g_downloadCount', 'desc')
+            ->orderBy('g_overallRate', 'desc')
             ->take(40)
             ->paginate(4)
             ->map(function ($game) {
@@ -68,16 +70,121 @@ class GameController extends Controller
      * Show the details for a specific game.
      *
      * @param  int  $id
-     * @return \Illuminate\View\View
+     * @return \Illuminate\Http\JsonResponse
      */
     public function show($id)
     {
-        // In a real application, this would come from a database query
-        $game = Game::with('developer', 'purchasedUsers', 'wishlistedUsers', 'libraryUsers')
-            ->where('g_id', $id)
-            ->firstOrFail();
+        try {
+            $game = Game::with(['developer', 'categories', 'reviews.user'])
+                ->where('g_id', $id)
+                ->firstOrFail();
 
-        return view('game-details', compact('game'));
+            // Get user's library status if authenticated
+            $libraryStatus = null;
+            $isWishlisted = false;
+            if (Auth::check()) {
+                $libraryGame = UserLib::where('ul_userId', Auth::user()->u_id)
+                    ->where('ul_gameId', $id)
+                    ->first();
+                $libraryStatus = $libraryGame ? $libraryGame->ul_status : null;
+                
+                // Check if game is in user's wishlist
+                $isWishlisted = Wishlist::where('wl_userId', Auth::id())
+                    ->where('wl_gameId', $id)
+                    ->exists();
+            }
+
+            // Calculate rating breakdown
+            $ratingBreakdown = [
+                5 => 0,
+                4 => 0,
+                3 => 0,
+                2 => 0,
+                1 => 0
+            ];
+
+            foreach ($game->reviews as $review) {
+                if (isset($ratingBreakdown[$review->r_rating])) {
+                    $ratingBreakdown[$review->r_rating]++;
+                }
+            }
+
+            // Calculate percentages for rating breakdown
+            $totalReviews = $game->reviews->count();
+            if ($totalReviews > 0) {
+                foreach ($ratingBreakdown as $rating => $count) {
+                    $ratingBreakdown[$rating] = round(($count / $totalReviews) * 100);
+                }
+            }
+
+            // Get similar games based on categories
+            $similarGames = Game::whereHas('categories', function($query) use ($game) {
+                $query->whereIn('gc_category', $game->categories->pluck('gc_category'));
+            })
+            ->where('g_id', '!=', $id)
+            ->where('g_status', 'verified')
+            ->take(4)
+            ->get()
+            ->map(function ($game) {
+                return [
+                    'id' => $game->g_id,
+                    'title' => $game->g_title,
+                    'price' => $game->g_price,
+                    'discount' => $game->g_discount,
+                    'rating' => $game->g_overallRate,
+                    'image' => $game->g_mainImage ? asset('storage/' . $game->g_mainImage) : null
+                ];
+            });
+
+            // Transform the game data
+            $gameData = [
+                'id' => $game->g_id,
+                'title' => $game->g_title,
+                'description' => $game->g_description,
+                'fullDescription' => $game->g_description,
+                'price' => $game->g_price,
+                'originalPrice' => $game->g_price,
+                'discount' => $game->g_discount,
+                'rating' => $game->g_overallRate,
+                'reviewCount' => $totalReviews,
+                'category' => $game->g_category,
+                'developer' => $game->developer->u_name,
+                'releaseDate' => $game->created_at->format('M d, Y'),
+                'platform' => 'PC',
+                'mainImage' => $game->g_mainImage ? asset('storage/' . $game->g_mainImage) : null,
+                'gallery' => array_filter([
+                    $game->g_mainImage ? asset('storage/' . $game->g_mainImage) : null,
+                    $game->g_exImg1 ? asset('storage/' . $game->g_exImg1) : null,
+                    $game->g_exImg2 ? asset('storage/' . $game->g_exImg2) : null,
+                    $game->g_exImg3 ? asset('storage/' . $game->g_exImg3) : null
+                ]),
+                'features' => $game->categories->pluck('gc_category')->toArray(),
+                'ratingBreakdown' => $ratingBreakdown,
+                'reviews' => $game->reviews->map(function ($review) {
+                    return [
+                        'userName' => $review->user->u_name,
+                        'userProfileImage' => $review->user->u_profileImagePath ? asset($review->user->u_profileImagePath) : null,
+                        'rating' => $review->r_rating,
+                        'date' => $review->created_at->format('M d, Y'),
+                        'comment' => $review->r_reviewText
+                    ];
+                }),
+                'libraryStatus' => $libraryStatus,
+                'isWishlisted' => $isWishlisted
+            ];
+
+            return response()->json([
+                'success' => true,
+                'game' => $gameData,
+                'similarGames' => $similarGames
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch game details',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -96,7 +203,7 @@ class GameController extends Controller
                     'id' => $lib->game->g_id,
                     'title' => $lib->game->g_title,
                     'status' => $lib->ul_status,
-                    'image' => $lib->game->g_mainImage,
+                    'image' => $lib->game->g_mainImage ? asset('storage/' . $lib->game->g_mainImage) : null,
                 ];
             });
 
@@ -171,7 +278,6 @@ class GameController extends Controller
                 'g_exImg2' => $exImg2Path,
                 'g_exImg3' => $exImg3Path,
                 'g_developerId' => $request->user()->u_id,
-                'g_downloadCount' => 0,
                 'g_overallRate' => 0,
             ]);
             
@@ -260,8 +366,7 @@ class GameController extends Controller
                         'price' => $game->g_price,
                         'discount' => $game->g_discount,
                         'status' => $game->g_status,
-                        'mainImage' => $game->g_mainImage,
-                        'downloadCount' => $game->g_downloadCount,
+                        'mainImage' => $game->g_mainImage ? asset('storage/' . $game->g_mainImage) : null,
                         'overallRate' => $game->g_overallRate,
                         'categories' => $game->categories->pluck('gc_category'),
                         'created_at' => $game->created_at
@@ -352,22 +457,6 @@ class GameController extends Controller
     }
 
     /**
-     * Get user's library game IDs
-     *
-     * @return array
-     */
-    private function getUserLibraryGameIds()
-    {
-        if (!Auth::check()) {
-            return [];
-        }
-
-        return UserLib::where('ul_userId', Auth::user()->u_id)
-            ->pluck('ul_gameId')
-            ->toArray();
-    }
-
-    /**
      * Browse games with filters
      *
      * @param Request $request
@@ -380,18 +469,19 @@ class GameController extends Controller
                 ->where('g_status', 'verified');
 
             // Get user's library game IDs
-            $userLibraryGameIds = $this->getUserLibraryGameIds();
+            $userLibraryGameIds = UserLibraryController::getUserLibraryGameIds();
 
             // Apply tab filters
             switch ($request->tab) {
                 case 'trending':
                     $query->where('created_at', '>', now()->subDays(90))->orderBy("created_at", "desc");
                     break;
-                case 'top-sellers':
-                    $query->orderBy('g_downloadCount', 'desc');
+                case 'most-review':
+                    $query->withCount('reviews')
+                        ->orderBy('reviews_count', 'desc');
                     break;
                 case 'top-rated':
-                    $query->where('g_overallRate', '>=', 4);
+                    $query->orderBy('g_overallRate', 'desc');
                     break;
             }
 
@@ -423,17 +513,18 @@ class GameController extends Controller
                 });
             }
 
+            // Get the games
             $games = $query->get()->map(function ($game) use ($userLibraryGameIds) {
                 return [
                     'id' => $game->g_id,
                     'title' => $game->g_title,
-                    'image' => $game->g_mainImage,
+                    'image' => $game->g_mainImage ? asset('storage/' . $game->g_mainImage) : null,
                     'price' => $game->g_price,
                     'originalPrice' => $game->g_price,
                     'discount' => $game->g_discount,
                     'onSale' => $game->g_discount > 0,
-                    'reviewStatus' => $this->getReviewStatus($game->g_overallRate),
-                    'reviewCount' => $game->g_downloadCount,
+                    'reviewStatus' => ReviewController::getReviewStatus($game->g_overallRate),
+                    'reviewCount' => Review::where('r_gameId', $game->g_id)->count(),
                     'releaseDate' => $game->created_at,
                     'multiPlayer' => true,
                     'openWorld' => false,
@@ -456,67 +547,199 @@ class GameController extends Controller
             ], 500);
         }
     }
-
-    /**
-     * Get review status based on rating
-     *
-     * @param float $rating
-     * @return string
-     */
-    private function getReviewStatus($rating)
-    {
-        if ($rating >= 4.5) return 'Overwhelmingly Positive';
-        if ($rating >= 4.0) return 'Very Positive';
-        if ($rating >= 3.5) return 'Positive';
-        if ($rating >= 3.0) return 'Mostly Positive';
-        if ($rating >= 2.5) return 'Mixed';
-        if ($rating >= 2.0) return 'Mostly Negative';
-        return 'Negative';
-    }
-
-    public function getLibraryGames(Request $request)
-    {
-        $userLibraryIds = $this->getUserLibraryGameIds();
-        
-        // Get user library details with status filter
-        $libraryQuery = UserLib::where('ul_userId', Auth::user()->u_id)
-            ->whereIn('ul_gameId', $userLibraryIds);
-
-        // Apply status filter
-        if ($request->has('status')) {
-            if ($request->status === 'all') {
-                $libraryQuery->whereIn('ul_status', ['owned', 'installed']);
-            } elseif ($request->status !== '') {
-                $libraryQuery->where('ul_status', $request->status);
-            }
-        }
-
-        $libraryDetails = $libraryQuery->get()->keyBy('ul_gameId');
-        $filteredGameIds = $libraryDetails->pluck('ul_gameId')->toArray();
-
-        // Get games that match the filtered library entries
-        $games = Game::select('games.*')
-            ->with(['developer'])
-            ->whereIn('g_id', $filteredGameIds)
-            ->get();
-
-        // Combine game data with library details
-        $libraryGames = $games->map(function ($game) use ($libraryDetails) {
-            $libraryInfo = $libraryDetails[$game->g_id];
-            return [
-                'game' => [
-                    'g_id' => $game->g_id,
-                    'g_title' => $game->g_title,
-                    'g_image' => $game->g_mainImage,
-                    'g_price' => $game->g_price,
-                    'g_description' => $game->g_description,
-                    'developer' => $game->developer
-                ],
-                'ul_createdAt' => $libraryInfo->created_at,
-                'ul_status' => $libraryInfo->ul_status
-            ];
-        });
-
-        return response()->json($libraryGames);
-    }
+     /**
+      * Get game details for editing
+      *
+      * @param int $id
+      * @return \Illuminate\Http\JsonResponse
+      */
+      public function getGameForEdit($id)
+      {
+          try {
+              $game = Game::with('categories')
+                  ->where('g_id', $id)
+                  ->where('g_developerId', Auth::id())
+                  ->firstOrFail();
+  
+              $categories = $game->categories->pluck('gc_category')->toArray();
+              $categoryIds = [];
+              
+              // Map category names to IDs
+              foreach ($categories as $category) {
+                  switch ($category) {
+                      case 'Action': $categoryIds[] = 1; break;
+                      case 'Adventure': $categoryIds[] = 2; break;
+                      case 'RPG': $categoryIds[] = 3; break;
+                      case 'Strategy': $categoryIds[] = 4; break;
+                      case 'Sports': $categoryIds[] = 5; break;
+                      case 'Racing': $categoryIds[] = 6; break;
+                      case 'Simulation': $categoryIds[] = 7; break;
+                      case 'Puzzle': $categoryIds[] = 8; break;
+                      case 'Platformer': $categoryIds[] = 9; break;
+                      case 'Fighting': $categoryIds[] = 10; break;
+                      case 'Shooter': $categoryIds[] = 11; break;
+                      default: $categoryIds[] = 1; break;
+                  }
+              }
+  
+              $gameData = [
+                  'id' => $game->g_id,
+                  'title' => $game->g_title,
+                  'description' => $game->g_description,
+                  'price' => $game->g_price,
+                  'discount' => $game->g_discount,
+                  'genre' => $game->g_category,
+                  'language' => $game->g_language,
+                  'releaseDate' => $game->created_at->format('Y-m-d'),
+                  'status' => $game->g_status,
+                  'mainImage' => $game->g_mainImage ? asset('storage/' . $game->g_mainImage) : null,
+                  'screenshots' => array_filter([
+                      $game->g_exImg1 ? asset('storage/' . $game->g_exImg1) : null,
+                      $game->g_exImg2 ? asset('storage/' . $game->g_exImg2) : null,
+                      $game->g_exImg3 ? asset('storage/' . $game->g_exImg3) : null
+                  ]),
+                  'categoryIds' => $categoryIds
+              ];
+  
+              return response()->json([
+                  'success' => true,
+                  'game' => $gameData
+              ]);
+          } catch (\Exception $e) {
+              return response()->json([
+                  'success' => false,
+                  'message' => 'Failed to get game for editing',
+                  'error' => $e->getMessage()
+              ], 500);
+          }
+      }
+      
+      /**
+       * Update the specified game.
+       *
+       * @param  \Illuminate\Http\Request  $request
+       * @param  int  $id
+       * @return \Illuminate\Http\JsonResponse
+       */
+      public function update(Request $request, $id)
+      {
+          try {
+              Log::info('Game update request:', $request->all());
+              
+              // Find the game and check ownership
+              $game = Game::where('g_id', $id)
+                  ->where('g_developerId', Auth::id())
+                  ->firstOrFail();
+              
+              // Validate request
+              $validated = $request->validate([
+                  'g_title' => 'required|string|max:255',
+                  'g_description' => 'required|string',
+                  'g_price' => 'required|numeric|min:0',
+                  'g_discount' => 'nullable|numeric|min:0|max:100',
+                  'g_status' => 'nullable|string',
+                  'g_language' => 'required|string',
+                  'g_category' => 'nullable|string',
+                  'categories' => 'required|array',
+                  'g_mainImage' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                  'g_exImg1' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                  'g_exImg2' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                  'g_exImg3' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+              ]);
+              
+              // Handle file uploads - only update if new files are provided
+              if ($request->hasFile('g_mainImage')) {
+                  // Delete the old image if it exists
+                  if ($game->g_mainImage) {
+                      Storage::delete('public/' . $game->g_mainImage);
+                  }
+                  $game->g_mainImage = $request->file('g_mainImage')->store('games', 'public');
+              }
+              
+              if ($request->hasFile('g_exImg1')) {
+                  if ($game->g_exImg1) {
+                      Storage::delete('public/' . $game->g_exImg1);
+                  }
+                  $game->g_exImg1 = $request->file('g_exImg1')->store('games', 'public');
+              }
+              
+              if ($request->hasFile('g_exImg2')) {
+                  if ($game->g_exImg2) {
+                      Storage::delete('public/' . $game->g_exImg2);
+                  }
+                  $game->g_exImg2 = $request->file('g_exImg2')->store('games', 'public');
+              }
+              
+              if ($request->hasFile('g_exImg3')) {
+                  if ($game->g_exImg3) {
+                      Storage::delete('public/' . $game->g_exImg3);
+                  }
+                  $game->g_exImg3 = $request->file('g_exImg3')->store('games', 'public');
+              }
+              
+              // Update game basic info
+              $game->g_title = $request->g_title;
+              $game->g_description = $request->g_description;
+              $game->g_price = $request->g_price;
+              $game->g_discount = $request->g_discount ?? 0;
+              $game->g_status = 'pending'; // Reset status to pending on update
+              $game->g_language = $request->g_language;
+              $game->g_category = $request->g_category;
+              
+              // Save the game
+              $game->save();
+              
+              // Update categories
+              if (isset($request->categories) && is_array($request->categories)) {
+                  // Delete existing categories
+                  GameCategory::where('gc_gameId', $game->g_id)->delete();
+                  
+                  // Add new categories
+                  foreach ($request->categories as $categoryId) {
+                      // Map category ID to category name
+                      $categoryName = '';
+                      switch ($categoryId) {
+                          case 1: $categoryName = 'Action'; break;
+                          case 2: $categoryName = 'Adventure'; break;
+                          case 3: $categoryName = 'RPG'; break;
+                          case 4: $categoryName = 'Strategy'; break;
+                          case 5: $categoryName = 'Sports'; break;
+                          case 6: $categoryName = 'Racing'; break;
+                          case 7: $categoryName = 'Simulation'; break;
+                          case 8: $categoryName = 'Puzzle'; break;
+                          case 9: $categoryName = 'Platformer'; break;
+                          case 10: $categoryName = 'Fighting'; break;
+                          case 11: $categoryName = 'Shooter'; break;
+                          default: $categoryName = 'Action'; break;
+                      }
+                      
+                      GameCategory::create([
+                          'gc_gameId' => $game->g_id,
+                          'gc_gameName' => $game->g_title,
+                          'gc_category' => $categoryName
+                      ]);
+                      
+                      // Update the game's main category if not already set
+                      if (!$game->g_category) {
+                          $game->g_category = $categoryName;
+                          $game->save();
+                      }
+                  }
+              }
+              
+              return response()->json([
+                  'success' => true,
+                  'message' => 'Game updated successfully',
+                  'game' => $game
+              ]);
+              
+          } catch (\Exception $e) {
+              Log::error('Error updating game: ' . $e->getMessage());
+              return response()->json([
+                  'success' => false,
+                  'message' => 'Failed to update game',
+                  'error' => $e->getMessage()
+              ], 500);
+          }
+      }
 }

@@ -12,8 +12,16 @@ export const getHeaderNavigationItems = user => {
     ],
     user: [
       {
-        title: 'My Library',
+        title: 'Library',
         to: '/game-library',
+      },
+      {
+        title: 'Wishlist',
+        to: '/user-wishlist',
+      },
+      {
+        title: 'Cart',
+        to: '/cart',
       },
     ],
     developer: [

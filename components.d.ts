@@ -18,5 +18,6 @@ declare module 'vue' {
     RouterView: typeof import('vue-router')['RouterView']
     ThemeSwitcher: typeof import('./resources/js/@core/components/ThemeSwitcher.vue')['default']
     WelcomeMessage: typeof import('./resources/js/components/WelcomeMessage.vue')['default']
+    WishlistButton: typeof import('./resources/js/components/WishlistButton.vue')['default']
   }
 }

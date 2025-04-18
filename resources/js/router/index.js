@@ -22,8 +22,23 @@ const routes = [
     meta: { requiresAuth: true, role: 'developer' },
   },
   {
+    path: '/game-edit/:id',
+    component: () => import('@/pages/developer/create-game.vue'),
+    meta: { requiresAuth: true, role: 'developer' },
+  },
+  {
     path: '/admin-dashboard',
-    component: () => import('@/pages/AdminDashboard.vue'),
+    component: () => import('@/pages/admin/admin-dashboard.vue'),
+    meta: { requiresAuth: true, role: 'admin' },
+  },
+  {
+    path: '/admin/game-management',
+    component: () => import('@/pages/admin/GameManagement.vue'),
+    meta: { requiresAuth: true, role: 'admin' },
+  },
+  {
+    path: '/admin/user-management',
+    component: () => import('@/pages/admin/user-management.vue'),
     meta: { requiresAuth: true, role: 'admin' },
   },
 ]

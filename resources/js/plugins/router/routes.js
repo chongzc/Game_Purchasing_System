@@ -18,8 +18,8 @@ export const routes = [
       },
       {
         path: 'cart',
-        component: () => import('@/pages/user/shopping-cart.vue'),
-        meta: { requiresAuth: true, roles: ['user', 'developer', 'admin'] },
+        component: () => import('@/pages/user/cart.vue'),
+        meta: { requiresAuth: true, roles: ['user'] },
       },
       {
         path: 'checkout',
@@ -29,6 +29,11 @@ export const routes = [
       {
         path: 'game-library',
         component: () => import('@/pages/user/user-library.vue'),
+        meta: { requiresAuth: true, roles: ['user', 'developer', 'admin'] },
+      },
+      {
+        path: 'user-wishlist',
+        component: () => import('@/pages/user/user-wishlist.vue'),
         meta: { requiresAuth: true, roles: ['user', 'developer', 'admin'] },
       },
       {
@@ -42,6 +47,11 @@ export const routes = [
         meta: { requiresAuth: true, roles: ['developer'] },
       },
       {
+        path: '/game-edit/:id',
+        component: () => import('@/pages/developer/create-game.vue'),
+        meta: { requiresAuth: true, role: 'developer' },
+      },
+      {
         path: 'admin-dashboard',
         component: () => import('@/pages/admin/admin-dashboard.vue'),
         meta: { requiresAuth: true, roles: ['admin'] },
@@ -53,6 +63,10 @@ export const routes = [
           {
             path: 'games',
             component: () => import('@/pages/admin/GameManagement.vue'),
+          },
+          {
+            path: 'users',
+            component: () => import('@/pages/admin/user-management.vue'),
           },
 
           // More admin routes can be added here

@@ -92,14 +92,14 @@
                   </VListItemTitle>
                 </VListItem>
               </VList>
-            </div>
+              </div>
 
             <VDivider class="my-4" />
 
             <div class="text-subtitle-2 font-weight-bold mb-2">
               LANGUAGES
             </div>
-            
+
             <div class="filter-categories">
               <VList density="compact">
                 <VListItem
@@ -123,7 +123,7 @@
                   </VListItemTitle>
                 </VListItem>
               </VList>
-            </div>
+                  </div>
 
             <VDivider class="my-4" />
 
@@ -174,10 +174,12 @@
             <VListItem
               v-for="game in filteredGames"
               :key="game.id"
-              :to="`/games/${game.id}`"
+              :to="null"
               class="game-list-item py-3"
+              @click="navigateToGame(game.id, $event)"
             >
               <template #prepend>
+                <div class="position-relative">
                 <VImg
                   :src="game.image || '/images/placeholder.jpg'"
                   width="324"
@@ -185,7 +187,14 @@
                   cover
                   class="rounded"
                   style="margin-right: 20px;"
+                  :alt="game.title"
                 />
+                  <WishlistButton
+                    :game-id="game.id"
+                    class="position-absolute top-0 end-0 ma-2"
+                    @click.stop
+                  />
+                </div>
               </template>
               
               <VListItemTitle class="text-subtitle-1 font-weight-bold d-flex align-center mb-1">
@@ -255,7 +264,7 @@
                       RM{{ game.originalPrice.toFixed(2) }}
                     </div>
                     <div class="text-primary font-weight-bold">
-                      RM{{ game.price.toFixed(2) }}
+                      RM{{ (game.originalPrice - (game.originalPrice * (game.discount / 100))).toFixed(2) }}
                     </div>
                   </div>
                   <div
@@ -268,7 +277,7 @@
                     v-else
                     class="font-weight-bold text-primary"
                   >
-                    RM{{ game.price.toFixed(2) }}
+                    RM{{ game.originalPrice.toFixed(2) }}
                   </div>
                 </div>
               </template>
@@ -305,8 +314,11 @@
 </template>
 
 <script setup>
+import WishlistButton from '@/components/WishlistButton.vue'
 import axios from 'axios'
+import { debounce } from 'lodash'
 import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 // Breadcrumbs
 const breadcrumbs = ref([
@@ -325,22 +337,43 @@ const breadcrumbs = ref([
 const tabs = [
   { title: 'ALL', value: 'all' },
   { title: 'NEW & TRENDING', value: 'trending' },
-  { title: 'TOP SELLERS', value: 'top-sellers' },
+  { title: 'MOST REVIEW', value: 'most-review' },
   { title: 'TOP RATED', value: 'top-rated' }
 ]
 
 const activeTab = ref('all')
 
+// Add route instance
+const route = useRoute()
+const router = useRouter()
+
 // Filter state
 const searchQuery = ref('')
 const hideLibraryGames = ref(false)
 const priceRange = ref(500)
+const debouncedPriceRange = ref(500)
 const loading = ref(true)
 const games = ref([])
 const categories = ref([])
 const languages = ref([])
 const selectedCategory = ref(null)
 const selectedLanguage = ref(null)
+
+// Create a debounced function to update the price range
+const debouncedUpdatePrice = debounce((value) => {
+  debouncedPriceRange.value = value
+}, 500)
+
+// Watch for price range changes
+watch(priceRange, (newValue) => {
+  debouncedUpdatePrice(newValue)
+})
+
+// Update URL and load games when debounced price changes
+watch(debouncedPriceRange, () => {
+  loadGames()
+  updateURL()
+})
 
 // Load categories
 const loadCategories = async () => {
@@ -370,7 +403,7 @@ const loadGames = async () => {
       params: {
         tab: activeTab.value,
         search: searchQuery.value,
-        maxPrice: priceRange.value,
+        maxPrice: debouncedPriceRange.value,
         category: selectedCategory.value,
         language: selectedLanguage.value
       }
@@ -391,16 +424,66 @@ const clearFilters = () => {
   activeTab.value = 'all'
   selectedCategory.value = null
   selectedLanguage.value = null
-  loadGames()
+  // Update URL when clearing filters
+  router.replace({ query: {} })
+}
+
+// Update URL and load games when debounced price changes
+const updateURL = () => {
+  const query = {}
+  if (activeTab.value !== 'all') query.tab = activeTab.value
+  if (searchQuery.value) query.search = searchQuery.value
+  if (selectedCategory.value) query.category = selectedCategory.value
+  if (selectedLanguage.value) query.language = selectedLanguage.value
+  if (debouncedPriceRange.value !== 500) query.maxPrice = debouncedPriceRange.value
+
+  router.replace({ query })
 }
 
 // Watch for filter changes
-watch([activeTab, searchQuery, priceRange, selectedCategory, selectedLanguage], () => {
+watch([activeTab, searchQuery, selectedCategory, selectedLanguage], () => {
   loadGames()
+  updateURL()
 }, { deep: true })
+
+// Watch for route changes
+watch(
+  () => route.query,
+  (newQuery) => {
+    if (newQuery.category !== selectedCategory.value) {
+      selectedCategory.value = newQuery.category || null
+    }
+    if (newQuery.language !== selectedLanguage.value) {
+      selectedLanguage.value = newQuery.language || null
+    }
+    if (newQuery.tab !== activeTab.value) {
+      activeTab.value = newQuery.tab || 'all'
+    }
+    if (newQuery.search !== searchQuery.value) {
+      searchQuery.value = newQuery.search || ''
+    }
+    if (newQuery.maxPrice !== debouncedPriceRange.value?.toString()) {
+      const newPrice = parseInt(newQuery.maxPrice) || 500
+      priceRange.value = newPrice
+      debouncedPriceRange.value = newPrice
+    }
+  },
+  { immediate: true }
+)
 
 // Lifecycle hooks
 onMounted(() => {
+  const { category, language, tab, search, maxPrice } = route.query
+  if (category) selectedCategory.value = category
+  if (language) selectedLanguage.value = language
+  if (tab) activeTab.value = tab
+  if (search) searchQuery.value = search
+  if (maxPrice) {
+    const price = parseInt(maxPrice)
+    priceRange.value = price
+    debouncedPriceRange.value = price
+  }
+
   loadCategories()
   loadLanguages()
   loadGames()
@@ -417,6 +500,14 @@ const filteredGames = computed(() => {
 
   return result
 })
+
+// Add this in the script section after the other methods
+const navigateToGame = (gameId, event) => {
+  // Check if the click was on the wishlist button or its children
+  if (!event.target.closest('.v-btn')) {
+    router.push(`/games/${gameId}`)
+  }
+}
 </script>
 
 <style lang="scss" scoped>

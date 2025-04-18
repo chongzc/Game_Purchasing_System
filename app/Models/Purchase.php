@@ -14,16 +14,16 @@ class Purchase extends Model
 
     protected $fillable = [
         'p_userId',
-        'p_gameName',
         'p_gameId',
+        'p_gameName',
         'p_purchaseDate',
         'p_purchasePrice',
-        'p_receiptNumber',
+        'p_receiptNumber'
     ];
 
     protected $casts = [
         'p_purchaseDate' => 'datetime',
-        'p_purchasePrice' => 'float'
+        'p_purchasePrice' => 'decimal:2'
     ];
 
     public function user()

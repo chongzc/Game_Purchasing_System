@@ -39,6 +39,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/user-library', [GameController::class, 'library'])->name('user-library');
     Route::get('/game-library/games', [GameController::class, 'library']); 
     
+    Route::get('/user-wishlist', function () {
+        return view('application');
+    })->name('user-wishlist');
+    
     // Developer routes
     Route::middleware(['role:developer'])->group(function () {
         Route::get('/developer-dashboard', function () {

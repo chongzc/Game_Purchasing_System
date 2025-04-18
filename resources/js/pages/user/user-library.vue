@@ -10,12 +10,6 @@
         My Game Library
       </h1>
       <VSpacer />
-      <VBtn
-        color="primary"
-        prepend-icon="bx-download"
-      >
-        Download Launcher
-      </VBtn>
     </div>
     
     <!-- Search and Filter -->
@@ -92,11 +86,17 @@
       >
         <VCard>
           <VImg
-            :src="game.image || '/images/placeholder.jpg'"
+            :src="game.image || '/images/placeholder-game.jpg'"
             height="200"
             cover
             class="game-image"
+            :alt="game.title"
           >
+            <template v-slot:placeholder>
+              <VRow class="fill-height ma-0" align="center" justify="center">
+                <VProgressCircular indeterminate color="grey-lighten-5"></VProgressCircular>
+              </VRow>
+            </template>
             <div class="image-overlay d-flex align-center justify-center">
               <VBtn
                 icon="bx-play-circle"
@@ -140,14 +140,24 @@
           
           <VCardActions>
             <VBtn
-              block
               :color="game.status === 'installed' ? 'success' : 'primary'"
               :prepend-icon="game.status === 'installed' ? 'bx-play' : 'bx-download'"
               size="small"
               variant="flat"
+              class="me-2"
               @click="toggleInstallation(game)"
             >
               {{ game.status === 'installed' ? 'Play Now' : 'Install' }}
+            </VBtn>
+            <VBtn
+              v-if="game.status === 'installed'"
+              color="error"
+              size="small"
+              variant="outlined"
+              prepend-icon="bx-trash"
+              @click="uninstallGame(game)"
+            >
+              Uninstall
             </VBtn>
           </VCardActions>
         </VCard>
@@ -270,10 +280,10 @@ const fetchAllGames = async () => {
   }
 }
 
-const fetchLibrary = async () => {
+const fetchLibraryGames = async () => {
   try {
     loading.value = true
-    const response = await axios.get('/api/library-games', {
+    const response = await axios.get('/api/library', {
       params: {
         status: filterStatus.value
       }
@@ -285,18 +295,17 @@ const fetchLibrary = async () => {
     library.value = response.data.map(item => ({
       id: item.game?.g_id || 0,
       title: item.game?.g_title || 'Unknown Game',
-      image: item.game?.g_image || '/images/placeholder.jpg',
+      image: item.game?.g_image || '/images/placeholder-game.jpg',
       status: item.ul_status || 'owned',
       purchaseDate: item.ul_createdAt || new Date().toISOString(),
       price: item.game?.g_price || 0,
       description: item.game?.g_description || '',
-      developer: item.game?.developer || 'Unknown Developer',
-      downloadProgress: item.ul_status === 'downloading' ? Math.floor(Math.random() * 100) : null
+      developer: item.game?.developer || 'Unknown Developer'
     }))
 
     console.log('Transformed Library:', library.value)
   } catch (error) {
-    console.error('Error fetching library:', error)
+    console.error('Error fetching library games:', error)
     library.value = [] // Reset library on error
   } finally {
     loading.value = false
@@ -305,16 +314,43 @@ const fetchLibrary = async () => {
 
 const toggleInstallation = async (game) => {
   try {
-    // Here we would make an API call to update the game status
-    // For now, just update locally
     if (game.status === 'installed') {
+      // If game is installed, launch it
       alert(`Launching ${game.title}...`)
     } else {
-      alert(`Installing ${game.title}...`)
-      game.status = 'installed'
+      // If game is not installed, update status to installed
+      const response = await axios.put(`/api/library/${game.id}/status`, {
+        status: 'installed'
+      })
+      
+      if (response.data.success) {
+        // Update local state
+        game.status = 'installed'
+      } else {
+        throw new Error(response.data.message || 'Failed to update game status')
+      }
     }
   } catch (error) {
     console.error('Error updating game status:', error)
+    alert('Failed to update game status. Please try again.')
+  }
+}
+
+const uninstallGame = async (game) => {
+  try {
+    const response = await axios.put(`/api/library/${game.id}/status`, {
+      status: 'owned'
+    })
+    
+    if (response.data.success) {
+      // Update local state
+      game.status = 'owned'
+    } else {
+      throw new Error(response.data.message || 'Failed to uninstall game')
+    }
+  } catch (error) {
+    console.error('Error uninstalling game:', error)
+    alert('Failed to uninstall game. Please try again.')
   }
 }
 
@@ -363,12 +399,12 @@ const getEmptyStateMessage = computed(() => {
 
 // Add watch for filterStatus changes
 watch(filterStatus, () => {
-  fetchLibrary()
+  fetchLibraryGames()
 })
 
 // Load library data on mount
 onMounted(() => {
-  fetchLibrary()
+  fetchLibraryGames()
 })
 </script>
 
