@@ -195,19 +195,6 @@ onMounted(() => {
                 hidden
                 @input="changeAvatar"
               >
-
-              <VBtn
-                type="reset"
-                color="error"
-                variant="tonal"
-                @click="resetForm"
-              >
-                <span class="d-none d-sm-block">Reset</span>
-                <VIcon
-                  icon="bx-refresh"
-                  class="d-sm-none"
-                />
-              </VBtn>
             </div>
 
             <p class="text-body-1 mb-0">
@@ -292,7 +279,7 @@ onMounted(() => {
               </VBtn>
 
               <VBtn
-                color="secondary"
+                color="error"
                 variant="tonal"
                 @click="resetForm"
               >
