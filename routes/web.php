@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\Gate;
 Route::get('/sanctum/csrf-cookie', [CsrfCookieController::class, 'show']);
 
 Route::get('/', function () {
+    if (auth()->check() && !Gate::allows('is-user')) {
+        abort(403, 'Unauthorized action.');
+    }
     return view('application');
 })->name('home');
 

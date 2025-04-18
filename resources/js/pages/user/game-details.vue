@@ -903,6 +903,7 @@ watch(
                     :alt="relatedGame.title"
                   />
                   <WishlistButton
+                    v-if="isRegularUser"
                     :game-id="relatedGame.id"
                     class="position-absolute top-0 end-0 ma-2"
                   />
