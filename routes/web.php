@@ -5,6 +5,10 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\GameController;
 use Laravel\Sanctum\Http\Controllers\CsrfCookieController;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\DeveloperController;
+use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Gate;
 
 // CSRF Cookie for SPA Authentication
 Route::get('/sanctum/csrf-cookie', [CsrfCookieController::class, 'show']);
@@ -42,28 +46,36 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/user-wishlist', function () {
         return view('application');
     })->name('user-wishlist');
-    
-    // Developer routes
-    Route::middleware(['role:developer'])->group(function () {
-        Route::get('/developer-dashboard', function () {
-            return view('application');
-        })->name('developer-dashboard');
 
-        Route::get('/create-game', function () {
-            return view('application');
-        })->name('create-game');
-    });
-    
+    // Developer routes
+    Route::get('/developer-dashboard', function () {
+        if (!Gate::allows('access-developer-dashboard')) {
+            abort(403, 'Unauthorized action.');
+        }
+        return view('application');
+    })->name('developer-dashboard');
+
+    Route::get('/create-game', function () {
+        if (!Gate::allows('access-developer-dashboard')) {
+            abort(403, 'Unauthorized action.');
+        }
+        return view('application');
+    })->name('create-game');
+
     // Admin routes
-    Route::middleware(['role:admin'])->group(function () {
-        Route::get('/admin-dashboard', function () {
-            return view('application');
-        })->name('admin-dashboard');
-        
-        Route::get('/admin/games', function () {
-            return view('application');
-        })->name('admin.games');
-    });
+    Route::get('/admin-dashboard', function () {
+        if (!Gate::allows('access-admin-dashboard')) {
+            abort(403, 'Unauthorized action.');
+        }
+        return view('application');
+    })->name('admin-dashboard');
+    
+    Route::get('/admin/games', function () {
+        if (!Gate::allows('access-admin-dashboard')) {
+            abort(403, 'Unauthorized action.');
+        }
+        return view('application');
+    })->name('admin.games');
 });
 
 // This is the main entry point for the SPA
