@@ -162,6 +162,7 @@
 </template>
 
 <script setup>
+import { calculateFinalTotal, calculateOriginalSubtotal, calculateTotalDiscount } from '@/utils/priceCalculations'
 import axios from 'axios'
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -187,21 +188,9 @@ const isLoading = ref(false)
 const error = ref(null)
 
 // Cart calculations
-const originalSubtotal = computed(() => {
-  return cartItems.value.reduce((total, item) => {
-    return total + parseFloat(item.game.g_price)
-  }, 0)
-})
-
-const totalDiscount = computed(() => {
-  return cartItems.value.reduce((total, item) => {
-    return total + (parseFloat(item.game.g_price) * (item.c_discount / 100))
-  }, 0)
-})
-
-const finalTotal = computed(() => {
-  return originalSubtotal.value - totalDiscount.value
-})
+const originalSubtotal = computed(() => calculateOriginalSubtotal(cartItems.value))
+const totalDiscount = computed(() => calculateTotalDiscount(cartItems.value))
+const finalTotal = computed(() => calculateFinalTotal(originalSubtotal.value, totalDiscount.value))
 
 // Fetch cart items
 const fetchCartItems = async () => {
@@ -224,7 +213,7 @@ const fetchCartItems = async () => {
 const removeItem = async id => {
   try {
     await axios.delete(`/api/cart/${id}`)
-    await fetchCartItems() // Refresh cart after deletion
+    await fetchCartItems() 
   } catch (err) {
     console.error('Failed to remove item', err)
   }
@@ -244,7 +233,6 @@ const clearCart = async () => {
         },
       })
       
-      console.log('Clear cart response:', response.data)
       cartItems.value = []
       
       return

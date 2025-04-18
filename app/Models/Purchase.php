@@ -15,6 +15,7 @@ class Purchase extends Model
     protected $fillable = [
         'p_userId',
         'p_gameId',
+        'p_gameName',
         'p_purchaseDate',
         'p_purchasePrice',
         'p_receiptNumber'

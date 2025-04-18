@@ -38,3 +38,4 @@ class Cart extends Model
         return $this->belongsTo(Game::class, 'c_gameId', 'g_id');
     }
 }
+

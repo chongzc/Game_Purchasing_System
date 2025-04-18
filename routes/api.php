@@ -11,6 +11,7 @@ use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\CartController;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\PurchaseController;
 
 /*
 |--------------------------------------------------------------------------
@@ -119,4 +120,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/cart/clear', [CartController::class, 'clearCart']);
     Route::delete('/cart/{id}', [CartController::class, 'removeFromCart']);
     Route::get('/cart/checkout', [CartController::class, 'checkout']);
+});
+
+// Purchase Routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/purchases', [PurchaseController::class, 'store']);
+    Route::get('/purchases', [PurchaseController::class, 'getUserPurchases']);
 });
