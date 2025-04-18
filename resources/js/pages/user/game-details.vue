@@ -3,7 +3,7 @@ import WishlistButton from '@/components/WishlistButton.vue'
 import { useAuthStore } from '@/stores/auth'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-
+import axios from 'axios'
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
@@ -70,6 +70,7 @@ const getStatusText = computed(() => {
   if (game.value.libraryStatus === 'owned') {
     return game.value.isInstalled ? 'Installed' : 'Not Installed'
   }
+  
   return 'In Library'
 })
 
@@ -78,6 +79,7 @@ const getStatusColor = computed(() => {
   if (game.value.libraryStatus === 'owned') {
     return game.value.isInstalled ? 'success' : 'info'
   }
+  
   return 'primary'
 })
 
@@ -86,10 +88,13 @@ const fetchGameDetails = async () => {
   try {
     loading.value = true
 
+    const { default: axios } = await import('axios')
+    
     const response = await axios.get(`/api/games/${gameId.value}`)
     if (response.data.success) {
       game.value = response.data.game
       similarGames.value = response.data.similarGames
+
       // Make sure libraryStatus is set from the API response
       game.value.libraryStatus = response.data.game.libraryStatus || null
     }
@@ -236,7 +241,7 @@ const submitReview = async () => {
 }
 
 
-const viewGame = async (id) => {
+const viewGame = async id => {
   await router.push(`/games/${id}`)
   await fetchGameDetails()
 }
@@ -254,12 +259,13 @@ const formatDate = dateString => {
 const installGame = async () => {
   try {
     const response = await axios.put(`/api/library/${gameId.value}/status`, {
-      status: 'installed'
+      status: 'installed',
     })
     
     if (response.data.success) {
       // Update the local game status
       game.value.libraryStatus = 'installed'
+
       // Show success message or handle UI updates
     } else {
       throw new Error(response.data.message || 'Failed to install game')
@@ -273,12 +279,13 @@ const installGame = async () => {
 const uninstallGame = async () => {
   try {
     const response = await axios.put(`/api/library/${gameId.value}/status`, {
-      status: 'owned'
+      status: 'owned',
     })
     
     if (response.data.success) {
       // Update the local game status
       game.value.libraryStatus = 'owned'
+
       // Refresh the game details to ensure sync with server
       await fetchGameDetails()
     } else {
@@ -298,11 +305,11 @@ onMounted(async () => {
 // Watch for route changes
 watch(
   () => route.params.id,
-  async (newId) => {
+  async newId => {
     if (newId) {
       await fetchGameDetails()
     }
-  }
+  },
 )
 </script>
 
@@ -461,8 +468,14 @@ watch(
               <!-- Game Status Section -->
               <template v-if="isLoggedIn">
                 <!-- Not in library - Show purchase buttons -->
-                <VRow v-if="!game.libraryStatus" class="mt-4">
-                  <VCol cols="12" md="6">
+                <VRow
+                  v-if="!game.libraryStatus"
+                  class="mt-4"
+                >
+                  <VCol
+                    cols="12"
+                    md="6"
+                  >
                     <VBtn
                       block
                       size="large"
@@ -473,7 +486,10 @@ watch(
                       Add to Cart
                     </VBtn>
                   </VCol>
-                  <VCol cols="12" md="6">
+                  <VCol
+                    cols="12"
+                    md="6"
+                  >
                     <VBtn
                       block
                       size="large"
@@ -486,7 +502,10 @@ watch(
                 </VRow>
 
                 <!-- Owned or Installed -->
-                <VCard v-else class="mb-4">
+                <VCard
+                  v-else
+                  class="mb-4"
+                >
                   <VCardText>
                     <div class="d-flex align-center justify-space-between">
                       <div>
