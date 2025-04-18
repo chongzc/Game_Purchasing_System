@@ -1,7 +1,7 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { useAuthStore } from '@/stores/auth';
-import { getCookie } from '@/utils/cookie';
+import { getCookie, deleteCookie } from '@/utils/cookie';
 import logo from '@images/logo.svg?raw';
 import authV1BottomShape from '@images/svg/auth-v1-bottom-shape.svg?url';
 import authV1TopShape from '@images/svg/auth-v1-top-shape.svg?url';
@@ -36,6 +36,18 @@ const handleLogin = async () => {
     console.error('Login failed:', error);
   }
 };
+
+// Watch for changes to the "remember" checkbox
+watch(
+  () => form.value.remember,
+  (newValue) => {
+    if (!newValue) {
+      // Delete cookies when "Remember Me" is deselected
+      deleteCookie('email');
+      deleteCookie('password');
+    }
+  }
+);
 </script>
 
 <template>
