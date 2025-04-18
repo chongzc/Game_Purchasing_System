@@ -242,21 +242,6 @@ onMounted(() => {
             />
           </div>
         </VCol>
-        <VCol
-          cols="12"
-          md="3"
-          class="d-flex align-center justify-end"
-        >
-          <VBtn
-            color="primary"
-            prepend-icon="mdi-refresh"
-            :loading="loading"
-            :disabled="loading"
-            @click="fetchUsers"
-          >
-            Refresh
-          </VBtn>
-        </VCol>
       </VRow>
         
       <!-- Loading and Error States -->
@@ -325,13 +310,12 @@ onMounted(() => {
         
         <!-- Actions Column -->
         <template #item.actions="{ item }">
-          <div class="d-flex align-center gap-2">
+          <div class="d-flex align-center gap-2">   
             <VBtn
               v-if="item.isBanned !== 'true'"
               size="small"
               color="error"
               variant="tonal"
-              prepend-icon="mdi-block-helper"
               title="Ban User"
               @click="confirmUserAction(item, 'ban')"
             >
@@ -343,7 +327,6 @@ onMounted(() => {
               size="small"
               color="success"
               variant="elevated"
-              prepend-icon="mdi-check-circle"
               title="Unban User"
               class="px-4"
               @click="confirmUserAction(item, 'unban')"
@@ -355,7 +338,6 @@ onMounted(() => {
               size="small"
               color="info"
               variant="tonal"
-              prepend-icon="mdi-eye"
               title="View User Details"
               @click="viewUserDetails(item)"
             >
