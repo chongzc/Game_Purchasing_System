@@ -18,7 +18,7 @@ const gameData = ref({
   discount: '',
   genre: '',
   language: '',
-  coverImage: null,
+  coverImage: '',
   screenshots: [],
 })
 
@@ -31,9 +31,8 @@ const genres = [
   'Racing',
   'Simulation',
   'Puzzle',
-  'Platformer',
+  'Horror',
   'Fighting',
-  'Shooter',
 ]
 
 const languages = [
@@ -97,6 +96,20 @@ const handleSubmit = async () => {
   successMessage.value = ''
   errorMessage.value = ''
   
+  // Check if all required fields are filled
+  if (!gameData.value.title || 
+      !gameData.value.description || 
+      !gameData.value.price || 
+      !gameData.value.discount ||
+      !gameData.value.genre || 
+      !gameData.value.language ||
+      !gameData.value.coverImage ||
+      !gameData.value.screenshots) {
+    errorMessage.value = 'Please fill in all required fields'
+    
+    return // Stop the submission process
+  }
+
   try {
     console.log('Game data:', gameData.value)
     

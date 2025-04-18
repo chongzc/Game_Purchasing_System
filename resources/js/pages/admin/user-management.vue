@@ -252,7 +252,6 @@ onMounted(() => {
         >
           <VBtn
             color="primary"
-            prepend-icon="mdi-refresh"
             :loading="loading"
             :disabled="loading"
             @click="fetchUsers"
@@ -298,6 +297,7 @@ onMounted(() => {
         hover
         class="elevation-1"
         :item-class="item => item.isBanned === 'true' ? 'bg-error-lighten-5' : ''"
+        :sort-by="[{key: 'id', order: 'asc'}]"
       >
         <!-- ID Column -->
         <template #item.id="{ item }">
@@ -344,7 +344,6 @@ onMounted(() => {
               size="small"
               color="error"
               variant="tonal"
-              prepend-icon="mdi-block-helper"
               title="Ban User"
               @click="confirmUserAction(item, 'ban')"
             >
@@ -356,7 +355,6 @@ onMounted(() => {
               size="small"
               color="success"
               variant="elevated"
-              prepend-icon="mdi-check-circle"
               title="Unban User"
               class="px-4"
               @click="confirmUserAction(item, 'unban')"
@@ -368,7 +366,6 @@ onMounted(() => {
               size="small"
               color="info"
               variant="tonal"
-              prepend-icon="mdi-eye"
               title="View User Details"
               @click="viewUserDetails(item)"
             >

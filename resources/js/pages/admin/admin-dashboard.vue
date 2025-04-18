@@ -104,36 +104,36 @@ onMounted(() => {
             Users Overview
           </VCardTitle>
           <VCardText>
-            <div class="d-flex justify-space-between align-center">
-              <div>
-                <h3 class="text-h6">
+            <div class="d-flex justify-space-around align-center">
+              <div class="text-center px-4">
+                <h3 class="text-h6 text-medium-emphasis">
                   Total Users
                 </h3>
-                <p class="text-h4">
+                <p class="text-h4 mt-2">
                   {{ statistics.totalUsers + statistics.totalDevelopers + statistics.totalAdmins }}
                 </p>
               </div>
               <VDivider
                 vertical
-                class="mx-4"
+                class="mx-2"
               />
-              <div>
-                <h3 class="text-h6">
+              <div class="text-center px-4">
+                <h3 class="text-h6 text-medium-emphasis">
                   Developers
                 </h3>
-                <p class="text-h4">
+                <p class="text-h4 mt-2">
                   {{ statistics.totalDevelopers }}
                 </p>
               </div>
               <VDivider
                 vertical
-                class="mx-4"
+                class="mx-2"
               />
-              <div>
-                <h3 class="text-h6">
+              <div class="text-center px-4">
+                <h3 class="text-h6 text-medium-emphasis">
                   Customers
                 </h3>
-                <p class="text-h4">
+                <p class="text-h4 mt-2">
                   {{ statistics.totalUsers }}
                 </p>
               </div>
@@ -151,12 +151,12 @@ onMounted(() => {
             Games Overview
           </VCardTitle>
           <VCardText>
-            <div class="d-flex justify-space-between align-center">
-              <div>
-                <h3 class="text-h6">
+            <div class="d-flex justify-space-around align-center">
+              <div class="text-center px-4">
+                <h3 class="text-h6 text-medium-emphasis">
                   Total Games
                 </h3>
-                <p class="text-h4">
+                <p class="text-h4 mt-2">
                   {{ statistics.totalGames }}
                 </p>
               </div>
@@ -164,11 +164,11 @@ onMounted(() => {
                 vertical
                 class="mx-4"
               />
-              <div>
-                <h3 class="text-h6">
+              <div class="text-center px-4">
+                <h3 class="text-h6 text-medium-emphasis">
                   Pending Review
                 </h3>
-                <p class="text-h4 text-warning">
+                <p class="text-h4 text-warning mt-2">
                   {{ statistics.pendingGames }}
                 </p>
               </div>
@@ -180,11 +180,6 @@ onMounted(() => {
       <VCol cols="12">
         <VCard v-if="statistics.pendingGames > 0">
           <VCardTitle class="bg-warning-subtle">
-            <VIcon
-              icon="mdi-alert"
-              color="warning"
-              class="me-2"
-            />
             Pending Games Approval
           </VCardTitle>
           <VCardText>
@@ -241,7 +236,6 @@ onMounted(() => {
                 md="4"
               >
                 <VBtn
-                  prepend-icon="mdi-account-group"
                   block
                   variant="flat"
                   color="primary"
@@ -256,7 +250,6 @@ onMounted(() => {
                 md="4"
               >
                 <VBtn
-                  prepend-icon="mdi-gamepad-variant"
                   block
                   variant="flat"
                   color="primary"
@@ -271,7 +264,6 @@ onMounted(() => {
                 md="4"
               >
                 <VBtn
-                  prepend-icon="mdi-chart-bar"
                   block
                   variant="flat"
                   color="primary"
