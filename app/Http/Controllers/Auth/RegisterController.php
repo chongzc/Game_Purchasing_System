@@ -32,14 +32,17 @@ class RegisterController extends Controller
         $validator = Validator::make($request->all(), [
             'username' => ['required', 'string', 'max:255', 'unique:users,u_name'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,u_email'],
-            'password' => ['required', 'string', 'min:8'],
+            'password' => ['required', 'string', 'min:8', 'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/'],
             'birthDate' => ['required', 'date', 'before:today'],
             'role' => ['required', 'in:user,developer,admin'],
         ]);
 
         if ($validator->fails()) {
             if ($request->wantsJson()) {
-                return response()->json(['errors' => $validator->errors()], 422);
+                return response()->json([
+                    'errors' => $validator->errors(),
+                    'message' => 'Password must be at least 8 characters long and include an uppercase letter, a lowercase letter, a number, and a special character.'
+                ], 422);
             }
             return back()->withErrors($validator)->withInput();
         }

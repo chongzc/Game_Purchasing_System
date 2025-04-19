@@ -1,7 +1,7 @@
 <script setup>
 import { useAuthStore } from '@/stores/auth'
 import { formatDate } from '@core/utils/formatters'
-import logo from '@images/logo.svg?raw'
+import logo from '@images/logo.png'
 import authV1BottomShape from '@images/svg/auth-v1-bottom-shape.svg?url'
 import authV1TopShape from '@images/svg/auth-v1-top-shape.svg?url'
 import { useRouter } from 'vue-router'
@@ -39,9 +39,10 @@ const passwordsMatch = computed(() => {
 
 // Username validation
 const validateUsername = username => {
-  const usernameRegex = /^[a-zA-Z0-9]{5,100}$/ // Alphanumeric, min 5 characters and max 100
+  const usernameRegex = /^[a-z0-9]{5,100}$/i // Alphanumeric, min 5 characters and max 100
   if (!username) return 'Username is required.'
   if (!usernameRegex.test(username)) return 'Username must be alphanumeric, max 5 characters, and no special characters.'
+  
   return ''
 }
 
@@ -50,6 +51,7 @@ const validatePassword = password => {
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/ // At least one uppercase, one lowercase, one number, one special character, min 8 characters
   if (!password) return 'Password is required.'
   if (!passwordRegex.test(password)) return 'Password must be at least 8 characters long and include an uppercase letter, a lowercase letter, a number, and a special character.'
+  
   return ''
 }
 
@@ -82,6 +84,7 @@ const handleRegister = async () => {
 
   if (!isFormValid.value) {
     errorMessages.value.form = 'Please fill in all required fields.'
+    
     return
   }
 
@@ -142,10 +145,11 @@ const handleRegister = async () => {
             to="/"
             class="app-logo"
           >
-            <!-- eslint-disable vue/no-v-html -->
-            <div
-              class="d-flex"
-              v-html="logo"
+            <VImg
+              :src="logo"
+              height="80"
+              width="80"
+              cover
             />
             <h1>
               Game Store

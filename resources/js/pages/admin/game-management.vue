@@ -180,7 +180,7 @@
           
           <!-- Actions Column -->
           <template #item.actions="{ item }">
-            <div class="d-flex">
+            <div>
               <VBtn
                 icon
                 variant="text"
