@@ -8,6 +8,8 @@
 7. npm run dev
 8. php artisan serve
 
-6. php artisan migrate:fresh
+game_store.sql already provided
+
+php artisan migrate:fresh
 
 
