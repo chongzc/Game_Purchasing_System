@@ -17,6 +17,9 @@ const activeTab = ref('description')
 const userRating = ref(0)
 const userReview = ref('')
 
+// Add a ref for the currently displayed image
+const currentImage = ref('')
+
 const isLoggedIn = computed(() => {
   console.log('Auth Store State:', {
     user: authStore.user,
@@ -102,12 +105,20 @@ const fetchGameDetails = async () => {
 
       // Make sure libraryStatus is set from the API response
       game.value.libraryStatus = response.data.game.libraryStatus || null
+      
+      // Set the current image to the main image when game data is fetched
+      currentImage.value = game.value.mainImage
     }
   } catch (error) {
     console.error('Error fetching game details:', error)
   } finally {
     loading.value = false
   }
+}
+
+// Add method to change the current image
+const setCurrentImage = image => {
+  currentImage.value = image
 }
 
 const hideCartSuccessAfterDelay = () => {
@@ -349,7 +360,7 @@ watch(
         >
           <VCard class="mb-4">
             <VImg
-              :src="game.mainImage || '/images/placeholder.jpg'"
+              :src="currentImage || game.mainImage || '/images/placeholder.jpg'"
               height="400"
               cover
               class="rounded"
@@ -359,6 +370,23 @@ watch(
         
           <!-- Thumbnail Gallery -->
           <VRow v-if="game.gallery?.length">
+            <!-- Main image thumbnail - only show if it's not already in the gallery -->
+            <VCol 
+              v-if="!game.gallery.includes(game.mainImage)"
+              cols="3"
+            >
+              <VImg
+                :src="game.mainImage || '/images/placeholder.jpg'"
+                height="80"
+                cover
+                class="rounded cursor-pointer thumbnail-image"
+                :class="{ 'active-thumbnail': currentImage === game.mainImage }"
+                alt="Main image"
+                @click="setCurrentImage(game.mainImage)"
+              />
+            </VCol>
+            
+            <!-- Gallery images thumbnails -->
             <VCol
               v-for="(image, index) in game.gallery"
               :key="index"
@@ -368,8 +396,10 @@ watch(
                 :src="image || '/images/placeholder.jpg'"
                 height="80"
                 cover
-                class="rounded cursor-pointer"
+                class="rounded cursor-pointer thumbnail-image"
+                :class="{ 'active-thumbnail': currentImage === image }"
                 :alt="`${game.title} screenshot ${index + 1}`"
+                @click="setCurrentImage(image)"
               />
             </VCol>
           </VRow>
@@ -1022,5 +1052,19 @@ watch(
 <style scoped>
 .cursor-pointer {
   cursor: pointer;
+}
+
+.thumbnail-image {
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.thumbnail-image:hover {
+  opacity: 0.85;
+  transform: scale(1.05);
+}
+
+.active-thumbnail {
+  border: 2px solid #1976d2;
 }
 </style>
