@@ -39,7 +39,7 @@
                 >
                   <td>
                     <VImg
-                      :src="item.game.g_mainImage || '/images/placeholder.jpg'"
+                      :src="item.game.g_mainImage ? `/storage/${item.game.g_mainImage}` : '/images/placeholder.jpg'"
                       height="80"
                       width="80"
                       cover

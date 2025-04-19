@@ -121,9 +121,9 @@
           <template #item.image="{ item }">
             <div class="d-flex align-center py-2">
               <VImg
-                :src="item.image || '/images/placeholder.jpg'"
-                width="60"
-                height="40"
+                :src="item.image ? `/storage/${item.image}` : '/images/placeholder.jpg'"
+                height="80"
+                width="80"
                 cover
                 class="rounded me-3"
               />
