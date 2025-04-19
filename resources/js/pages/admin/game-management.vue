@@ -264,7 +264,7 @@ const headers = [
 
 // Options for filters
 const categoryOptions = ['All', 'Action', 'Adventure', 'RPG', 'Strategy', 'Sports', 'Racing', 'Simulation', 'Puzzle', 'Horror', 'Fighting']
-const statusOptions = ['All', 'pending', 'verified', 'reported', 'removed']
+const statusOptions = ['All', 'pending', 'verified']
 const priceRangeOptions = ['All', 'Free', 'Under $10', '$10-$30', '$30-$60', 'Over $60']
 
 // Breadcrumbs for navigation
@@ -299,7 +299,6 @@ const fetchGames = async () => {
       discount: game.g_discount,
       status: game.g_status,
       category: game.g_category,
-      categories: game.categories ? game.categories.map(cat => cat.gc_category) : [],
       image: game.g_mainImage,
       releaseDate: game.created_at,
       developer: {
@@ -334,10 +333,7 @@ const applyFilters = () => {
   
   // Apply category filter
   if (filters.value.category && filters.value.category !== 'All') {
-    result = result.filter(game => 
-      game.category === filters.value.category || 
-      (Array.isArray(game.categories) && game.categories.includes(filters.value.category)),
-    )
+    result = result.filter(game => game.category === filters.value.category)
   }
   
   // Apply status filter
