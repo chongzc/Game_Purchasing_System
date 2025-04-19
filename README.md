@@ -4,11 +4,10 @@
 3. cp .env.example .env
 4. php artisan key:generate
 5. php artisan migrate
-6. php artisan db:seed
-7. npm run dev
-8. php artisan serve
+6. npm run dev
+7. php artisan serve
 
-game_store.sql already provided
+after migrate , import game_store.sql into php my admin
 
 php artisan migrate:fresh
 
