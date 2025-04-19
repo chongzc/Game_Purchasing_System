@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Game;
-use App\Models\GameCategory;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -23,7 +22,7 @@ class AdminController extends Controller
      */
     public function getAllGames()
     {
-        $games = Game::with(['developer', 'categories'])
+        $games = Game::with(['developer'])
             ->orderBy('created_at', 'desc')
             ->get();
             
@@ -38,7 +37,7 @@ class AdminController extends Controller
      */
     public function getGame($id)
     {
-        $game = Game::with(['developer', 'categories', 'reviews'])
+        $game = Game::with(['developer', 'reviews'])
             ->findOrFail($id);
             
         return response()->json([
@@ -97,9 +96,6 @@ class AdminController extends Controller
         if ($game->g_exImg3) {
             Storage::delete('public/' . $game->g_exImg3);
         }
-        
-        // Delete associated categories
-        GameCategory::where('gc_gameId', $id)->delete();
         
         // Delete the game
         $game->delete();
@@ -252,9 +248,8 @@ class AdminController extends Controller
         $verifiedGames = Game::where('g_status', 'verified')->count();
         $reportedGames = Game::where('g_status', 'reported')->count();
         
-        $topCategories = DB::table('game_categories')
-            ->select('gc_category as name', DB::raw('count(*) as games_count'))
-            ->groupBy('gc_category')
+        $topCategories = Game::select('g_category as name', DB::raw('count(*) as games_count'))
+            ->groupBy('g_category')
             ->orderBy('games_count', 'desc')
             ->take(5)
             ->get();

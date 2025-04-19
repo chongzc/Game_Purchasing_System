@@ -11,6 +11,17 @@ const successMessage = ref('')
 const searchQuery = ref('')
 const showBannedOnly = ref(false)
 
+// Filters for the data table
+const filters = ref({
+  search: '',
+  role: '',
+  status: '',
+})
+
+// Filter options
+const roleOptions = ['All', 'admin', 'developer', 'user']
+const statusOptions = ['All', 'Active', 'Banned']
+
 // User status management
 const userToUpdate = ref(null)
 const confirmDialog = ref(false)
@@ -72,7 +83,7 @@ const fetchUsers = async () => {
 
 // Search users by name
 const searchUsers = async () => {
-  if (!searchQuery.value || searchQuery.value.length < 2) {
+  if (!filters.value.search || filters.value.search.length < 2) {
     // If search query is empty or too short, fetch all users
     return fetchUsers()
   }
@@ -82,7 +93,7 @@ const searchUsers = async () => {
   
   try {
     const response = await axios.post('/api/admin/users/find-by-name', {
-      name: searchQuery.value,
+      name: filters.value.search,
     })
     
     if (response.data.success) {
@@ -100,12 +111,47 @@ const searchUsers = async () => {
 
 // Filter users (for client-side filtering)
 const filteredUsers = computed(() => {
-  if (showBannedOnly.value) {
-    return users.value.filter(user => user.isBanned === 'true')
+  let result = [...users.value]
+  
+  // Apply search filter (already handled by searchUsers function)
+  
+  // Apply role filter
+  if (filters.value.role && filters.value.role !== 'All') {
+    result = result.filter(user => user.role === filters.value.role)
   }
   
-  return users.value
+  // Apply status filter
+  if (filters.value.status && filters.value.status !== 'All') {
+    if (filters.value.status === 'Banned') {
+      result = result.filter(user => user.isBanned === 'true')
+    } else if (filters.value.status === 'Active') {
+      result = result.filter(user => user.isBanned !== 'true')
+    }
+  }
+  
+  return result
 })
+
+// Apply filters
+const applyFilters = () => {
+  // If there's a search query, first search the backend
+  if (filters.value.search && filters.value.search.length >= 2) {
+    searchUsers()
+  } else {
+    // Otherwise just apply client-side filters
+    fetchUsers()
+  }
+}
+
+// Reset filters
+const resetFilters = () => {
+  filters.value = {
+    search: '',
+    role: '',
+    status: '',
+  }
+  fetchUsers()
+}
 
 // Open ban confirmation dialog
 const confirmUserAction = (user, action) => {
@@ -153,12 +199,6 @@ const updateUserBanStatus = async () => {
   }
 }
 
-// Reset search
-const resetSearch = () => {
-  searchQuery.value = ''
-  fetchUsers()
-}
-
 // Get badge color for user role
 const getRoleBadgeColor = role => {
   switch (role) {
@@ -193,7 +233,7 @@ onMounted(() => {
   // Check if there's a filter parameter in the URL for banned users
   const urlParams = new URLSearchParams(window.location.search)
   if (urlParams.get('filter') === 'banned') {
-    showBannedOnly.value = true
+    filters.value.status = 'Banned'
   }
   
   fetchUsers()
@@ -201,70 +241,16 @@ onMounted(() => {
 </script>
 
 <template>
-  <VCard>
-    <VCardTitle class="d-flex justify-space-between align-center pt-6 mt-4">
-      <h2>Users Management</h2>
-    </VCardTitle>
-    
+  <div class="d-flex align-center mb-6">
+    <h2 class="text-h3 font-weight-bold">
+      User Management
+    </h2>
+  </div>
+
+  <!-- Filters -->
+  <VCard class="mb-6">
     <VCardText>
-      <p class="mb-4">
-        Manage all system users, including the ability to ban users who violate platform rules.
-      </p>
-      
-      <!-- Search and Filter Section -->
-      <VRow class="mb-6">
-        <VCol
-          cols="12"
-          md="6"
-        >
-          <VTextField
-            v-model="searchQuery"
-            label="Search users by name"
-            prepend-inner-icon="mdi-magnify"
-            density="compact"
-            clearable
-            @update:model-value="searchUsers"
-            @click:clear="resetSearch"
-          />
-        </VCol>
-        <VCol
-          cols="12"
-          md="3"
-        >
-          <div class="d-flex flex-column">
-            <VSwitch
-              v-model="showBannedOnly"
-              color="error"
-              label="Show banned users only"
-              hide-details
-              density="comfortable"
-            />
-            <div
-              v-if="showBannedOnly"
-              class="text-error text-caption ms-2"
-            />
-          </div>
-        </VCol>
-      </VRow>
-        
-      <!-- Loading and Error States -->
-      <div
-        v-if="loading"
-        class="d-flex justify-center py-4"
-      >
-        <VProgressCircular indeterminate />
-      </div>
-        
-      <VAlert
-        v-if="error"
-        type="error"
-        variant="tonal"
-        closable
-        class="mb-4"
-      >
-        {{ error }}
-      </VAlert>
-      
+      <!-- Success and Error Messages -->
       <VAlert
         v-if="successMessage"
         type="success"
@@ -274,6 +260,88 @@ onMounted(() => {
       >
         {{ successMessage }}
       </VAlert>
+      
+      <VAlert
+        v-if="error"
+        type="error"
+        variant="tonal"
+        closable
+        class="mb-4"
+      >
+        {{ error }}
+      </VAlert>
+    
+      <VRow>
+        <VCol
+          cols="12"
+          md="5"
+        >
+          <VTextField
+            v-model="filters.search"
+            label="Search users"
+            placeholder="Enter user name or email"
+            variant="outlined"
+            density="compact"
+            prepend-inner-icon="bx-search"
+            hide-details
+            @update:model-value="applyFilters"
+          />
+        </VCol>
+        <VCol
+          cols="12"
+          md="3"
+        >
+          <VSelect
+            v-model="filters.role"
+            label="Role"
+            :items="roleOptions"
+            variant="outlined"
+            density="compact"
+            hide-details
+            @update:model-value="applyFilters"
+          />
+        </VCol>
+        <VCol
+          cols="12"
+          md="2"
+        >
+          <VSelect
+            v-model="filters.status"
+            label="Status"
+            :items="statusOptions"
+            variant="outlined"
+            density="compact"
+            hide-details
+            @update:model-value="applyFilters"
+          />
+        </VCol>
+        <VCol
+          cols="12"
+          md="2"
+        >
+          <VBtn 
+            color="primary" 
+            variant="outlined" 
+            block
+            height="40"
+            @click="resetFilters"
+          >
+            Reset Filters
+          </VBtn>
+        </VCol>
+      </VRow>
+    </VCardText>
+  </VCard>
+  
+  <VCard>
+    <VCardText>
+      <!-- Loading and Error States -->
+      <div
+        v-if="loading"
+        class="d-flex justify-center py-4"
+      >
+        <VProgressCircular indeterminate />
+      </div>
       
       <!-- Users Table -->
       <VDataTable
@@ -375,15 +443,15 @@ onMounted(() => {
           No users found
         </h3>
         <p class="text-body-2">
-          {{ searchQuery ? 'Try a different search term' : 'There are no users in the system yet' }}
+          {{ filters.search ? 'Try a different search term' : 'There are no users in the system yet' }}
         </p>
         
         <VBtn
-          v-if="searchQuery"
+          v-if="filters.search"
           color="primary"
           variant="outlined"
           class="mt-4"
-          @click="resetSearch"
+          @click="resetFilters"
         >
           Clear Search
         </VBtn>

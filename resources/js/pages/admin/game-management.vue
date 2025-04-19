@@ -1,14 +1,9 @@
 <template>
   <div>
-    <VBreadcrumbs
-      :items="breadcrumbs"
-      class="pa-0 mb-6"
-    />
-    
     <div class="d-flex align-center mb-6">
-      <h1 class="text-h3 font-weight-bold">
+      <h2 class="text-h3 font-weight-bold">
         Game Management
-      </h1>
+      </h2>
     </div>
     
     <!-- Filters -->
@@ -126,9 +121,9 @@
           <template #item.image="{ item }">
             <div class="d-flex align-center py-2">
               <VImg
-                :src="item.image || '/images/placeholder.jpg'"
-                width="60"
-                height="40"
+                :src="item.image ? `/storage/${item.image}` : '/images/placeholder.jpg'"
+                height="80"
+                width="80"
                 cover
                 class="rounded me-3"
               />
@@ -269,7 +264,7 @@ const headers = [
 
 // Options for filters
 const categoryOptions = ['All', 'Action', 'Adventure', 'RPG', 'Strategy', 'Sports', 'Racing', 'Simulation', 'Puzzle', 'Horror', 'Fighting']
-const statusOptions = ['All', 'pending', 'verified', 'reported', 'removed']
+const statusOptions = ['All', 'pending', 'verified']
 const priceRangeOptions = ['All', 'Free', 'Under $10', '$10-$30', '$30-$60', 'Over $60']
 
 // Breadcrumbs for navigation
@@ -304,7 +299,6 @@ const fetchGames = async () => {
       discount: game.g_discount,
       status: game.g_status,
       category: game.g_category,
-      categories: game.categories ? game.categories.map(cat => cat.gc_category) : [],
       image: game.g_mainImage,
       releaseDate: game.created_at,
       developer: {
@@ -339,10 +333,7 @@ const applyFilters = () => {
   
   // Apply category filter
   if (filters.value.category && filters.value.category !== 'All') {
-    result = result.filter(game => 
-      game.category === filters.value.category || 
-      (Array.isArray(game.categories) && game.categories.includes(filters.value.category)),
-    )
+    result = result.filter(game => game.category === filters.value.category)
   }
   
   // Apply status filter

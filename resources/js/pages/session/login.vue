@@ -1,53 +1,53 @@
 <script setup>
-import { ref, watch } from 'vue';
-import { useAuthStore } from '@/stores/auth';
-import { getCookie, deleteCookie } from '@/utils/cookie';
-import logo from '@images/logo.svg?raw';
-import authV1BottomShape from '@images/svg/auth-v1-bottom-shape.svg?url';
-import authV1TopShape from '@images/svg/auth-v1-top-shape.svg?url';
-import { useRoute, useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores/auth'
+import { deleteCookie, getCookie } from '@/utils/cookie'
+import logo from '@images/logo.png'
+import authV1BottomShape from '@images/svg/auth-v1-bottom-shape.svg?url'
+import authV1TopShape from '@images/svg/auth-v1-top-shape.svg?url'
+import { ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 const form = ref({
   email: getCookie('email') || '', // Pre-fill email from cookie
   password: getCookie('password') || '', // Pre-fill password from cookie
   remember: !!getCookie('email'), // Check if "remember" was enabled
-});
+})
 
-const isPasswordVisible = ref(false);
-const router = useRouter();
-const route = useRoute();
-const authStore = useAuthStore();
+const isPasswordVisible = ref(false)
+const router = useRouter()
+const route = useRoute()
+const authStore = useAuthStore()
 
 const handleLogin = async () => {
   try {
-    await authStore.login(form.value.email, form.value.password, form.value.remember);
+    await authStore.login(form.value.email, form.value.password, form.value.remember)
 
     // Redirect based on user role or previous intended route
     const redirectPath = route.query.redirect
       ? route.query.redirect
       : authStore.isAdmin
-      ? '/admin-dashboard'
-      : authStore.isDeveloper
-      ? '/developer-dashboard'
-      : '/game-store';
+        ? '/admin-dashboard'
+        : authStore.isDeveloper
+          ? '/developer-dashboard'
+          : '/game-store'
 
-    router.push(redirectPath);
+    router.push(redirectPath)
   } catch (error) {
-    console.error('Login failed:', error);
+    console.error('Login failed:', error)
   }
-};
+}
 
 // Watch for changes to the "remember" checkbox
 watch(
   () => form.value.remember,
-  (newValue) => {
+  newValue => {
     if (!newValue) {
       // Delete cookies when "Remember Me" is deselected
-      deleteCookie('email');
-      deleteCookie('password');
+      deleteCookie('email')
+      deleteCookie('password')
     }
-  }
-);
+  },
+)
 </script>
 
 <template>
@@ -75,10 +75,12 @@ watch(
             class="app-logo"
           >
             <!-- eslint-disable vue/no-v-html -->
-            <div
-              class="d-flex"
-              v-html="logo"
-            />
+            <VImg
+              :src="logo"
+              height="80"
+              width="80"
+              cover
+                    />
             <h1>
               Game Store
             </h1>
@@ -87,7 +89,7 @@ watch(
 
         <VCardText>
           <h4 class="text-h4 mb-1">
-            Welcome to Ali Game Store! 👋🏻
+            Welcome! 👋🏻
           </h4>
           <p class="mb-0">
             Please sign-in to your account and start the adventure
@@ -201,7 +203,7 @@ watch(
 
 .auth-v1-top-shape,
 .auth-v1-bottom-shape {
-  position: fixed !important; // Use !important to override any possible conflicting styles
+  position: fixed !important;
   z-index: 0;
 }
 

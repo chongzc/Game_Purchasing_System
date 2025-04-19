@@ -7,6 +7,12 @@ export const routes = [
       {
         path: 'game-store',
         component: () => import('@/pages/game-store.vue'),
+        meta: { requiresAuth: false, roles: ['user'] },
+      },
+      {
+        path: 'purchase-history',
+        component: () => import('@/pages/user/purchase-history.vue'),
+        meta: { requiresAuth: true, roles: ['user'] },
       },
       {
         path: 'browse-games',
@@ -62,45 +68,19 @@ export const routes = [
         children: [
           {
             path: 'games',
-            component: () => import('@/pages/admin/GameManagement.vue'),
+            component: () => import('@/pages/admin/game-management.vue'),
           },
           {
             path: 'users',
             component: () => import('@/pages/admin/user-management.vue'),
           },
 
-          // More admin routes can be added here
         ],
-      },
-      {
-        path: 'dashboard',
-        component: () => import('@/pages/dashboard.vue'),
-        meta: { requiresAuth: true },
       },
       {
         path: 'account-settings',
         component: () => import('@/pages/profile/account-settings.vue'),
         meta: { requiresAuth: true },
-      },
-      {
-        path: 'typography',
-        component: () => import('@/pages/typography.vue'),
-      },
-      {
-        path: 'icons',
-        component: () => import('@/pages/icons.vue'),
-      },
-      {
-        path: 'cards',
-        component: () => import('@/pages/cards.vue'),
-      },
-      {
-        path: 'tables',
-        component: () => import('@/pages/tables.vue'),
-      },
-      {
-        path: 'form-layouts',
-        component: () => import('@/pages/form-layouts.vue'),
       },
     ],
   },

@@ -1,24 +1,45 @@
 <template>
   <div class="user-wishlist">
-    <VContainer>
+    <VContainer class="max-width-container">
       <VBreadcrumbs
         :items="breadcrumbs"
         class="pa-0 mb-4"
       />
       
-      <h1 class="text-h4 mb-6">My Wishlist</h1>
+      <h1 class="text-h4 mb-6">
+        My Wishlist
+      </h1>
 
       <!-- Loading State -->
-      <VCard v-if="loading" class="pa-6 d-flex justify-center">
+      <VCard
+        v-if="loading"
+        class="pa-6 d-flex justify-center"
+      >
         <VProgressCircular indeterminate />
       </VCard>
 
       <!-- Empty State -->
-      <VCard v-else-if="!wishlistGames.length" class="pa-6 text-center">
-        <VIcon icon="bx-heart" size="64" color="grey" class="mb-4" />
-        <h2 class="text-h5 mb-2">Your wishlist is empty</h2>
-        <p class="text-body-1 mb-4">Browse our game store to find games you love!</p>
-        <VBtn color="primary" to="/game-store" :href="null">
+      <VCard
+        v-else-if="!wishlistGames.length"
+        class="pa-6 text-center"
+      >
+        <VIcon
+          icon="bx-heart"
+          size="64"
+          color="grey"
+          class="mb-4"
+        />
+        <h2 class="text-h5 mb-2">
+          Your wishlist is empty
+        </h2>
+        <p class="text-body-1 mb-4">
+          Browse our game store to find games you love!
+        </p>
+        <VBtn
+          color="primary"
+          to="/game-store"
+          :href="null"
+        >
           Browse Games
         </VBtn>
       </VCard>
@@ -41,9 +62,16 @@
               class="position-relative"
               :alt="game.title"
             >
-              <template v-slot:placeholder>
-                <VRow class="fill-height ma-0" align="center" justify="center">
-                  <VProgressCircular indeterminate color="grey-lighten-5"></VProgressCircular>
+              <template #placeholder>
+                <VRow
+                  class="fill-height ma-0"
+                  align="center"
+                  justify="center"
+                >
+                  <VProgressCircular
+                    indeterminate
+                    color="grey-lighten-5"
+                  />
                 </VRow>
               </template>
               <!-- Wishlist Button -->
@@ -71,10 +99,21 @@
               </div>
 
               <div class="d-flex align-center">
-                <div class="text-h6">${{ calculateDiscountedPrice(game.price, game.discount).toFixed(2) }}</div>
-                <div v-if="game.discount > 0" class="ms-2">
+                <div class="text-h6">
+                  ${{ calculateDiscountedPrice(game.price, game.discount).toFixed(2) }}
+                </div>
+                <div
+                  v-if="game.discount > 0"
+                  class="ms-2"
+                >
                   <span class="text-decoration-line-through text-disabled">${{ game.price }}</span>
-                  <VChip color="error" size="small" class="ms-2">-{{ game.discount }}%</VChip>
+                  <VChip
+                    color="error"
+                    size="small"
+                    class="ms-2"
+                  >
+                    -{{ game.discount }}%
+                  </VChip>
                 </div>
               </div>
 
@@ -126,19 +165,22 @@ const calculateDiscountedPrice = (price, discount) => {
   return price - (price * (discount / 100))
 }
 
-const formatDate = (dateString) => {
+const formatDate = dateString => {
   return new Date(dateString).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
-    day: 'numeric'
+    day: 'numeric',
   })
 }
 
 const fetchWishlist = async () => {
   try {
     loading.value = true
+    
     const response = await axios.get('/api/wishlist')
+    
     console.log('Wishlist response:', response.data) // Debug log
+    
     if (response.data.success) {
       wishlistGames.value = (response.data.wishlist || []).map(game => ({
         id: game.id,
@@ -147,7 +189,7 @@ const fetchWishlist = async () => {
         price: game.price || 0,
         discount: game.discount || 0,
         rating: game.rating || 0,
-        addedAt: game.addedAt
+        addedAt: game.addedAt,
       }))
     }
   } catch (error) {
@@ -158,7 +200,7 @@ const fetchWishlist = async () => {
   }
 }
 
-const onWishlistUpdate = (gameId) => {
+const onWishlistUpdate = gameId => {
   // Remove the game from the list when it's removed from wishlist
   wishlistGames.value = wishlistGames.value.filter(game => game.id !== gameId)
 }
@@ -171,5 +213,10 @@ onMounted(() => {
 <style scoped>
 .user-wishlist {
   min-height: 400px;
+}
+
+.max-width-container {
+  max-width: 1920px !important;
+  margin: 0 auto;
 }
 </style> 

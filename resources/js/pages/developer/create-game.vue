@@ -243,7 +243,7 @@ const navigateToDashboard = () => {
                     v-model="gameData.price"
                     label="Price"
                     type="number"
-                    prefix="RM"
+                    prefix="$"
                     required
                     :rules="[v => !!v || 'Price is required']"
                   />
@@ -325,7 +325,7 @@ const navigateToDashboard = () => {
                     accept="image/*"
                     multiple
                     :required="!isEditing"
-                    :rules="[v => isEditing ? true : (v.length > 0 && v.length <= 3) || 'At least one screenshot is required']"
+                    :rules="[v => isEditing ? true : (v.length <= 3) || 'Maximum 3 screenshots are allowed']"
                     @change="handleImageUpload($event, 'screenshots')"
                   />
                 </VCol>

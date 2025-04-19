@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Purchase;
+use App\Models\Game;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -28,6 +29,13 @@ class PurchaseController extends Controller
             
             // Check if we received a batch of purchases
             if ($request->has('purchases') && is_array($request->purchases)) {
+                // Check if user is authorized to make purchases
+                if (!Auth::user()->can('purchaseAny', Game::class)) {
+                    return response()->json([
+                        'message' => 'You are not authorized to purchase games. Only regular users can make purchases.',
+                    ], 403);
+                }
+                
                 $successCount = 0;
                 $purchases = [];
                 $baseReceiptNumber = null;
@@ -83,6 +91,16 @@ class PurchaseController extends Controller
                     'p_receiptNumber' => 'required|string',
                     'p_gameName' => 'required|string',
                 ]);
+                
+                // Get the game
+                $game = Game::findOrFail($validated['p_gameId']);
+                
+                // Check if user is authorized to make a purchase
+                if (!Auth::user()->can('purchase', $game)) {
+                    return response()->json([
+                        'message' => 'You are not authorized to purchase games. Only regular users can make purchases.',
+                    ], 403);
+                }
                 
                 // Create the purchase record
                 $purchase = Purchase::create([

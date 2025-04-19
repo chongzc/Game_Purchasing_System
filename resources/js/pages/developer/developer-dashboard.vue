@@ -49,164 +49,123 @@ onMounted(() => {
 </script>
 
 <template>
-  <VContainer>
-    <VRow>
-      <VCol cols="12">
-        <VCard>
-          <VCardTitle>
-            Developer Dashboard
-          </VCardTitle>
-          <VCardText>
-            <h2 class="text-h6 font-weight-medium mb-6">
-              Welcome back, {{ authStore.user?.u_name || 'Developer' }}!
-            </h2>
-            <p>From here you can manage your published games, add new ones, and view statistics.</p>
-          </VCardText>
-        </VCard>
-      </VCol>
-      
-      <VCol
-        cols="24"
-        md="12"
-      >
-        <VCard height="100%">
-          <VCardTitle class="d-flex align-center justify-space-between">
-            My Games
-            <VBtn
-              color="primary"
-              variant="flat"
-              size="small"
-              @click="handleAddNewGame"
-            >
-              Add New Game
-            </VBtn>
-          </VCardTitle>
-          <VCardText v-if="!games.length">
-            <p>No games published yet.</p>
-          </VCardText>
-          <VCardText v-else>
-            <VTable>
-              <thead>
-                <tr>
-                  <th>Image</th>
-                  <th>Title</th>
-                  <th>Price</th>
-                  <th>Status</th>
-                  <th>Downloads</th>
-                  <th>Rating</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="game in games"
-                  :key="game.id"
-                >
-                  <td>
-                    <VImg
-                      :src="game.mainImage"
-                      width="200"
-                      height="120"
-                      cover
-                      class="rounded"
-                    />
-                  </td>
-                  <td>{{ game.title }}</td>
-                  <td>RM {{ game.price.toFixed(2) }}</td>
-                  <td>
-                    <VChip
-                      :color="getStatusColor(game.status)"
-                      size="small"
-                    >
-                      {{ game.status }}
-                    </VChip>
-                  </td>
-                  <td>{{ game.downloadCount }}</td>
-                  <td>{{ game.overallRate }}/5</td>
-                  <td>
-                    <VBtn
-                      icon
-                      variant="text"
-                      color="primary"
-                      size="small"
-                      :to="'/games/' + game.id"
-                    >
-                      <VIcon icon="bx-show" />
-                    </VBtn>
-                    <VBtn
-                      icon
-                      variant="text"
-                      color="primary"
-                      size="small"
-                      :to="'/game-edit/' + game.id"
-                    >
-                      <VIcon icon="bx-edit" />
-                    </VBtn>
-                  </td>
-                </tr>
-              </tbody>
-            </VTable>
-          </VCardText>
-        </VCard>
-      </VCol>
-      
-      <!--
+  <div class="developer-dashboard-container">
+    <VContainer
+      fluid
+      class="max-width-1920"
+    >
+      <VRow>
+        <h1 class="text-h3 font-weight-bold">
+          Developer Dashboard
+        </h1>
+
+        
         <VCol
-        cols="12"
-        md="6"
+          cols="24"
+          md="12"
         >
-        <VCard height="100%">
-        <VCardTitle>
-        Sales Overview
-        </VCardTitle>
-        <VCardText>
-        <p>No sales data available.</p>
-        </VCardText>
-        </VCard>
-        </VCol> 
-      -->
-      
-      <VCol
-        cols="12"
-        md="6"
-      >
-        <VCard height="100%">
-          <VCardTitle>
-            Latest Reviews
-          </VCardTitle>
-          <VCardText>
-            <p>No reviews yet.</p>
-          </VCardText>
-        </VCard>
-      </VCol>
-      
-      <VCol
-        cols="12"
-        md="6"
-      >
-        <VCard height="100%">
-          <VCardTitle>
-            Quick Actions
-          </VCardTitle>
-          <VDivider />
-          <VList>
-            <VListItem
-              title="Create New Game"
-              prepend-icon="mdi-plus"
-            />
-            <!--
-              <VListItem
-              title="View Sales Reports"
-              prepend-icon="mdi-chart-line"
-              /> 
-            -->
-            <VListItem
-              title="Update Profile"
-              prepend-icon="mdi-account-edit"
-            />
-          </VList>
-        </VCard>
-      </VCol>
-    </VRow>
-  </VContainer>
-</template> 
+          <VCard
+            height="100%"
+            style="padding: 15px;"
+          >
+            <VCardTitle class="d-flex align-center justify-space-between">
+              My Games
+              <VBtn
+                color="primary"
+                variant="flat"
+                size="small"
+                @click="handleAddNewGame"
+              >
+                Add New Game
+              </VBtn>
+            </VCardTitle>
+            <VCardText v-if="!games.length">
+              <p>No games published yet.</p>
+            </VCardText>
+            <VCardText v-else>
+              <VTable>
+                <thead>
+                  <tr>
+                    <th>Image</th>
+                    <th>Title</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                    <th class="text-center">
+                      Discount
+                    </th>
+                    <th>Rating</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="game in games"
+                    :key="game.id"
+                  >
+                    <td>
+                      <VImg
+                        :src="game.mainImage"
+                        width="200"
+                        height="120"
+                        cover
+                        class="rounded"
+                        style="margin: 10px;"
+                      />
+                    </td>
+                    <td>{{ game.title }}</td>
+                    <td>$ {{ game.price.toFixed(2) }}</td>
+                    <td>
+                      <VChip
+                        :color="getStatusColor(game.status)"
+                        size="small"
+                      >
+                        {{ game.status }}
+                      </VChip>
+                    </td>
+                    <td class="text-center">
+                      {{ game.discount || 0 }}%
+                    </td>
+                    <td>{{ game.overallRate }}/5</td>
+                    <td>
+                      <VBtn
+                        icon
+                        variant="text"
+                        color="primary"
+                        size="small"
+                        :to="'/games/' + game.id"
+                      >
+                        <VIcon icon="bx-show" />
+                      </VBtn>
+                      <VBtn
+                        icon
+                        variant="text"
+                        color="primary"
+                        size="small"
+                        :to="'/game-edit/' + game.id"
+                      >
+                        <VIcon icon="bx-edit" />
+                      </VBtn>
+                    </td>
+                  </tr>
+                </tbody>
+              </VTable>
+            </VCardText>
+          </VCard>
+        </VCol>
+      </VRow>
+    </VContainer>
+  </div>
+</template>
+
+<style scoped>
+.max-width-1920 {
+  max-width: 1920px !important;
+  margin: 0 auto;
+}
+
+.developer-dashboard-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+</style> 

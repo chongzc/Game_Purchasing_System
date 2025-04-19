@@ -12,14 +12,6 @@ use Illuminate\Support\Facades\Gate;
 
 Route::get('/sanctum/csrf-cookie', [CsrfCookieController::class, 'show']);
 
-Route::get('/', function () {
-    return view('application');
-})->name('home');
-
-Route::get('/game-store', function () {
-    return view('application');
-})->name('game-store');
-
 //Get method
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
@@ -28,6 +20,29 @@ Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->na
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/register', [RegisterController::class, 'register']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
+Route::get('/', function () {
+    if (auth()->check() && !Gate::allows('is-user')) {
+        abort(403, 'Unauthorized action.');
+    }
+    return view('application');
+})->name('home');
+
+Route::get('/purchase-history', function () {
+    if (auth()->check() && !Gate::allows('is-user')) {
+        abort(403, 'Unauthorized action.');
+    }
+    
+    return view('application');
+})->name('purchase-history');
+
+Route::get('/game-store', function () {
+    if (auth()->check() && !Gate::allows('is-user')) {
+        abort(403, 'Unauthorized action.');
+    }
+    
+    return view('application');
+})->name('game-store');
 
 // Protected routes
 Route::middleware(['auth'])->group(function () {

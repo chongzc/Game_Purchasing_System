@@ -33,7 +33,7 @@ const routes = [
   },
   {
     path: '/admin/game-management',
-    component: () => import('@/pages/admin/GameManagement.vue'),
+    component: () => import('@/pages/admin/game-management.vue'),
     meta: { requiresAuth: true, role: 'admin' },
   },
   {

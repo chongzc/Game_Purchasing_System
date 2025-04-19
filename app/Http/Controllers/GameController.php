@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Game;
-use App\Models\GameCategory;
 use App\Models\UserLib;
 use App\Models\User;
 use App\Models\Review;
@@ -75,7 +74,7 @@ class GameController extends Controller
     public function show($id)
     {
         try {
-            $game = Game::with(['developer', 'categories', 'reviews.user'])
+            $game = Game::with(['developer', 'reviews.user'])
                 ->where('g_id', $id)
                 ->firstOrFail();
 
@@ -117,24 +116,22 @@ class GameController extends Controller
                 }
             }
 
-            // Get similar games based on categories
-            $similarGames = Game::whereHas('categories', function($query) use ($game) {
-                $query->whereIn('gc_category', $game->categories->pluck('gc_category'));
-            })
-            ->where('g_id', '!=', $id)
-            ->where('g_status', 'verified')
-            ->take(4)
-            ->get()
-            ->map(function ($game) {
-                return [
-                    'id' => $game->g_id,
-                    'title' => $game->g_title,
-                    'price' => $game->g_price,
-                    'discount' => $game->g_discount,
-                    'rating' => $game->g_overallRate,
-                    'image' => $game->g_mainImage ? asset('storage/' . $game->g_mainImage) : null
-                ];
-            });
+            // Get similar games based on category
+            $similarGames = Game::where('g_category', $game->g_category)
+                ->where('g_id', '!=', $id)
+                ->where('g_status', 'verified')
+                ->take(4)
+                ->get()
+                ->map(function ($game) {
+                    return [
+                        'id' => $game->g_id,
+                        'title' => $game->g_title,
+                        'price' => $game->g_price,
+                        'discount' => $game->g_discount,
+                        'rating' => $game->g_overallRate,
+                        'image' => $game->g_mainImage ? asset('storage/' . $game->g_mainImage) : null
+                    ];
+                });
 
             // Transform the game data
             $gameData = [
@@ -158,7 +155,7 @@ class GameController extends Controller
                     $game->g_exImg2 ? asset('storage/' . $game->g_exImg2) : null,
                     $game->g_exImg3 ? asset('storage/' . $game->g_exImg3) : null
                 ]),
-                'features' => $game->categories->pluck('gc_category')->toArray(),
+                'features' => [$game->g_category],
                 'ratingBreakdown' => $ratingBreakdown,
                 'reviews' => $game->reviews->map(function ($review) {
                     return [
@@ -281,54 +278,9 @@ class GameController extends Controller
                 'g_overallRate' => 0,
             ]);
             
-            // Make sure game is created and has a valid ID
-            if ($game && $game->g_id) {
-                // Map and add categories
-                if (isset($request->categories) && is_array($request->categories)) {
-                    foreach ($request->categories as $categoryId) {
-                        // Map category ID to category name
-                        $categoryName = '';
-                        switch ($categoryId) {
-                            case 1: $categoryName = 'Action'; break;
-                            case 2: $categoryName = 'Adventure'; break;
-                            case 3: $categoryName = 'RPG'; break;
-                            case 4: $categoryName = 'Strategy'; break;
-                            case 5: $categoryName = 'Sports'; break;
-                            case 6: $categoryName = 'Racing'; break;
-                            case 7: $categoryName = 'Simulation'; break;
-                            case 8: $categoryName = 'Puzzle'; break;
-                            case 9: $categoryName = 'Platformer'; break;
-                            case 10: $categoryName = 'Fighting'; break;
-                            case 11: $categoryName = 'Shooter'; break;
-                            case 12: $categoryName = 'Horror'; break;
-                            case 13: $categoryName = 'Casual'; break;
-                            case 14: $categoryName = 'Indie'; break;
-                            case 15: $categoryName = 'MMO'; break;
-                            default: $categoryName = 'Other'; break;
-                        }
-                        
-                        // Log the game ID to debug
-                        Log::info('Creating category with game ID: ' . $game->g_id);
-                        
-                        GameCategory::create([
-                            'gc_gameId' => $game->g_id,
-                            'gc_gameName' => $game->g_title,
-                            'gc_category' => $categoryName
-                        ]);
-                        
-                        // For the first category, update the game's main category if it's not already set
-                        if (!$game->g_category) {
-                            $game->g_category = $categoryName;
-                            $game->save();
-                        }
-                    }
-                }
-            } else {
-                throw new \Exception('Failed to create game or game ID is missing');
+            if (!$game) {
+                throw new \Exception('Failed to create game');
             }
-            
-            // Refresh the game to get the updated data including any changes made during category setup
-            $game = Game::find($game->g_id);
             
             return response()->json([
                 'success' => true,
@@ -355,9 +307,6 @@ class GameController extends Controller
     {
         try {
             $games = Game::where('g_developerId', Auth::user()->u_id)
-                ->with(['categories' => function($query) {
-                    $query->select('gc_gameId', 'gc_category');
-                }])
                 ->get()
                 ->map(function ($game) {
                     return [
@@ -368,7 +317,7 @@ class GameController extends Controller
                         'status' => $game->g_status,
                         'mainImage' => $game->g_mainImage ? asset('storage/' . $game->g_mainImage) : null,
                         'overallRate' => $game->g_overallRate,
-                        'categories' => $game->categories->pluck('gc_category'),
+                        'category' => $game->g_category,
                         'created_at' => $game->created_at
                     ];
                 });
@@ -395,14 +344,14 @@ class GameController extends Controller
     public function getCategories()
     {
         try {
-            $categories = GameCategory::select('gc_category')
+            $categories = Game::select('g_category')
                 ->selectRaw('COUNT(*) as count')
-                ->groupBy('gc_category')
+                ->groupBy('g_category')
                 ->orderBy('count', 'desc')
                 ->get()
                 ->map(function ($category) {
                     return [
-                        'name' => $category->gc_category,
+                        'name' => $category->g_category,
                         'count' => $category->count
                     ];
                 });
@@ -465,7 +414,7 @@ class GameController extends Controller
     public function browseGames(Request $request)
     {
         try {
-            $query = Game::with(['categories', 'developer'])
+            $query = Game::with(['developer'])
                 ->where('g_status', 'verified');
 
             // Get user's library game IDs
@@ -492,9 +441,7 @@ class GameController extends Controller
 
             // Apply category filter
             if ($request->has('category')) {
-                $query->whereHas('categories', function($q) use ($request) {
-                    $q->where('gc_category', $request->category);
-                });
+                $query->where('g_category', $request->category);
             }
 
             // Apply language filter
@@ -507,9 +454,7 @@ class GameController extends Controller
                 $search = $request->search;
                 $query->where(function($q) use ($search) {
                     $q->where('g_title', 'like', "%{$search}%")
-                      ->orWhereHas('categories', function($q) use ($search) {
-                          $q->where('gc_category', 'like', "%{$search}%");
-                      });
+                      ->orWhere('g_category', 'like', "%{$search}%");
                 });
             }
 
@@ -528,7 +473,7 @@ class GameController extends Controller
                     'releaseDate' => $game->created_at,
                     'multiPlayer' => true,
                     'openWorld' => false,
-                    'tags' => $game->categories->pluck('gc_category')->toArray(),
+                    'tags' => [$game->g_category],
                     'inLibrary' => in_array($game->g_id, $userLibraryGameIds)
                 ];
             });
@@ -556,30 +501,27 @@ class GameController extends Controller
       public function getGameForEdit($id)
       {
           try {
-              $game = Game::with('categories')
-                  ->where('g_id', $id)
+              $game = Game::where('g_id', $id)
                   ->where('g_developerId', Auth::id())
                   ->firstOrFail();
   
-              $categories = $game->categories->pluck('gc_category')->toArray();
-              $categoryIds = [];
+              $category = $game->g_category;
+              $categoryId = 1; // Default to Action
               
-              // Map category names to IDs
-              foreach ($categories as $category) {
-                  switch ($category) {
-                      case 'Action': $categoryIds[] = 1; break;
-                      case 'Adventure': $categoryIds[] = 2; break;
-                      case 'RPG': $categoryIds[] = 3; break;
-                      case 'Strategy': $categoryIds[] = 4; break;
-                      case 'Sports': $categoryIds[] = 5; break;
-                      case 'Racing': $categoryIds[] = 6; break;
-                      case 'Simulation': $categoryIds[] = 7; break;
-                      case 'Puzzle': $categoryIds[] = 8; break;
-                      case 'Platformer': $categoryIds[] = 9; break;
-                      case 'Fighting': $categoryIds[] = 10; break;
-                      case 'Shooter': $categoryIds[] = 11; break;
-                      default: $categoryIds[] = 1; break;
-                  }
+              // Map category name to ID
+              switch ($category) {
+                  case 'Action': $categoryId = 1; break;
+                  case 'Adventure': $categoryId = 2; break;
+                  case 'RPG': $categoryId = 3; break;
+                  case 'Strategy': $categoryId = 4; break;
+                  case 'Sports': $categoryId = 5; break;
+                  case 'Racing': $categoryId = 6; break;
+                  case 'Simulation': $categoryId = 7; break;
+                  case 'Puzzle': $categoryId = 8; break;
+                  case 'Platformer': $categoryId = 9; break;
+                  case 'Fighting': $categoryId = 10; break;
+                  case 'Shooter': $categoryId = 11; break;
+                  default: $categoryId = 1; break;
               }
   
               $gameData = [
@@ -598,7 +540,7 @@ class GameController extends Controller
                       $game->g_exImg2 ? asset('storage/' . $game->g_exImg2) : null,
                       $game->g_exImg3 ? asset('storage/' . $game->g_exImg3) : null
                   ]),
-                  'categoryIds' => $categoryIds
+                  'categoryId' => $categoryId
               ];
   
               return response()->json([
@@ -640,7 +582,6 @@ class GameController extends Controller
                   'g_status' => 'nullable|string',
                   'g_language' => 'required|string',
                   'g_category' => 'nullable|string',
-                  'categories' => 'required|array',
                   'g_mainImage' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
                   'g_exImg1' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
                   'g_exImg2' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -682,50 +623,12 @@ class GameController extends Controller
               $game->g_description = $request->g_description;
               $game->g_price = $request->g_price;
               $game->g_discount = $request->g_discount ?? 0;
-              $game->g_status = $request->g_status ?? 'pending'; // Use provided status or default to pending
+              $game->g_status = $request->g_status ?? 'pending';
               $game->g_language = $request->g_language;
               $game->g_category = $request->g_category;
               
               // Save the game
               $game->save();
-              
-              // Update categories
-              if (isset($request->categories) && is_array($request->categories)) {
-                  // Delete existing categories
-                  GameCategory::where('gc_gameId', $game->g_id)->delete();
-                  
-                  // Add new categories
-                  foreach ($request->categories as $categoryId) {
-                      // Map category ID to category name
-                      $categoryName = '';
-                      switch ($categoryId) {
-                          case 1: $categoryName = 'Action'; break;
-                          case 2: $categoryName = 'Adventure'; break;
-                          case 3: $categoryName = 'RPG'; break;
-                          case 4: $categoryName = 'Strategy'; break;
-                          case 5: $categoryName = 'Sports'; break;
-                          case 6: $categoryName = 'Racing'; break;
-                          case 7: $categoryName = 'Simulation'; break;
-                          case 8: $categoryName = 'Puzzle'; break;
-                          case 9: $categoryName = 'Platformer'; break;
-                          case 10: $categoryName = 'Fighting'; break;
-                          case 11: $categoryName = 'Shooter'; break;
-                          default: $categoryName = 'Action'; break;
-                      }
-                      
-                      GameCategory::create([
-                          'gc_gameId' => $game->g_id,
-                          'gc_gameName' => $game->g_title,
-                          'gc_category' => $categoryName
-                      ]);
-                      
-                      // Update the game's main category if not already set
-                      if (!$game->g_category) {
-                          $game->g_category = $categoryName;
-                          $game->save();
-                      }
-                  }
-              }
               
               return response()->json([
                   'success' => true,

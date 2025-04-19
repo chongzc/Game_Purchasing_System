@@ -2,7 +2,7 @@ export const getHeaderNavigationItems = user => {
   const navigationConfig = {
     public: [
       {
-        title: 'Game Store',
+        title: 'Home',
         to: '/game-store',
       },
       {
@@ -23,20 +23,24 @@ export const getHeaderNavigationItems = user => {
         title: 'Cart',
         to: '/cart',
       },
+      {
+        title: 'Purchases',
+        to: '/purchase-history',
+      },
     ],
     developer: [
       {
-        title: 'Developer Dashboard',
+        title: 'Dashboard',
         to: '/developer-dashboard', 
       },
       {
-        title: 'Developer Create Game',
+        title: 'Create Game',
         to: '/create-game', 
       },
     ],
     admin: [
       {
-        title: 'Admin Dashboard',
+        title: 'Dashboard',
         to: '/admin-dashboard',
       },
     ],

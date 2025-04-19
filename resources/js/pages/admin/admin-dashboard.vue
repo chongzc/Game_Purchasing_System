@@ -1,8 +1,10 @@
 <script setup>
 import { useAuthStore } from '@/stores/auth'
 import axios from 'axios'
-import { onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import GameManagement from './game-management.vue'
+import UserManagement from './user-management.vue'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -18,6 +20,8 @@ const statistics = ref({
   totalAdmins: 0,
   bannedUsers: 0,
 })
+
+let pollingInterval = null
 
 // Fetch statistics for the dashboard
 const fetchStatistics = async () => {
@@ -63,6 +67,19 @@ const fetchStatistics = async () => {
   }
 }
 
+// Start polling for statistics
+const startPolling = () => {
+  pollingInterval = setInterval(fetchStatistics, 30000) // Refresh every 30 seconds
+}
+
+// Stop polling
+const stopPolling = () => {
+  if (pollingInterval) {
+    clearInterval(pollingInterval)
+    pollingInterval = null
+  }
+}
+
 // Navigate to the game management page
 const navigateToGameManagement = () => {
   router.push('/admin/games')
@@ -75,207 +92,123 @@ const navigateToUserManagement = () => {
 
 onMounted(() => {
   fetchStatistics()
+  startPolling()
+})
+
+onUnmounted(() => {
+  stopPolling()
 })
 </script>
 
 <template>
-  <VContainer>
-    <VRow>
-      <VCol cols="12">
-        <VCard>
-          <VCardTitle>
-            Admin Dashboard
-          </VCardTitle>
-          <VCardText>
-            <h2 class="text-h6 font-weight-medium mb-6">
-              Welcome back, {{ authStore.user?.u_name || 'Admin' }}!
-            </h2>
-            <p>From here you can manage the game store platform, users, and view statistics.</p>
-          </VCardText>
-        </VCard>
-      </VCol>
-      
-      <VCol
-        cols="12"
-        md="6"
-      >
-        <VCard height="100%">
-          <VCardTitle>
-            Users Overview
-          </VCardTitle>
-          <VCardText>
-            <div class="d-flex justify-space-around align-center">
-              <div class="text-center px-4">
-                <h3 class="text-h6 text-medium-emphasis">
-                  Total Users
-                </h3>
-                <p class="text-h4 mt-2">
-                  {{ statistics.totalUsers + statistics.totalDevelopers + statistics.totalAdmins }}
-                </p>
-              </div>
-              <VDivider
-                vertical
-                class="mx-2"
-              />
-              <div class="text-center px-4">
-                <h3 class="text-h6 text-medium-emphasis">
-                  Developers
-                </h3>
-                <p class="text-h4 mt-2">
-                  {{ statistics.totalDevelopers }}
-                </p>
-              </div>
-              <VDivider
-                vertical
-                class="mx-2"
-              />
-              <div class="text-center px-4">
-                <h3 class="text-h6 text-medium-emphasis">
-                  Customers
-                </h3>
-                <p class="text-h4 mt-2">
-                  {{ statistics.totalUsers }}
-                </p>
-              </div>
-            </div>
-          </VCardText>
-        </VCard>
-      </VCol>
-      
-      <VCol
-        cols="12"
-        md="6"
-      >
-        <VCard height="100%">
-          <VCardTitle>
-            Games Overview
-          </VCardTitle>
-          <VCardText>
-            <div class="d-flex justify-space-around align-center">
-              <div class="text-center px-4">
-                <h3 class="text-h6 text-medium-emphasis">
-                  Total Games
-                </h3>
-                <p class="text-h4 mt-2">
-                  {{ statistics.totalGames }}
-                </p>
-              </div>
-              <VDivider
-                vertical
-                class="mx-4"
-              />
-              <div class="text-center px-4">
-                <h3 class="text-h6 text-medium-emphasis">
-                  Pending Review
-                </h3>
-                <p class="text-h4 text-warning mt-2">
-                  {{ statistics.pendingGames }}
-                </p>
-              </div>
-            </div>
-          </VCardText>
-        </VCard>
-      </VCol>
-      
-      <VCol cols="12">
-        <VCard v-if="statistics.pendingGames > 0">
-          <VCardTitle class="bg-warning-subtle">
-            Pending Games Approval
-          </VCardTitle>
-          <VCardText>
-            <p>There are {{ statistics.pendingGames }} games waiting for your approval.</p>
-            <VBtn
-              color="warning"
-              variant="outlined"
-              class="mt-2"
-              @click="navigateToGameManagement"
-            >
-              Review Pending Games
-            </VBtn>
-          </VCardText>
-        </VCard>
-      </VCol>
-      
-      <VCol cols="12">
-        <VCard
-          v-if="statistics.bannedUsers > 0"
-          class="border-error"
+  <div class="admin-dashboard-container">
+    <VContainer
+      fluid
+      class="max-width-1920"
+    >
+      <div class="d-flex align-center justify-space-between mb-6">
+        <h1 class="text-h3 font-weight-bold">
+          Admin Dashboard
+        </h1>
+        <VBtn
+          color="primary"
+          @click="fetchStatistics"
         >
-          <VCardTitle class="bg-error-lighten-5 text-error">
-            <VIcon
-              icon="mdi-account-cancel"
-              color="error"
-              class="me-2"
-            />
-            Banned Users
-          </VCardTitle>
-          <VCardText>
-            <p>There are currently {{ statistics.bannedUsers }} banned users in the system.</p>
-            <VBtn
-              color="error"
-              variant="outlined"
-              class="mt-2"
-              @click="router.push('/admin/users?filter=banned')"
-            >
-              Manage Banned Users
-            </VBtn>
-          </VCardText>
-        </VCard>
-      </VCol>
-      
-      <VCol cols="12">
-        <VCard>
-          <VCardTitle>
-            Quick Actions
-          </VCardTitle>
-          <VDivider />
-          <VCardText>
-            <VRow>
-              <VCol
-                cols="12"
-                md="4"
-              >
-                <VBtn
-                  block
-                  variant="flat"
-                  color="primary"
-                  class="mb-4"
-                  @click="navigateToUserManagement"
-                >
-                  Manage Users
-                </VBtn>
-              </VCol>
-              <VCol
-                cols="12"
-                md="4"
-              >
-                <VBtn
-                  block
-                  variant="flat"
-                  color="primary"
-                  class="mb-4"
-                  @click="navigateToGameManagement"
-                >
-                  Manage Games
-                </VBtn>
-              </VCol>
-              <VCol
-                cols="12"
-                md="4"
-              >
-                <VBtn
-                  block
-                  variant="flat"
-                  color="primary"
-                  class="mb-4"
-                >
-                  View Reports
-                </VBtn>
-              </VCol>
-            </VRow>
-          </VCardText>
-        </VCard>
-      </VCol>
-    </VRow>
-  </VContainer>
-</template> 
+          Refresh Statistics
+        </VBtn>
+      </div>
+      <VRow>
+        <VCol
+          cols="12"
+          md="6"
+        >
+          <VCard height="100%">
+            <VCardTitle>
+              Users Overview
+            </VCardTitle>
+            <VCardText>
+              <div class="d-flex justify-space-around align-center">
+                <div class="text-center px-4">
+                  <h3 class="text-h6 text-medium-emphasis">
+                    Total Users
+                  </h3>
+                  <p class="text-h4 mt-2">
+                    {{ statistics.totalUsers + statistics.totalDevelopers + statistics.totalAdmins }}
+                  </p>
+                </div>
+                <VDivider
+                  vertical
+                  class="mx-2"
+                />
+                <div class="text-center px-4">
+                  <h3 class="text-h6 text-medium-emphasis">
+                    Developers
+                  </h3>
+                  <p class="text-h4 mt-2">
+                    {{ statistics.totalDevelopers }}
+                  </p>
+                </div>
+              </div>
+            </VCardText>
+          </VCard>
+        </VCol>
+        
+        <VCol
+          cols="12"
+          md="6"
+        >
+          <VCard height="100%">
+            <VCardTitle>
+              Games Overview
+            </VCardTitle>
+            <VCardText>
+              <div class="d-flex justify-space-around align-center">
+                <div class="text-center px-4">
+                  <h3 class="text-h6 text-medium-emphasis">
+                    Total Games
+                  </h3>
+                  <p class="text-h4 mt-2">
+                    {{ statistics.totalGames }}
+                  </p>
+                </div>
+                <VDivider
+                  vertical
+                  class="mx-4"
+                />
+                <div class="text-center px-4">
+                  <h3 class="text-h6 text-medium-emphasis">
+                    Pending Review
+                  </h3>
+                  <p class="text-h4 text-warning mt-2">
+                    {{ statistics.pendingGames }}
+                  </p>
+                </div>
+              </div>
+            </VCardText>
+          </VCard>
+        </VCol>
+        
+        <VCol cols="12">
+          <GameManagement />
+        </VCol>
+
+        <VCol cols="12">
+          <UserManagement />
+        </VCol>
+      </VRow>
+    </VContainer>
+  </div>
+</template>
+
+<style scoped>
+.max-width-1920 {
+  max-width: 1920px !important;
+  margin: 0 auto;
+}
+
+.admin-dashboard-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+</style> 

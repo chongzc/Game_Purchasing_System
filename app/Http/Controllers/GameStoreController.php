@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Game;
-use App\Models\GameCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -27,7 +26,7 @@ class GameStoreController extends Controller
             ->where('g_discount', '>', 0)
             ->where('g_status', 'verified')
             ->orderBy('g_discount', 'desc')
-            ->take(4)
+            ->take(5)
             ->get()
             ->map(function ($game) {
                 $discount = $game->g_discount;
@@ -38,13 +37,13 @@ class GameStoreController extends Controller
     public function getCategories()
     {
         // Get distinct categories from game_categories table
-        return GameCategory::select('gc_category')
+        return Game::select('g_category')
             ->distinct()
             ->get()
             ->map(function ($category) {
                 return [
-                    'name' => $category->gc_category,
-                    'icon' => $this->getCategoryIcon($category->gc_category)
+                    'name' => $category->g_category,
+                    'icon' => $this->getCategoryIcon($category->g_category)
                 ];
             });
     }
@@ -56,7 +55,7 @@ class GameStoreController extends Controller
             ->with('developer')
             ->where('g_status', 'verified')
             ->orderBy('g_overallRate', 'desc')
-            ->take(4)
+            ->take(5)
             ->get();
     }
 
@@ -65,7 +64,7 @@ class GameStoreController extends Controller
         return Game::with('developer')
             ->where('g_status', 'verified')
             ->inRandomOrder()
-            ->take(8)
+            ->take(10)
             ->get();
     }
 

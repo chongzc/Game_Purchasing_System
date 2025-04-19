@@ -10,6 +10,7 @@ const display = useDisplay()
 const { y } = useWindowScroll()
 const auth = useAuthStore()
 const headerNavigationItems = computed(() => getHeaderNavigationItems(auth.user))
+const isAdminOrDeveloper = computed(() => auth.isAdmin || auth.isDeveloper)
 </script>
 
 <template>
@@ -24,11 +25,18 @@ const headerNavigationItems = computed(() => getHeaderNavigationItems(auth.user)
         <div class="d-flex align-center">
           <VAppBarTitle class="me-6">
             <RouterLink
+              v-if="!isAdminOrDeveloper"
               to="/"
               class="d-flex align-center text-decoration-none"
             >
               <span class="font-weight-bold text-primary">Game Store</span>
             </RouterLink>
+            <div
+              v-else
+              class="d-flex align-center text-decoration-none"
+            >
+              <span class="font-weight-bold text-primary">Game Store</span>
+            </div>
           </VAppBarTitle>
 
           <!-- Desktop navigation -->

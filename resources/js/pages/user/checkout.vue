@@ -235,7 +235,7 @@
                   style="width: 80px; height: 60px; overflow: hidden; border-radius: 4px; margin-right: 12px;"
                 >
                   <VImg
-                    :src="item.game?.g_mainImage || item.image || '/images/placeholder.jpg'"
+                    :src="item.game?.g_mainImage ? `/storage/${item.game?.g_mainImage}` : item.image || '/images/placeholder.jpg'"
                     cover
                     width="100%"
                     height="100%"
@@ -369,61 +369,63 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
-import { getCookie, setCookie } from '@/utils/cookie';
-import { calculateDiscountedPrice, calculateFinalTotal, calculateOriginalSubtotal, calculateTotalDiscount } from '@/utils/priceCalculations';
-import axios from 'axios';
+import { getCookie, setCookie } from '@/utils/cookie'
+import { calculateDiscountedPrice, calculateFinalTotal, calculateOriginalSubtotal, calculateTotalDiscount } from '@/utils/priceCalculations'
+import axios from 'axios'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
-const router = useRouter();
-const route = useRoute();
+const router = useRouter()
+const route = useRoute()
 
 // Session timeout handling
-const sessionTimeout = ref(null);
-const sessionDuration = 5000; // 5 seconds
-const lastVisitedPath = ref(null);
+const sessionTimeout = ref(null)
+const sessionDuration = 5000 // 5 seconds
+const lastVisitedPath = ref(null)
 
 // Store the current route as the last visited (before inactivity)
-watch(route, (newRoute) => {
-  lastVisitedPath.value = newRoute.fullPath;
-}, { immediate: true });
+watch(route, newRoute => {
+  lastVisitedPath.value = newRoute.fullPath
+}, { immediate: true })
 
 const resetSessionTimeout = () => {
   if (sessionTimeout.value) {
-    clearTimeout(sessionTimeout.value);
+    clearTimeout(sessionTimeout.value)
   }
 
   sessionTimeout.value = setTimeout(() => {
-    alert('Session expired due to inactivity. Redirecting to the game store.');
-    router.push('/game-store');
-  }, sessionDuration);
-};
+    alert('Session expired due to inactivity. Redirecting to the game store.')
+    router.push('/game-store')
+  }, sessionDuration)
+}
 
 const attachActivityListeners = () => {
-  const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
-  events.forEach((event) => {
-    window.addEventListener(event, resetSessionTimeout);
-  });
-};
+  const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart']
+
+  events.forEach(event => {
+    window.addEventListener(event, resetSessionTimeout)
+  })
+}
 
 const detachActivityListeners = () => {
-  const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
-  events.forEach((event) => {
-    window.removeEventListener(event, resetSessionTimeout);
-  });
-};
+  const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart']
+
+  events.forEach(event => {
+    window.removeEventListener(event, resetSessionTimeout)
+  })
+}
 
 onMounted(() => {
-  resetSessionTimeout();
-  attachActivityListeners();
-});
+  resetSessionTimeout()
+  attachActivityListeners()
+})
 
 onUnmounted(() => {
   if (sessionTimeout.value) {
-    clearTimeout(sessionTimeout.value);
+    clearTimeout(sessionTimeout.value)
   }
-  detachActivityListeners();
-});
+  detachActivityListeners()
+})
 
 // Breadcrumbs
 const breadcrumbs = ref([
@@ -441,61 +443,61 @@ const breadcrumbs = ref([
     title: 'Checkout',
     disabled: true,
   },
-]);
+])
 
-const cartItems = ref([]);
-const isLoading = ref(false);
-const error = ref(null);
+const cartItems = ref([])
+const isLoading = ref(false)
+const error = ref(null)
 
 // Check if this is a direct purchase from game details page
-const isDirectPurchase = computed(() => route.query.directPurchase === 'true');
+const isDirectPurchase = computed(() => route.query.directPurchase === 'true')
 
 // Fetch cart items or handle direct purchase
 const fetchCartItems = async () => {
-  isLoading.value = true;
-  error.value = null;
+  isLoading.value = true
+  error.value = null
   
   try {
     // If this is a direct purchase, create a cart item from query params
     if (isDirectPurchase.value) {
-      const gameId = route.query.gameId;
-      const gameTitle = route.query.gameTitle;
-      const gamePrice = parseFloat(route.query.gamePrice);
-      const gameDiscount = parseFloat(route.query.gameDiscount || 0);
-      const gameImage = route.query.gameImage;
+      const gameId = route.query.gameId
+      const gameTitle = route.query.gameTitle
+      const gamePrice = parseFloat(route.query.gamePrice)
+      const gameDiscount = parseFloat(route.query.gameDiscount || 0)
+      const gameImage = route.query.gameImage
       
       // Create a single item cart with the game details
       cartItems.value = [{
         c_gameId: gameId,
         c_price: gamePrice,
-        c_discount: gameDiscount,  // Add discount information
+        c_discount: gameDiscount,  
         game: {
           g_id: gameId,
           g_title: gameTitle,
           g_mainImage: gameImage,
           g_price: gamePrice,
-          g_discount: gameDiscount,  // Add discount information
+          g_discount: gameDiscount,  
         },
-      }];
+      }]
     } else {
       // Regular cart checkout - fetch from API
-      const response = await axios.get('/api/cart');
+      const response = await axios.get('/api/cart')
 
-      cartItems.value = response.data.cartItems;
+      cartItems.value = response.data.cartItems
     }
   } catch (err) {
-    error.value = 'Failed to load cart items';
-    console.error(err);
+    error.value = 'Failed to load cart items'
+    console.error(err)
   } finally {
-    isLoading.value = false;
+    isLoading.value = false
   }
-};
+}
 
 // Payment method from cookies
-const paymentMethod = ref(getCookie('paymentMethod') || 'credit_card');
+const paymentMethod = ref(getCookie('paymentMethod') || 'credit_card')
 
 // Load cart items when component mounts
-onMounted(fetchCartItems);
+onMounted(fetchCartItems)
 
 // Credit card form
 const creditCardForm = ref({
@@ -503,7 +505,7 @@ const creditCardForm = ref({
   name: getCookie('cardName') || '',
   expiry: getCookie('cardExpiry') || '',
   cvv: getCookie('cardCVV') || '',
-});
+})
 
 // Billing information
 const billingInfo = ref({
@@ -515,7 +517,7 @@ const billingInfo = ref({
   state: getCookie('billingState') || '',
   zip: getCookie('billingZip') || '',
   country: getCookie('billingCountry') || 'United States',
-});
+})
 
 // Countries list (shortened for brevity)
 const countries = [
@@ -528,74 +530,74 @@ const countries = [
   'Japan',
 
   // Add more countries as needed
-];
+]
 
 // Additional information
-const additionalInfo = ref('');
+const additionalInfo = ref('')
 
 // Terms acceptance
-const termsAccepted = ref(false);
+const termsAccepted = ref(false)
 
 // Order processing state
-const isProcessing = ref(false);
-const orderDialog = ref(false);
-const orderNumber = ref('');
+const isProcessing = ref(false)
+const orderDialog = ref(false)
+const orderNumber = ref('')
 
 // Save checkout data to cookies
 const saveCheckoutDataToCookies = () => {
-  setCookie('paymentMethod', paymentMethod.value, 30);
-  setCookie('cardNumber', creditCardForm.value.number, 30);
-  setCookie('cardName', creditCardForm.value.name, 30);
-  setCookie('cardExpiry', creditCardForm.value.expiry, 30);
-  setCookie('cardCVV', creditCardForm.value.cvv, 30);
-  setCookie('billingFirstName', billingInfo.value.firstName, 30);
-  setCookie('billingLastName', billingInfo.value.lastName, 30);
-  setCookie('billingEmail', billingInfo.value.email, 30);
-  setCookie('billingAddress', billingInfo.value.address, 30);
-  setCookie('billingCity', billingInfo.value.city, 30);
-  setCookie('billingState', billingInfo.value.state, 30);
-  setCookie('billingZip', billingInfo.value.zip, 30);
-  setCookie('billingCountry', billingInfo.value.country, 30);
-};
+  setCookie('paymentMethod', paymentMethod.value, 30)
+  setCookie('cardNumber', creditCardForm.value.number, 30)
+  setCookie('cardName', creditCardForm.value.name, 30)
+  setCookie('cardExpiry', creditCardForm.value.expiry, 30)
+  setCookie('cardCVV', creditCardForm.value.cvv, 30)
+  setCookie('billingFirstName', billingInfo.value.firstName, 30)
+  setCookie('billingLastName', billingInfo.value.lastName, 30)
+  setCookie('billingEmail', billingInfo.value.email, 30)
+  setCookie('billingAddress', billingInfo.value.address, 30)
+  setCookie('billingCity', billingInfo.value.city, 30)
+  setCookie('billingState', billingInfo.value.state, 30)
+  setCookie('billingZip', billingInfo.value.zip, 30)
+  setCookie('billingCountry', billingInfo.value.country, 30)
+}
 
 // Order calculations
-const cartTotal = computed(() => calculateOriginalSubtotal(cartItems.value));
-const totalDiscount = computed(() => calculateTotalDiscount(cartItems.value));
-const orderTotal = computed(() => calculateFinalTotal(cartTotal.value, totalDiscount.value));
+const cartTotal = computed(() => calculateOriginalSubtotal(cartItems.value))
+const totalDiscount = computed(() => calculateTotalDiscount(cartItems.value))
+const orderTotal = computed(() => calculateFinalTotal(cartTotal.value, totalDiscount.value))
 
 // Form validation
 const formValid = computed(() => {
   // Check terms acceptance
-  if (!termsAccepted.value) return false;
+  if (!termsAccepted.value) return false
   
   // Basic validation for required fields
-  const { firstName, lastName, email, address, city, state, zip, country } = billingInfo.value;
-  const hasRequiredFields = firstName && lastName && email && address && city && state && zip && country;
+  const { firstName, lastName, email, address, city, state, zip, country } = billingInfo.value
+  const hasRequiredFields = firstName && lastName && email && address && city && state && zip && country
   
   // Validate payment method based on cookie selection
-  const { number, name, expiry, cvv } = creditCardForm.value;
-  const hasValidCardInfo = paymentMethod.value && number && name && expiry && cvv;
+  const { number, name, expiry, cvv } = creditCardForm.value
+  const hasValidCardInfo = paymentMethod.value && number && name && expiry && cvv
   
-  return hasRequiredFields && hasValidCardInfo;
-});
+  return hasRequiredFields && hasValidCardInfo
+})
 
 // Place order method
 const placeOrder = async () => {
   if (!formValid.value) {
-    alert('Please fill out all required fields.');
+    alert('Please fill out all required fields.')
     
-    return;
+    return
   }
 	
-  isProcessing.value = true;
+  isProcessing.value = true
   
   try {
     // Save data to cookies from CookieForLogin branch
-    saveCheckoutDataToCookies();
+    saveCheckoutDataToCookies()
     
     // Generate order number/receipt number 
-    const receiptNumber = 'REC-' + Math.random().toString(36).substring(2, 12);
-    const currentDate = new Date().toISOString(); // Full ISO format with time
+    const receiptNumber = 'REC-' + Math.random().toString(36).substring(2, 12)
+    const currentDate = new Date().toISOString() // Full ISO format with time
     
     // Create batch of purchase records for all cart items
     const purchaseBatch = cartItems.value.map(item => ({
@@ -604,7 +606,7 @@ const placeOrder = async () => {
       'p_purchasePrice': calculateDiscountedPrice(item), 
       'p_purchaseDate': currentDate,
       'p_receiptNumber': receiptNumber,
-    }));
+    }))
     
     // Create all purchase records in a single request
     const response = await axios.post('/api/purchases', { purchases: purchaseBatch }, {
@@ -614,13 +616,13 @@ const placeOrder = async () => {
         'Accept': 'application/json',
       },
       withCredentials: true,
-    });
+    })
     
     // Use receipt number from response if available, otherwise use the generated one
     if (response.data && response.data.receiptNumber) {
-      orderNumber.value = response.data.receiptNumber;
+      orderNumber.value = response.data.receiptNumber
     } else {
-      orderNumber.value = receiptNumber;
+      orderNumber.value = receiptNumber
     }
     
     // Add purchased games to user library
@@ -628,7 +630,7 @@ const placeOrder = async () => {
       'ul_gameId': item.c_gameId || item.game?.g_id,
       'ul_name': item.game?.g_title || 'Unknown Game',
       'ul_status': 'owned',  // Default status is 'owned' when purchased
-    }));
+    }))
     
     // Add to user library
     await axios.post('/api/user-library', { games: libraryEntries }, {
@@ -638,7 +640,7 @@ const placeOrder = async () => {
         'Accept': 'application/json',
       },
       withCredentials: true,
-    });
+    })
     
     // Clear the cart after successful purchase
     await axios.delete('/api/cart/clear', {
@@ -648,27 +650,27 @@ const placeOrder = async () => {
         'Accept': 'application/json',
       },
       withCredentials: true,
-    });
+    })
     
     // Update the UI
-    isProcessing.value = false;
-    orderDialog.value = true;
+    isProcessing.value = false
+    orderDialog.value = true
   } catch (error) {
-    console.error('Error processing order:', error?.response?.data || error);
+    console.error('Error processing order:', error?.response?.data || error)
     
     // Handle authentication errors
     if (error?.response?.status === 401) {
-      alert('You need to be logged in to complete this purchase. Please log in and try again.');
+      alert('You need to be logged in to complete this purchase. Please log in and try again.')
       
       // Optionally redirect to login page
       // router.push('/login');
     } else {
-      alert('There was an error processing your order. Please try again.');
+      alert('There was an error processing your order. Please try again.')
     }
     
-    isProcessing.value = false;
+    isProcessing.value = false
   }
-};
+}
 </script>
 
 <style scoped>
