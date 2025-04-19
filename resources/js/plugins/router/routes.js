@@ -10,6 +10,11 @@ export const routes = [
         meta: { requiresAuth: false, roles: ['user'] },
       },
       {
+        path: 'purchase-history',
+        component: () => import('@/pages/user/purchase-history.vue'),
+        meta: { requiresAuth: true, roles: ['user'] },
+      },
+      {
         path: 'browse-games',
         component: () => import('@/pages/browse-games.vue'),
       },
@@ -70,38 +75,12 @@ export const routes = [
             component: () => import('@/pages/admin/user-management.vue'),
           },
 
-          // More admin routes can be added here
         ],
-      },
-      {
-        path: 'dashboard',
-        component: () => import('@/pages/dashboard.vue'),
-        meta: { requiresAuth: true },
       },
       {
         path: 'account-settings',
         component: () => import('@/pages/profile/account-settings.vue'),
         meta: { requiresAuth: true },
-      },
-      {
-        path: 'typography',
-        component: () => import('@/pages/typography.vue'),
-      },
-      {
-        path: 'icons',
-        component: () => import('@/pages/icons.vue'),
-      },
-      {
-        path: 'cards',
-        component: () => import('@/pages/cards.vue'),
-      },
-      {
-        path: 'tables',
-        component: () => import('@/pages/tables.vue'),
-      },
-      {
-        path: 'form-layouts',
-        component: () => import('@/pages/form-layouts.vue'),
       },
     ],
   },

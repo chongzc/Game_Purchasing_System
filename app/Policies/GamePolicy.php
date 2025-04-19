@@ -37,6 +37,16 @@ class GamePolicy
     }
 
     /**
+     * Determine whether the user can purchase any game.
+     * This is called when Game::class is passed instead of a specific game instance.
+     */
+    public function purchaseAny(User $user): bool
+    {
+        // Only customers (role = user) can purchase games
+        return $user->u_role === 'user' && !$user->isBanned();
+    }
+
+    /**
      * Determine whether the user can review a game.
      */
     public function review(User $user, Game $game): bool

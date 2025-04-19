@@ -30,7 +30,7 @@ class PurchaseController extends Controller
             // Check if we received a batch of purchases
             if ($request->has('purchases') && is_array($request->purchases)) {
                 // Check if user is authorized to make purchases
-                if (!Auth::user()->can('purchase', Game::class)) {
+                if (!Auth::user()->can('purchaseAny', Game::class)) {
                     return response()->json([
                         'message' => 'You are not authorized to purchase games. Only regular users can make purchases.',
                     ], 403);

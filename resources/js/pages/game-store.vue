@@ -2,7 +2,10 @@
   <div class="game-store-page">
     <!-- Featured Games Carousel -->
     <div class="carousel-container">
-      <VCard v-if="!loading.featured && featuredGames.length > 0" class="carousel-card">
+      <VCard
+        v-if="!loading.featured && featuredGames.length > 0"
+        class="carousel-card"
+      >
         <VCarousel
           cycle
           height="500"
@@ -33,8 +36,12 @@
                 <div class="carousel-overlay">
                   <VContainer>
                     <div class="carousel-text">
-                      <h2 class="text-h3 font-weight-bold mb-4">{{ game.g_title }}</h2>
-                      <p class="text-h6 mb-6">{{ game.g_description }}</p>
+                      <h2 class="text-h3 font-weight-bold mb-4">
+                        {{ game.g_title }}
+                      </h2>
+                      <p class="text-h6 mb-6">
+                        {{ game.g_description }}
+                      </p>
                       <VBtn
                         color="primary"
                         size="large"
@@ -475,7 +482,9 @@ const getDiscountedPrice = (price, discount) => {
 const fetchFeaturedGames = async () => {
   try {
     loading.value.featured = true
+
     const response = await axios.get('/api/store/featured')
+
     featuredGames.value = response.data
     console.log('Featured games:', featuredGames.value)
   } catch (error) {

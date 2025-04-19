@@ -87,7 +87,7 @@ watch(
 
         <VCardText>
           <h4 class="text-h4 mb-1">
-            Welcome to Ali Game Store! 👋🏻
+            Welcome! 👋🏻
           </h4>
           <p class="mb-0">
             Please sign-in to your account and start the adventure
@@ -201,7 +201,7 @@ watch(
 
 .auth-v1-top-shape,
 .auth-v1-bottom-shape {
-  position: fixed !important; // Use !important to override any possible conflicting styles
+  position: fixed !important;
   z-index: 0;
 }
 

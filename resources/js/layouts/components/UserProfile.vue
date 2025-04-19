@@ -166,23 +166,6 @@ onMounted(() => {
               <VListItemTitle>Developer Dashboard</VListItemTitle>
             </VListItem>
           </template>
-
-          <!-- 👉 Settings -->
-          <VListItem
-            to="/account-settings"
-            link
-          >
-            <template #prepend>
-              <VIcon
-                class="me-2"
-                icon="bx-cog"
-                size="22"
-              />
-            </template>
-
-            <VListItemTitle>Settings</VListItemTitle>
-          </VListItem>
-
           <!-- Divider -->
           <VDivider class="my-2" />
 

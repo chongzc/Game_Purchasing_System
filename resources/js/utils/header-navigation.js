@@ -23,6 +23,10 @@ export const getHeaderNavigationItems = user => {
         title: 'Cart',
         to: '/cart',
       },
+      {
+        title: 'Purchases',
+        to: '/purchase-history',
+      },
     ],
     developer: [
       {
