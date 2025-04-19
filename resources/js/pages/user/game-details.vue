@@ -407,7 +407,7 @@ watch(
                 <VSpacer />
                 <VChip
                   v-if="game.category"
-                  color="success"
+                  color="info"
                   class="ms-2"
                   size="small"
                 >
@@ -416,15 +416,7 @@ watch(
                 <template
                   v-for="(feature, index) in game.features"
                   :key="index"
-                >
-                  <VChip
-                    color="info"
-                    class="ms-2"
-                    size="small"
-                  >
-                    {{ feature }}
-                  </VChip>
-                </template>
+                />
               </div>
             
               <div class="d-flex align-center mb-6">

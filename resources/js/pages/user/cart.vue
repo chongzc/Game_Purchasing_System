@@ -6,7 +6,7 @@
     />
     
     <h1 class="text-h3 font-weight-bold mb-6">
-      Shopping Cart
+      My Cart
     </h1>
     
     <VRow v-if="cartItems.length > 0">
@@ -43,6 +43,8 @@
                       height="80"
                       width="80"
                       cover
+                      class="rounded me-3"
+                      style="margin: 10px"
                     />
                   </td>
                   <td>

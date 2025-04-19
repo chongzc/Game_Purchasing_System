@@ -235,7 +235,7 @@
                   style="width: 80px; height: 60px; overflow: hidden; border-radius: 4px; margin-right: 12px;"
                 >
                   <VImg
-                    :src="item.game?.g_mainImage || item.image || '/images/placeholder.jpg'"
+                    :src="item.game?.g_mainImage ? `/storage/${item.game?.g_mainImage}` : item.image || '/images/placeholder.jpg'"
                     cover
                     width="100%"
                     height="100%"
@@ -369,11 +369,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
 import { getCookie, setCookie } from '@/utils/cookie'
 import { calculateDiscountedPrice, calculateFinalTotal, calculateOriginalSubtotal, calculateTotalDiscount } from '@/utils/priceCalculations'
 import axios from 'axios'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 const router = useRouter()
 const route = useRoute()
@@ -470,13 +470,13 @@ const fetchCartItems = async () => {
       cartItems.value = [{
         c_gameId: gameId,
         c_price: gamePrice,
-        c_discount: gameDiscount,  // Add discount information
+        c_discount: gameDiscount,  
         game: {
           g_id: gameId,
           g_title: gameTitle,
           g_mainImage: gameImage,
           g_price: gamePrice,
-          g_discount: gameDiscount,  // Add discount information
+          g_discount: gameDiscount,  
         },
       }]
     } else {
