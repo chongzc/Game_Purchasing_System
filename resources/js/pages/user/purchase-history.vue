@@ -78,12 +78,12 @@
     
     <!-- Empty State -->
     <VCard
-      v-else-if="!loading && filteredPurchases.length === 0"
+      v-else-if="!loading && Object.keys(filteredPurchases).length === 0"
       class="pa-6 text-center mx-auto"
       max-width="1080"
     >
       <VIcon
-        icon="bx-receipt"
+        icon="bx-confused"
         size="64"
         color="grey-lighten-1"
       />
@@ -94,11 +94,20 @@
         {{ getEmptyStateMessage }}
       </p>
       <VBtn
+        v-if="Object.keys(purchases).length === 0"
         color="primary"
         to="/game-store"
         prepend-icon="bx-shopping-bag"
       >
         Browse Games
+      </VBtn>
+      <VBtn
+        v-else
+        color="primary"
+        prepend-icon="bx-reset"
+        @click="clearFilters"
+      >
+        Clear Filters
       </VBtn>
     </VCard>
     
@@ -308,6 +317,8 @@ const fetchPurchaseHistory = async () => {
     purchases.value = response.data.purchases || {}
     
     console.log('Purchase history:', purchases.value)
+    console.log('Purchase history length:', Object.keys(purchases.value).length)
+    console.log('Filtered purchases length:', Object.keys(filteredPurchases).length)
   } catch (error) {
     console.error('Error fetching purchase history:', error)
     errorMessage.value = 'Failed to load purchase history. Please try again.'
@@ -344,15 +355,13 @@ const clearFilters = () => {
   sortOption.value = 'date-desc'
 }
 
-
-
 // Computed property for empty state message
 const getEmptyStateMessage = computed(() => {
-  if (Object.keys(purchases.value).length === 0) {
+  if (Object.keys(purchases).length === 0) {
     return "You haven't made any purchases yet."
   }
   
-  if (Object.keys(filteredPurchases.value).length === 0) {
+  if (Object.keys(filteredPurchases).length === 0) {
     return "No purchases match your search criteria."
   }
   
