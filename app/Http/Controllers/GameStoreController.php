@@ -38,6 +38,7 @@ class GameStoreController extends Controller
     {
         // Get distinct categories from game_categories table
         return Game::select('g_category')
+            ->where('g_status', 'verified')
             ->distinct()
             ->get()
             ->map(function ($category) {

@@ -345,6 +345,7 @@ class GameController extends Controller
     {
         try {
             $categories = Game::select('g_category')
+                ->where('g_status', 'verified')
                 ->selectRaw('COUNT(*) as count')
                 ->groupBy('g_category')
                 ->orderBy('count', 'desc')
