@@ -8,7 +8,7 @@ import { defineConfig } from 'vite'
 import vuetify from 'vite-plugin-vuetify'
 import svgLoader from 'vite-svg-loader'
 
-// https://vitejs.dev/config/
+
 export default defineConfig({
   plugins: [
     laravel({
@@ -34,7 +34,6 @@ export default defineConfig({
       dts: true,
       resolvers: [
         componentName => {
-          // Auto import `VueApexCharts`
           if (componentName === 'VueApexCharts')
             return { name: 'default', from: 'vue3-apexcharts', as: 'VueApexCharts' }
         },

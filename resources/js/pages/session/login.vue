@@ -74,13 +74,12 @@ watch(
             to="/"
             class="app-logo"
           >
-            <!-- eslint-disable vue/no-v-html -->
             <VImg
               :src="logo"
               height="80"
               width="80"
               cover
-                    />
+            />
             <h1>
               Game Store
             </h1>
