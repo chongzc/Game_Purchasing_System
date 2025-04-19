@@ -1,7 +1,7 @@
 <script setup>
 import { useAuthStore } from '@/stores/auth'
 import axios from 'axios'
-import { onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import GameManagement from './game-management.vue'
 import UserManagement from './user-management.vue'
@@ -20,6 +20,8 @@ const statistics = ref({
   totalAdmins: 0,
   bannedUsers: 0,
 })
+
+let pollingInterval = null
 
 // Fetch statistics for the dashboard
 const fetchStatistics = async () => {
@@ -65,6 +67,19 @@ const fetchStatistics = async () => {
   }
 }
 
+// Start polling for statistics
+const startPolling = () => {
+  pollingInterval = setInterval(fetchStatistics, 30000) // Refresh every 30 seconds
+}
+
+// Stop polling
+const stopPolling = () => {
+  if (pollingInterval) {
+    clearInterval(pollingInterval)
+    pollingInterval = null
+  }
+}
+
 // Navigate to the game management page
 const navigateToGameManagement = () => {
   router.push('/admin/games')
@@ -77,6 +92,11 @@ const navigateToUserManagement = () => {
 
 onMounted(() => {
   fetchStatistics()
+  startPolling()
+})
+
+onUnmounted(() => {
+  stopPolling()
 })
 </script>
 
@@ -86,10 +106,16 @@ onMounted(() => {
       fluid
       class="max-width-1920"
     >
-      <div class="d-flex align-center mb-6">
+      <div class="d-flex align-center justify-space-between mb-6">
         <h1 class="text-h3 font-weight-bold">
           Admin Dashboard
         </h1>
+        <VBtn
+          color="primary"
+          @click="fetchStatistics"
+        >
+          Refresh Statistics
+        </VBtn>
       </div>
       <VRow>
         <VCol

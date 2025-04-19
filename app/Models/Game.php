@@ -67,9 +67,4 @@ class Game extends Model
     {
         return $this->hasMany(Review::class, 'r_gameId', 'g_id');
     }
-
-    public function categories()
-    {
-        return $this->hasMany(GameCategory::class, 'gc_gameId');
-    }
 }
