@@ -64,7 +64,8 @@
     <!-- Loading State -->
     <VCard
       v-if="loading"
-      class="pa-6 text-center"
+      class="pa-6 text-center mx-auto"
+      max-width="1080"
     >
       <VProgressCircular
         indeterminate
@@ -78,7 +79,8 @@
     <!-- Empty State -->
     <VCard
       v-else-if="!loading && filteredPurchases.length === 0"
-      class="pa-6 text-center"
+      class="pa-6 text-center mx-auto"
+      max-width="1080"
     >
       <VIcon
         icon="bx-receipt"
@@ -101,7 +103,11 @@
     </VCard>
     
     <!-- Purchase History -->
-    <div v-else>
+    <div
+      v-else
+      class="mx-auto"
+      style="max-width: 1080px;"
+    >
       <VCard
         v-for="(receipt, receiptNumber) in filteredPurchases"
         :key="receiptNumber"
@@ -141,8 +147,12 @@
           <VTable class="purchase-table">
             <thead>
               <tr>
-                <th>Game</th>
-                <th>Price</th>
+                <th class="game-column">
+                  Game
+                </th>
+                <th class="price-column text-right">
+                  Price
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -150,7 +160,7 @@
                 v-for="purchase in receipt"
                 :key="purchase.p_id"
               >
-                <td>
+                <td class="game-column">
                   <div class="d-flex align-center">
                     <VAvatar
                       v-if="purchase.game && purchase.game.g_image"
@@ -175,7 +185,9 @@
                     </div>
                   </div>
                 </td>
-                <td>${{ formatPrice(purchase.p_purchasePrice) }}</td>
+                <td class="price-column text-right">
+                  ${{ formatPrice(purchase.p_purchasePrice) }}
+                </td>
               </tr>
             </tbody>
             <tfoot>
@@ -183,7 +195,7 @@
                 <td class="text-right font-weight-bold">
                   Total:
                 </td>
-                <td class="font-weight-bold">
+                <td class="price-column text-right font-weight-bold">
                   ${{ calculateReceiptTotal(receipt) }}
                 </td>
               </tr>
@@ -374,6 +386,15 @@ onMounted(() => {
 .purchase-table tfoot tr td {
   border-bottom: none;
   padding-top: 1rem;
+}
+
+.game-column {
+  width: 70%;
+}
+
+.price-column {
+  width: 30%;
+  text-align: right;
 }
 </style>
 
