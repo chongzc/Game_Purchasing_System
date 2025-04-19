@@ -155,7 +155,7 @@
                 <VIcon
                   size="small"
                   icon="bx-calendar"
-                  class="mr-1"
+                  class="me-1"
                 />
                 Added: {{ formatDate(game.purchaseDate) }}
               </div>
@@ -163,7 +163,7 @@
                 <VIcon
                   size="small"
                   icon="bx-purchase-tag"
-                  class="mr-1"
+                  class="me-1"
                 />
                 Price: ${{ game.price }}
               </div>
@@ -174,7 +174,7 @@
                 <VIcon
                   size="small"
                   icon="bx-code-alt"
-                  class="mr-1"
+                  class="me-1"
                 />
                 Developer: {{ game.developer.u_name }}
               </div>
@@ -183,14 +183,14 @@
           
           <VCardActions>
             <VBtn
-              :color="game.status === 'installed' ? 'success' : 'primary'"
-              :prepend-icon="game.status === 'installed' ? 'bx-play' : 'bx-download'"
+              :color="game.status === 'installed' ? (playingGameId === game.id ? 'error' : 'success') : 'primary'"
+              :prepend-icon="game.status === 'installed' ? (playingGameId === game.id ? 'bx-stop' : 'bx-play') : 'bx-download'"
               size="small"
               variant="flat"
               class="me-2"
               @click="toggleInstallation(game)"
             >
-              {{ game.status === 'installed' ? 'Play Now' : 'Install' }}
+              {{ game.status === 'installed' ? (playingGameId === game.id ? 'Stop' : 'Play Now') : 'Install' }}
             </VBtn>
             <VBtn
               v-if="game.status === 'installed'"
@@ -263,6 +263,9 @@ const breadcrumbs = ref([
 const library = ref([])
 const loading = ref(true)
 const allGames = ref([])
+
+// Add tracking for currently playing game
+const playingGameId = ref(null)
 
 // Search and filtering
 const searchQuery = ref('')
@@ -369,8 +372,23 @@ const toggleInstallation = async game => {
   errorMessage.value = ''
   try {
     if (game.status === 'installed') {
-      // If game is installed, launch it
-      successMessage.value = `Launching ${game.title}...`
+      // If game is installed, toggle between play and stop
+      if (playingGameId.value === game.id) {
+        // Stop the game
+        playingGameId.value = null
+        successMessage.value = `Stopped ${game.title}`
+        
+        // Clear the "Stopped" message after 3 seconds
+        setTimeout(() => {
+          if (successMessage.value === `Stopped ${game.title}`) {
+            successMessage.value = ''
+          }
+        }, 3000)
+      } else {
+        // Launch the game
+        playingGameId.value = game.id
+        successMessage.value = `Launching ${game.title}...`
+      }
     } else {
       // If game is not installed, update status to installed
       const response = await axios.put(`/api/library/${game.id}/status`, {
