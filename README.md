@@ -3,13 +3,12 @@
 2. composer install
 3. cp .env.example .env
 4. php artisan key:generate
-5. php artisan migrate
+5. import game_store.sql into php my admin
 6. npm run dev
 7. php artisan serve
-
-after migrate , import game_store.sql into php my admin
-
-php artisan migrate:fresh
+8. rm public/storage
+9. php artisan storage:link
+10. Refresh the page
 
 User Accounts:
 Admin: admin@example.com (password: password123)
