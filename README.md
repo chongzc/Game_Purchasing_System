@@ -4,7 +4,6 @@
 3. cp .env.example .env
 4. php artisan key:generate
 5. import game_store.sql into php my admin
-5. import game_store.sql into php my admin
 6. npm run dev
 7. php artisan serve
 8. rm public/storage
