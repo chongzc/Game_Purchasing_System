@@ -7,10 +7,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+
+// Add necessary imports for direct SDK usage
+use Aws\S3\S3Client;
+use Aws\Exception\AwsException;
 
 
 class UserController extends Controller
@@ -66,33 +70,62 @@ class UserController extends Controller
                         'error' => $file->getError()
                     ]);
                     
-                    // Create directory if it doesn't exist
-                    $uploadPath = public_path('images/user_profile');
-                    if (!File::exists($uploadPath)) {
-                        File::makeDirectory($uploadPath, 0777, true);
-                        Log::info('Created directory: ' . $uploadPath);
+                    $directory = 'user_profile'; // Define the directory
+                    
+                    // Delete previous profile picture if it exists using Storage
+                    if ($user->u_profileImagePath && Storage::exists($user->u_profileImagePath)) {
+                        Storage::delete($user->u_profileImagePath);
+                        Log::info('Deleted previous profile picture using Storage: ' . $user->u_profileImagePath);
                     }
                     
-                    // Delete previous profile picture if it exists
-                    if ($user->u_profileImagePath) {
-                        $previousImagePath = public_path($user->u_profileImagePath);
-                        if (File::exists($previousImagePath)) {
-                            File::delete($previousImagePath);
-                            Log::info('Deleted previous profile picture: ' . $previousImagePath);
-                        }
+                    // --- TEMPORARY DEBUG: Direct S3 Upload --- //
+                    $path = false; // Default to false
+                    try {
+                        $s3Client = new S3Client([
+                            'region' => env('AWS_DEFAULT_REGION'),
+                            'version' => 'latest',
+                            // Credentials should be picked up automatically from env/role
+                        ]);
+
+                        $key = $directory . '/' . Str::uuid() . '.' . $file->getClientOriginalExtension();
+
+                        Log::info('Attempting direct S3 upload', ['bucket' => env('AWS_BUCKET'), 'key' => $key, 'source' => $file->getRealPath()]);
+
+                        $result = $s3Client->putObject([
+                            'Bucket' => env('AWS_BUCKET'),
+                            'Key'    => $key,
+                            'SourceFile' => $file->getRealPath(),
+                            'ACL'    => 'public-read' // Assuming public visibility based on previous config
+                        ]);
+
+                        Log::info('Direct S3 PutObject Result: Success', ['result_data' => $result->toArray()]);
+                        // If successful, set the path using the key we generated
+                        $path = $key;
+
+                    } catch (AwsException $e) {
+                        // Output detailed AWS error message
+                        Log::error('Direct S3 Upload Error: ' . $e->getMessage());
+                        Log::error('AWS Error Code: ' . $e->getAwsErrorCode());
+                        Log::error('AWS Error Type: ' . $e->getAwsErrorType());
+                        Log::error('AWS Request ID: ' . $e->getAwsRequestId());
+                        Log::error('Full AWS Exception: ' . $e); // Log the full exception object for more detail
+                        $path = false; // Ensure path remains false on error
+                    } catch (\Exception $e) {
+                        Log::error('Generic Error during Direct S3 Upload: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+                        $path = false; // Ensure path remains false on error
                     }
-                    
-                    // Generate unique filename
-                    $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
-                    
-                    // Move file to public directory
-                    $file->move($uploadPath, $filename);
-                    Log::info('File moved to: ' . $uploadPath . '/' . $filename);
-                    
-                    // Store file path in database
-                    $user->u_profileImagePath = 'images/user_profile/' . $filename;
+                    // --- END TEMPORARY DEBUG --- //
+
+                    // Comment out the original store method during debugging
+                    // $path = $file->store($directory);
+                    // Log::info('File stored using Storage at path: ' . $path);
+
+                    // Store the path (relative to the disk root) in the database
+                    $user->u_profileImagePath = $path;
+                    Log::info('Assigning path to user model', ['path_value' => $path]);
+
                 } catch (\Exception $e) {
-                    Log::error('File upload error: ' . $e->getMessage());
+                    Log::error('File upload block error (outer catch): ' . $e->getMessage());
                     return response()->json([
                         'message' => 'Failed to upload profile picture: ' . $e->getMessage()
                     ], 500);
@@ -145,7 +178,8 @@ class UserController extends Controller
                     'u_email' => $user->u_email,
                     'u_birthdate' => $user->u_birthdate,
                     'u_role' => $user->u_role,
-                    'profilePic' => $user->u_profileImagePath ? asset($user->u_profileImagePath) : null
+                    'role' => $user->u_role,
+                    'profilePic' => $user->u_profileImagePath ? Storage::url($user->u_profileImagePath) : null
                 ]
             ], 200, [
                 'Content-Type' => 'application/json'
@@ -187,7 +221,7 @@ class UserController extends Controller
                 'birthdate' => $user->u_birthdate,
                 'u_role' => $user->u_role,
                 'role' => $user->u_role,
-                'profilePic' => $user->u_profileImagePath ? asset($user->u_profileImagePath) : null
+                'profilePic' => $user->u_profileImagePath ? Storage::url($user->u_profileImagePath) : null
             ]);
         } catch (\Exception $e) {
             // Log the exception
@@ -211,7 +245,7 @@ class UserController extends Controller
                     'name' => $user->u_name,
                     'email' => $user->u_email,
                     'role' => $user->u_role,
-                    'profilePic' => $user->u_profileImagePath ? asset($user->u_profileImagePath) : null,
+                    'profilePic' => $user->u_profileImagePath ? Storage::url($user->u_profileImagePath) : null,
                     'created_at' => $user->created_at
                 ];
             });

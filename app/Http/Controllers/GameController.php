@@ -36,7 +36,7 @@ class GameController extends Controller
                     'originalPrice' => $game->g_price,
                     'price' => $game->g_price - ($game->g_price * ($game->g_discount / 100)),
                     'rating' => $game->g_overallRate,
-                    'image' => $game->g_mainImage
+                    'image' => $game->g_mainImage ? Storage::url($game->g_mainImage) : null
                 ];
             });
 
@@ -51,7 +51,7 @@ class GameController extends Controller
                     'originalPrice' => $game->g_price,
                     'price' => $game->g_price - ($game->g_price * ($game->g_discount / 100)),
                     'rating' => $game->g_overallRate,
-                    'image' => $game->g_mainImage
+                    'image' => $game->g_mainImage ? Storage::url($game->g_mainImage) : null
                 ];
             });
 
@@ -129,7 +129,7 @@ class GameController extends Controller
                         'price' => $game->g_price,
                         'discount' => $game->g_discount,
                         'rating' => $game->g_overallRate,
-                        'image' => $game->g_mainImage ? asset('storage/' . $game->g_mainImage) : null
+                        'image' => $game->g_mainImage ? Storage::url($game->g_mainImage) : null
                     ];
                 });
 
@@ -148,19 +148,19 @@ class GameController extends Controller
                 'developer' => $game->developer->u_name,
                 'releaseDate' => $game->created_at->format('M d, Y'),
                 'platform' => 'PC',
-                'mainImage' => $game->g_mainImage ? asset('storage/' . $game->g_mainImage) : null,
+                'mainImage' => $game->g_mainImage ? Storage::url($game->g_mainImage) : null,
                 'gallery' => array_filter([
-                    $game->g_mainImage ? asset('storage/' . $game->g_mainImage) : null,
-                    $game->g_exImg1 ? asset('storage/' . $game->g_exImg1) : null,
-                    $game->g_exImg2 ? asset('storage/' . $game->g_exImg2) : null,
-                    $game->g_exImg3 ? asset('storage/' . $game->g_exImg3) : null
+                    $game->g_mainImage ? Storage::url($game->g_mainImage) : null,
+                    $game->g_exImg1 ? Storage::url($game->g_exImg1) : null,
+                    $game->g_exImg2 ? Storage::url($game->g_exImg2) : null,
+                    $game->g_exImg3 ? Storage::url($game->g_exImg3) : null
                 ]),
                 'features' => [$game->g_category],
                 'ratingBreakdown' => $ratingBreakdown,
                 'reviews' => $game->reviews->map(function ($review) {
                     return [
                         'userName' => $review->user->u_name,
-                        'userProfileImage' => $review->user->u_profileImagePath ? asset($review->user->u_profileImagePath) : null,
+                        'userProfileImage' => $review->user->u_profileImagePath ? Storage::url($review->user->u_profileImagePath) : null,
                         'rating' => $review->r_rating,
                         'date' => $review->created_at->format('M d, Y'),
                         'comment' => $review->r_reviewText
@@ -200,7 +200,7 @@ class GameController extends Controller
                     'id' => $lib->game->g_id,
                     'title' => $lib->game->g_title,
                     'status' => $lib->ul_status,
-                    'image' => $lib->game->g_mainImage ? asset('storage/' . $lib->game->g_mainImage) : null,
+                    'image' => $lib->game->g_mainImage ? Storage::url($lib->game->g_mainImage) : null,
                 ];
             });
 
@@ -246,19 +246,19 @@ class GameController extends Controller
             $exImg3Path = null;
             
             if ($request->hasFile('g_mainImage')) {
-                $mainImagePath = $request->file('g_mainImage')->store('games', 'public');
+                $mainImagePath = $request->file('g_mainImage')->store('games');
             }
             
             if ($request->hasFile('g_exImg1')) {
-                $exImg1Path = $request->file('g_exImg1')->store('games', 'public');
+                $exImg1Path = $request->file('g_exImg1')->store('games');
             }
             
             if ($request->hasFile('g_exImg2')) {
-                $exImg2Path = $request->file('g_exImg2')->store('games', 'public');
+                $exImg2Path = $request->file('g_exImg2')->store('games');
             }
             
             if ($request->hasFile('g_exImg3')) {
-                $exImg3Path = $request->file('g_exImg3')->store('games', 'public');
+                $exImg3Path = $request->file('g_exImg3')->store('games');
             }
             
             // Create new game
@@ -315,7 +315,7 @@ class GameController extends Controller
                         'price' => $game->g_price,
                         'discount' => $game->g_discount,
                         'status' => $game->g_status,
-                        'mainImage' => $game->g_mainImage ? asset('storage/' . $game->g_mainImage) : null,
+                        'mainImage' => $game->g_mainImage ? Storage::url($game->g_mainImage) : null,
                         'overallRate' => $game->g_overallRate,
                         'category' => $game->g_category,
                         'created_at' => $game->created_at
@@ -464,7 +464,7 @@ class GameController extends Controller
                 return [
                     'id' => $game->g_id,
                     'title' => $game->g_title,
-                    'image' => $game->g_mainImage ? asset('storage/' . $game->g_mainImage) : null,
+                    'image' => $game->g_mainImage ? Storage::url($game->g_mainImage) : null,
                     'price' => $game->g_price,
                     'originalPrice' => $game->g_price,
                     'discount' => $game->g_discount,
@@ -535,11 +535,11 @@ class GameController extends Controller
                   'language' => $game->g_language,
                   'releaseDate' => $game->created_at->format('Y-m-d'),
                   'status' => $game->g_status,
-                  'mainImage' => $game->g_mainImage ? asset('storage/' . $game->g_mainImage) : null,
+                  'mainImage' => $game->g_mainImage ? Storage::url($game->g_mainImage) : null,
                   'screenshots' => array_filter([
-                      $game->g_exImg1 ? asset('storage/' . $game->g_exImg1) : null,
-                      $game->g_exImg2 ? asset('storage/' . $game->g_exImg2) : null,
-                      $game->g_exImg3 ? asset('storage/' . $game->g_exImg3) : null
+                      $game->g_exImg1 ? Storage::url($game->g_exImg1) : null,
+                      $game->g_exImg2 ? Storage::url($game->g_exImg2) : null,
+                      $game->g_exImg3 ? Storage::url($game->g_exImg3) : null
                   ]),
                   'categoryId' => $categoryId
               ];
@@ -591,32 +591,39 @@ class GameController extends Controller
               
               // Handle file uploads - only update if new files are provided
               if ($request->hasFile('g_mainImage')) {
-                  // Delete the old image if it exists
+                  // Delete the old image if it exists using the default disk
                   if ($game->g_mainImage) {
-                      Storage::delete('public/' . $game->g_mainImage);
+                      Storage::delete($game->g_mainImage);
                   }
-                  $game->g_mainImage = $request->file('g_mainImage')->store('games', 'public');
+                // Use default disk (S3)
+                  $game->g_mainImage = $request->file('g_mainImage')->store('games');
               }
               
               if ($request->hasFile('g_exImg1')) {
+                  // Delete the old image if it exists using the default disk
                   if ($game->g_exImg1) {
-                      Storage::delete('public/' . $game->g_exImg1);
+                      Storage::delete($game->g_exImg1);
                   }
-                  $game->g_exImg1 = $request->file('g_exImg1')->store('games', 'public');
+                  // Use default disk (S3)
+                  $game->g_exImg1 = $request->file('g_exImg1')->store('games');
               }
               
               if ($request->hasFile('g_exImg2')) {
+                  // Delete the old image if it exists using the default disk
                   if ($game->g_exImg2) {
-                      Storage::delete('public/' . $game->g_exImg2);
+                      Storage::delete($game->g_exImg2);
                   }
-                  $game->g_exImg2 = $request->file('g_exImg2')->store('games', 'public');
+                  // Use default disk (S3)
+                  $game->g_exImg2 = $request->file('g_exImg2')->store('games');
               }
               
               if ($request->hasFile('g_exImg3')) {
+                  // Delete the old image if it exists using the default disk
                   if ($game->g_exImg3) {
-                      Storage::delete('public/' . $game->g_exImg3);
+                      Storage::delete($game->g_exImg3);
                   }
-                  $game->g_exImg3 = $request->file('g_exImg3')->store('games', 'public');
+                  // Use default disk (S3)
+                  $game->g_exImg3 = $request->file('g_exImg3')->store('games');
               }
               
               // Update game basic info

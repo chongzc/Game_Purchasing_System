@@ -380,7 +380,7 @@ const route = useRoute()
 
 // Session timeout handling
 const sessionTimeout = ref(null)
-const sessionDuration = 5000 // 5 seconds
+const sessionDuration = 500000 // 5 seconds
 const lastVisitedPath = ref(null)
 
 // Store the current route as the last visited (before inactivity)

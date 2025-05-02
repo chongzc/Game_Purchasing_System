@@ -19,7 +19,7 @@
           >
             <div class="carousel-content">
               <VImg
-                :src="`/storage/${game.g_mainImage}`"
+                :src="game.mainImage"
                 height="500"
                 cover
                 class="carousel-image"
@@ -107,7 +107,7 @@
             elevation="0"
           >
             <VImg
-              :src="game.cover_image || '/images/placeholder-game.jpg'"
+              :src="game.coverImage || '/images/placeholder-game.jpg'"
               :alt="game.title"
               class="game-card-image"
             >
@@ -204,7 +204,7 @@
             elevation="0"
           >
             <VImg
-              :src="game.cover_image || '/images/placeholder-game.jpg'"
+              :src="game.coverImage || '/images/placeholder-game.jpg'"
               :alt="game.title"
               class="game-card-image"
             >
@@ -273,15 +273,15 @@
             <div class="d-flex mb-4">
               <VIcon
                 icon="bx-joystick"
-                class="rounded-circle bg-white text-black p-2 mr-2"
+                class="rounded-circle bg-white text-black p-2 me-2"
               />
               <VIcon
                 icon="bx-game"
-                class="rounded-circle bg-white text-black p-2 mr-2"
+                class="rounded-circle bg-white text-black p-2 me-2"
               />
               <VIcon
                 icon="bx-rocket"
-                class="rounded-circle bg-white text-black p-2 mr-2"
+                class="rounded-circle bg-white text-black p-2 me-2"
               />
               <VIcon
                 icon="bx-trophy"
@@ -329,7 +329,7 @@
             elevation="0"
           >
             <VImg
-              :src="game.cover_image || '/images/placeholder-game.jpg'"
+              :src="game.coverImage || '/images/placeholder-game.jpg'"
               :alt="game.title"
               class="game-card-image"
             >
@@ -506,7 +506,7 @@ const fetchFlashSales = async () => {
       title: game.g_title,
       price: game.g_price,
       discount: game.discount,
-      cover_image: game.g_mainImage ? `/storage/${game.g_mainImage}` : null,
+      coverImage: game.g_mainImage || null,
     }))
   } catch (error) {
     console.error('Error fetching flash sales:', error)
@@ -541,7 +541,7 @@ const fetchBestSelling = async () => {
       price: game.g_price,
       rating: game.g_overallRate || 0,
       discount: game.g_discount || 0,
-      cover_image: game.g_mainImage ? `/storage/${game.g_mainImage}` : null,
+      coverImage: game.g_mainImage || null,
     }))
   } catch (error) {
     console.error('Error fetching top rated games:', error)
@@ -562,7 +562,7 @@ const fetchExploreProducts = async () => {
       price: game.g_price,
       rating: game.g_overallRate || 0,
       discount: game.g_discount || 0,
-      cover_image: game.g_mainImage ? `/storage/${game.g_mainImage}` : null,
+      coverImage: game.g_mainImage || null,
     }))
   } catch (error) {
     console.error('Error fetching explore products:', error)
@@ -723,7 +723,7 @@ const countdown = ref({
 }
 
 /* Fix the icon spacing issues */
-.rounded-circle.bg-white.text-black.p-2.mr-2 {
+.rounded-circle.bg-white.text-black.p-2.me-2 {
   margin-right: 8px;
 }
 
@@ -847,7 +847,7 @@ const countdown = ref({
 
 .glitch-effect {
   filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.5));
-  animation: glitch 3s infinite;
+  animation: glitch 1s infinite;
 }
 
 @keyframes glitch {

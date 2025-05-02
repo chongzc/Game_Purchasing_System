@@ -103,6 +103,9 @@ const handleSubmit = async () => {
     
     if (refInputEl.value?.files?.[0]) {
       formData.append('profile_picture', refInputEl.value.files[0])
+      console.log('Appending file:', refInputEl.value.files[0])
+    } else {
+      console.log('No file selected to append.')
     }
     
     formData.append('name', accountDataLocal.value.name)
@@ -111,6 +114,8 @@ const handleSubmit = async () => {
       formData.append('birthdate', formatBirthDate(accountDataLocal.value.birthdate))
     }
     
+    console.log('Sending FormData:', formData)
+
     // Use axios for the request
     const response = await axios.post('/api/profile', formData, {
       headers: {
@@ -128,6 +133,7 @@ const handleSubmit = async () => {
         ...userData.value,
         profilePic: response.data.user.profilePic,
       }
+      console.log('Updated userData:', userData.value)
       
       // Update the display image with proper URL formatting
       userProfileImage.value = getUserProfileImage(response.data.user.profilePic)
@@ -137,7 +143,7 @@ const handleSubmit = async () => {
     }
     
     // Refresh page to reflect changes
-    window.location.reload()
+    //window.location.reload()
   } catch (error) {
     console.error('Error updating profile:', error)
     errorMessage.value = error.response?.data?.message || error.message || 'Failed to update profile'
@@ -152,7 +158,7 @@ const displayProfileImage = computed(() => {
 })
 
 onMounted(() => {
-  fetchUserProfile() // Call the function to fetch user profile on component mount
+  fetchUserProfile() 
 })
 </script>
 
