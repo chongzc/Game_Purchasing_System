@@ -6,6 +6,8 @@ use App\Models\Review;
 use App\Models\Game;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class ReviewController extends Controller
 {
@@ -48,7 +50,7 @@ class ReviewController extends Controller
                         'user' => [
                             'id' => $review->user->u_id,
                             'name' => $review->user->u_name,
-                            'avatar' => $review->user->u_profileImagePath
+                            'avatar' => $this->getProfilePicUrl($review->user->u_profileImagePath)
                         ]
                     ];
                 });
@@ -64,6 +66,39 @@ class ReviewController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Helper method to get the complete profile picture URL
+     */
+    private function getProfilePicUrl($path)
+    {
+        if (!$path) {
+            Log::info('getProfilePicUrl: Path is null or empty');
+            return null;
+        }
+        
+        Log::info('getProfilePicUrl: Processing path', ['path' => $path]);
+        
+        // If it's already a complete URL, return it
+        if (filter_var($path, FILTER_VALIDATE_URL)) {
+            Log::info('getProfilePicUrl: Path is already a URL');
+            return $path;
+        }
+        
+        // If it looks like a local storage path (starts with user_profile/), construct S3 URL
+        if (Str::startsWith($path, 'user_profile/')) {
+            $bucket = env('AWS_BUCKET');
+            $region = env('AWS_DEFAULT_REGION');
+            $url = "https://{$bucket}.s3.{$region}.amazonaws.com/{$path}";
+            Log::info('getProfilePicUrl: Constructed S3 URL', ['url' => $url]);
+            return $url;
+        }
+        
+        // For local storage paths
+        $url = asset('storage/' . $path);
+        Log::info('getProfilePicUrl: Local storage URL', ['url' => $url]);
+        return $url;
     }
 
     /**

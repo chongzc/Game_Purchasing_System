@@ -18,7 +18,7 @@ const gameData = ref({
   discount: '',
   genre: '',
   language: '',
-  coverImage: '',
+  coverImage: null,
   screenshots: [],
   status: 'pending',
 })
@@ -81,11 +81,16 @@ onMounted(async () => {
 })
 
 const handleImageUpload = (event, type) => {
-  const file = event.target.files[0]
   if (type === 'cover') {
-    gameData.value.coverImage = file
-  } else if (type === 'screenshots') {
-    gameData.value.screenshots.append(file)
+    gameData.value.coverImage = event.target.files[0]
+  } else if (type === 'screenshots' && event.target.files.length > 0) {
+    // Clear the screenshots array first if it's a new selection
+    gameData.value.screenshots = []
+
+    // Add all selected files to the screenshots array
+    for (let i = 0; i < event.target.files.length; i++) {
+      gameData.value.screenshots.push(event.target.files[i])
+    }
   }
 }
 
@@ -104,7 +109,7 @@ const handleSubmit = async () => {
       !gameData.value.price || 
       !gameData.value.genre || 
       !gameData.value.language ||
-      !gameData.value.coverImage) {
+      (!isEditing.value && !gameData.value.coverImage)) {
     errorMessage.value = 'Please fill in all required fields'
     
     return
@@ -137,32 +142,42 @@ const handleSubmit = async () => {
 
     formData.append('categories[]', categoryId)
     
-    if (gameData.value.coverImage) {
+    // Only append the coverImage file if it actually exists and is a File object
+    if (gameData.value.coverImage && gameData.value.coverImage instanceof File) {
+      console.log('Appending cover image:', gameData.value.coverImage.name)
       formData.append('g_mainImage', gameData.value.coverImage)
     }
     
+    // Handle screenshots
     if (gameData.value.screenshots.length > 0) {
-      if (gameData.value.screenshots[0]) {
-        formData.append('g_exImg1', gameData.value.screenshots[0])
-      }
-      if (gameData.value.screenshots[1]) {
-        formData.append('g_exImg2', gameData.value.screenshots[1])
-      }
-      if (gameData.value.screenshots[2]) {
-        formData.append('g_exImg3', gameData.value.screenshots[2])
-      }
+      gameData.value.screenshots.forEach((file, index) => {
+        if (file instanceof File) {
+          console.log(`Appending screenshot ${index + 1}:`, file.name)
+          formData.append(`g_exImg${index + 1}`, file)
+        }
+      })
     }
     
     let response
     
     if (isEditing.value) {
       formData.append('_method', 'PUT')
-      response = await axios.post(`/api/games/${gameId.value}`, formData)
+      response = await axios.post(`/api/games/${gameId.value}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
       successMessage.value = 'Game updated successfully! It will be reviewed by an admin.'
     } else {
-      response = await axios.post('/api/games', formData)
+      response = await axios.post('/api/games', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
       successMessage.value = 'Game submitted successfully! It will be reviewed by an admin.'
     }
+    
+    console.log('Server response:', response.data)
     
     setTimeout(() => {
       router.push('/developer-dashboard')

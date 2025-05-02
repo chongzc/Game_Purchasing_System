@@ -87,11 +87,13 @@ class UserController extends Controller
                                     $s3Client = new S3Client([
                                         'region' => env('AWS_DEFAULT_REGION'),
                                         'version' => 'latest',
-                                        'verify' => false,
                                         'credentials' => [
                                             'key'    => env('AWS_ACCESS_KEY_ID'),
                                             'secret' => env('AWS_SECRET_ACCESS_KEY'),
                                         ],
+                                        'http' => [
+                                            'verify' => false // SSL verification disabled
+                                        ]
                                     ]);
                                     
                                     $s3Client->deleteObject([

@@ -145,7 +145,6 @@ const handleSubmit = async () => {
     
     // Update UI with success
     successMessage.value = response.data.message || 'Profile updated successfully'
-    window.location.reload()
     
     // Update the local data with the new profile data
     if (response.data.user?.profilePic) {
@@ -164,6 +163,9 @@ const handleSubmit = async () => {
       // Log this to help debugging
       console.warn('No profile picture URL in response:', response.data)
     }
+    
+    // Reload the page after all processing is complete
+    window.location.reload()
     
   } catch (error) {
     console.error('Error updating profile:', error)

@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use League\CommonMark\Extension\CommonMark\Parser\Inline\EscapableParser;
+use Aws\S3\S3Client;
+use Aws\Exception\AwsException;
+use Illuminate\Support\Str;
 
 class GameController extends Controller
 {
@@ -160,7 +163,7 @@ class GameController extends Controller
                 'reviews' => $game->reviews->map(function ($review) {
                     return [
                         'userName' => $review->user->u_name,
-                        'userProfileImage' => $review->user->u_profileImagePath ? Storage::url($review->user->u_profileImagePath) : null,
+                        'userProfileImage' => $this->getProfilePicUrl($review->user->u_profileImagePath),
                         'rating' => $review->r_rating,
                         'date' => $review->created_at->format('M d, Y'),
                         'comment' => $review->r_reviewText
@@ -222,6 +225,7 @@ class GameController extends Controller
     {
         try {
             Log::info('Game creation request:', $request->all());
+            Log::info('Has file g_mainImage: ' . $request->hasFile('g_mainImage'));
             
             // Validate request
             $validated = $request->validate([
@@ -245,20 +249,183 @@ class GameController extends Controller
             $exImg2Path = null;
             $exImg3Path = null;
             
+            // Handle main image with direct S3 upload
             if ($request->hasFile('g_mainImage')) {
-                $mainImagePath = $request->file('g_mainImage')->store('games');
+                $file = $request->file('g_mainImage');
+                
+                // Log file details
+                Log::info('Main image file details', [
+                    'original_name' => $file->getClientOriginalName(),
+                    'mime_type' => $file->getMimeType(),
+                    'size' => $file->getSize(),
+                    'error' => $file->getError()
+                ]);
+                
+                $directory = 'games';
+                
+                try {
+                    // Create S3 client
+                    $s3Client = new S3Client([
+                        'region' => env('AWS_DEFAULT_REGION'),
+                        'version' => 'latest',
+                        'credentials' => [
+                            'key'    => env('AWS_ACCESS_KEY_ID'),
+                            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+                        ],
+                        'http' => [
+                            'verify' => false // SSL verification disabled
+                        ]
+                    ]);
+                    
+                    // Generate a unique key for the file
+                    $key = $directory . '/' . Str::uuid() . '.' . $file->getClientOriginalExtension();
+                    
+                    // Get file contents
+                    $fileContent = file_get_contents($file->getRealPath());
+                    
+                    if (!$fileContent) {
+                        throw new \Exception('Could not read file contents');
+                    }
+                    
+                    Log::info('Attempting direct S3 upload for game main image', [
+                        'bucket' => env('AWS_BUCKET'), 
+                        'key' => $key, 
+                        'file_size' => strlen($fileContent),
+                        'mime_type' => $file->getMimeType()
+                    ]);
+                    
+                    // Upload to S3
+                    $result = $s3Client->putObject([
+                        'Bucket' => env('AWS_BUCKET'),
+                        'Key'    => $key,
+                        'Body'   => $fileContent,
+                        'ContentType' => $file->getMimeType()
+                    ]);
+                    
+                    $mainImagePath = $key;
+                    Log::info('Main image stored at S3:', ['path' => $mainImagePath]);
+                    
+                } catch (\Exception $e) {
+                    Log::error('Error during S3 upload for main image: ' . $e->getMessage());
+                    
+                    // Fall back to local storage
+                    $mainImagePath = $file->store('games');
+                    Log::info('Main image stored locally at: ' . $mainImagePath);
+                }
             }
             
+            // Handle extra image 1 with direct S3 upload
             if ($request->hasFile('g_exImg1')) {
-                $exImg1Path = $request->file('g_exImg1')->store('games');
+                $file = $request->file('g_exImg1');
+                $directory = 'games';
+                
+                try {
+                    $s3Client = new S3Client([
+                        'region' => env('AWS_DEFAULT_REGION'),
+                        'version' => 'latest',
+                        'credentials' => [
+                            'key'    => env('AWS_ACCESS_KEY_ID'),
+                            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+                        ],
+                        'http' => [
+                            'verify' => false
+                        ]
+                    ]);
+                    
+                    $key = $directory . '/' . Str::uuid() . '.' . $file->getClientOriginalExtension();
+                    $fileContent = file_get_contents($file->getRealPath());
+                    
+                    $s3Client->putObject([
+                        'Bucket' => env('AWS_BUCKET'),
+                        'Key'    => $key,
+                        'Body'   => $fileContent,
+                        'ContentType' => $file->getMimeType()
+                    ]);
+                    
+                    $exImg1Path = $key;
+                    Log::info('Extra image 1 stored at S3:', ['path' => $exImg1Path]);
+                    
+                } catch (\Exception $e) {
+                    Log::error('Error during S3 upload for extra image 1: ' . $e->getMessage());
+                    $exImg1Path = $file->store('games');
+                    Log::info('Extra image 1 stored locally at: ' . $exImg1Path);
+                }
             }
             
+            // Handle extra image 2 with direct S3 upload
             if ($request->hasFile('g_exImg2')) {
-                $exImg2Path = $request->file('g_exImg2')->store('games');
+                $file = $request->file('g_exImg2');
+                $directory = 'games';
+                
+                try {
+                    $s3Client = new S3Client([
+                        'region' => env('AWS_DEFAULT_REGION'),
+                        'version' => 'latest',
+                        'credentials' => [
+                            'key'    => env('AWS_ACCESS_KEY_ID'),
+                            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+                        ],
+                        'http' => [
+                            'verify' => false
+                        ]
+                    ]);
+                    
+                    $key = $directory . '/' . Str::uuid() . '.' . $file->getClientOriginalExtension();
+                    $fileContent = file_get_contents($file->getRealPath());
+                    
+                    $s3Client->putObject([
+                        'Bucket' => env('AWS_BUCKET'),
+                        'Key'    => $key,
+                        'Body'   => $fileContent,
+                        'ContentType' => $file->getMimeType()
+                    ]);
+                    
+                    $exImg2Path = $key;
+                    Log::info('Extra image 2 stored at S3:', ['path' => $exImg2Path]);
+                    
+                } catch (\Exception $e) {
+                    Log::error('Error during S3 upload for extra image 2: ' . $e->getMessage());
+                    $exImg2Path = $file->store('games');
+                    Log::info('Extra image 2 stored locally at: ' . $exImg2Path);
+                }
             }
             
+            // Handle extra image 3 with direct S3 upload
             if ($request->hasFile('g_exImg3')) {
-                $exImg3Path = $request->file('g_exImg3')->store('games');
+                $file = $request->file('g_exImg3');
+                $directory = 'games';
+                
+                try {
+                    $s3Client = new S3Client([
+                        'region' => env('AWS_DEFAULT_REGION'),
+                        'version' => 'latest',
+                        'credentials' => [
+                            'key'    => env('AWS_ACCESS_KEY_ID'),
+                            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+                        ],
+                        'http' => [
+                            'verify' => false
+                        ]
+                    ]);
+                    
+                    $key = $directory . '/' . Str::uuid() . '.' . $file->getClientOriginalExtension();
+                    $fileContent = file_get_contents($file->getRealPath());
+                    
+                    $s3Client->putObject([
+                        'Bucket' => env('AWS_BUCKET'),
+                        'Key'    => $key,
+                        'Body'   => $fileContent,
+                        'ContentType' => $file->getMimeType()
+                    ]);
+                    
+                    $exImg3Path = $key;
+                    Log::info('Extra image 3 stored at S3:', ['path' => $exImg3Path]);
+                    
+                } catch (\Exception $e) {
+                    Log::error('Error during S3 upload for extra image 3: ' . $e->getMessage());
+                    $exImg3Path = $file->store('games');
+                    Log::info('Extra image 3 stored locally at: ' . $exImg3Path);
+                }
             }
             
             // Create new game
@@ -568,6 +735,7 @@ class GameController extends Controller
       {
           try {
               Log::info('Game update request:', $request->all());
+              Log::info('Has file g_mainImage: ' . $request->hasFile('g_mainImage'));
               
               // Find the game and check ownership
               $game = Game::where('g_id', $id)
@@ -591,39 +759,232 @@ class GameController extends Controller
               
               // Handle file uploads - only update if new files are provided
               if ($request->hasFile('g_mainImage')) {
-                  // Delete the old image if it exists using the default disk
+                  $file = $request->file('g_mainImage');
+                  
+                  // Log file details
+                  Log::info('File details', [
+                      'original_name' => $file->getClientOriginalName(),
+                      'mime_type' => $file->getMimeType(),
+                      'size' => $file->getSize(),
+                      'error' => $file->getError()
+                  ]);
+                  
+                  // Delete the old image if it exists
                   if ($game->g_mainImage) {
+                      Log::info('Attempting to delete old main image: ' . $game->g_mainImage);
                       Storage::delete($game->g_mainImage);
                   }
-                // Use default disk (S3)
-                  $game->g_mainImage = $request->file('g_mainImage')->store('games');
+                  
+                  // Directory for games
+                  $directory = 'games';
+                  
+                  // Direct S3 upload
+                  try {
+                      // Create S3 client
+                      $s3Client = new S3Client([
+                          'region' => env('AWS_DEFAULT_REGION'),
+                          'version' => 'latest',
+                          'credentials' => [
+                              'key'    => env('AWS_ACCESS_KEY_ID'),
+                              'secret' => env('AWS_SECRET_ACCESS_KEY'),
+                          ],
+                          'http' => [
+                              'verify' => false // SSL verification disabled
+                          ]
+                      ]);
+                      
+                      // Generate a unique key for the file
+                      $key = $directory . '/' . Str::uuid() . '.' . $file->getClientOriginalExtension();
+                      
+                      // Get file contents
+                      $fileContent = file_get_contents($file->getRealPath());
+                      
+                      if (!$fileContent) {
+                          throw new \Exception('Could not read file contents');
+                      }
+                      
+                      Log::info('Attempting direct S3 upload for game image', [
+                          'bucket' => env('AWS_BUCKET'), 
+                          'key' => $key, 
+                          'file_size' => strlen($fileContent),
+                          'mime_type' => $file->getMimeType()
+                      ]);
+                      
+                      // Upload to S3
+                      $result = $s3Client->putObject([
+                          'Bucket' => env('AWS_BUCKET'),
+                          'Key'    => $key,
+                          'Body'   => $fileContent,
+                          'ContentType' => $file->getMimeType()
+                      ]);
+                      
+                      Log::info('S3 Upload Result for Game Image:', ['result' => $result->toArray()]);
+                      
+                      // Get the full object URL from S3
+                      $objectUrl = $result->get('ObjectURL');
+                      Log::info('S3 Object URL for Game:', ['url' => $objectUrl]);
+                      
+                      // Store the path in the database (just the key)
+                      $game->g_mainImage = $key;
+                      Log::info('Stored game image path:', ['path' => $key]);
+                      
+                  } catch (AwsException $e) {
+                      Log::error('AWS S3 Error: ' . $e->getMessage());
+                      Log::error('AWS Error Code: ' . $e->getAwsErrorCode());
+                      
+                      // Fall back to local storage
+                      Log::info('Falling back to local storage for game image');
+                      $localPath = $file->store($directory, 'public');
+                      $game->g_mainImage = $localPath;
+                      Log::info('Game image stored locally at: ' . $localPath);
+                  } catch (\Exception $e) {
+                      Log::error('Error during S3 upload: ' . $e->getMessage());
+                      
+                      // Fall back to local storage
+                      Log::info('Falling back to local storage for game image');
+                      $localPath = $file->store($directory, 'public');
+                      $game->g_mainImage = $localPath;
+                      Log::info('Game image stored locally at: ' . $localPath);
+                  }
+              } else {
+                  // Keep existing image path - don't update it
+                  Log::info('No new main image provided, keeping existing: ' . $game->g_mainImage);
               }
               
+              // Apply the same direct S3 upload for other game images
               if ($request->hasFile('g_exImg1')) {
-                  // Delete the old image if it exists using the default disk
+                  // Handle g_exImg1 using the same S3 upload approach
+                  $file = $request->file('g_exImg1');
+                  
+                  // Delete old image if it exists
                   if ($game->g_exImg1) {
+                      Log::info('Attempting to delete old extra image 1: ' . $game->g_exImg1);
                       Storage::delete($game->g_exImg1);
                   }
-                  // Use default disk (S3)
-                  $game->g_exImg1 = $request->file('g_exImg1')->store('games');
+                  
+                  // Upload using the same S3 approach as above
+                  $directory = 'games';
+                  try {
+                      $s3Client = new S3Client([
+                          'region' => env('AWS_DEFAULT_REGION'),
+                          'version' => 'latest',
+                          'credentials' => [
+                              'key'    => env('AWS_ACCESS_KEY_ID'),
+                              'secret' => env('AWS_SECRET_ACCESS_KEY'),
+                          ],
+                          'http' => [
+                              'verify' => false
+                          ]
+                      ]);
+                      
+                      $key = $directory . '/' . Str::uuid() . '.' . $file->getClientOriginalExtension();
+                      $fileContent = file_get_contents($file->getRealPath());
+                      
+                      $s3Client->putObject([
+                          'Bucket' => env('AWS_BUCKET'),
+                          'Key'    => $key,
+                          'Body'   => $fileContent,
+                          'ContentType' => $file->getMimeType()
+                      ]);
+                      
+                      $game->g_exImg1 = $key;
+                      Log::info('New extra image 1 stored at: ' . $key);
+                      
+                  } catch (\Exception $e) {
+                      Log::error('Error uploading extra image 1: ' . $e->getMessage());
+                      $localPath = $file->store($directory, 'public');
+                      $game->g_exImg1 = $localPath;
+                  }
               }
               
               if ($request->hasFile('g_exImg2')) {
-                  // Delete the old image if it exists using the default disk
+                  // Handle g_exImg2 using the same S3 upload approach
+                  $file = $request->file('g_exImg2');
+                  
+                  // Delete old image if it exists
                   if ($game->g_exImg2) {
+                      Log::info('Attempting to delete old extra image 2: ' . $game->g_exImg2);
                       Storage::delete($game->g_exImg2);
                   }
-                  // Use default disk (S3)
-                  $game->g_exImg2 = $request->file('g_exImg2')->store('games');
+                  
+                  // Upload using the same S3 approach as above
+                  $directory = 'games';
+                  try {
+                      $s3Client = new S3Client([
+                          'region' => env('AWS_DEFAULT_REGION'),
+                          'version' => 'latest',
+                          'credentials' => [
+                              'key'    => env('AWS_ACCESS_KEY_ID'),
+                              'secret' => env('AWS_SECRET_ACCESS_KEY'),
+                          ],
+                          'http' => [
+                              'verify' => false
+                          ]
+                      ]);
+                      
+                      $key = $directory . '/' . Str::uuid() . '.' . $file->getClientOriginalExtension();
+                      $fileContent = file_get_contents($file->getRealPath());
+                      
+                      $s3Client->putObject([
+                          'Bucket' => env('AWS_BUCKET'),
+                          'Key'    => $key,
+                          'Body'   => $fileContent,
+                          'ContentType' => $file->getMimeType()
+                      ]);
+                      
+                      $game->g_exImg2 = $key;
+                      Log::info('New extra image 2 stored at: ' . $key);
+                      
+                  } catch (\Exception $e) {
+                      Log::error('Error uploading extra image 2: ' . $e->getMessage());
+                      $localPath = $file->store($directory, 'public');
+                      $game->g_exImg2 = $localPath;
+                  }
               }
               
               if ($request->hasFile('g_exImg3')) {
-                  // Delete the old image if it exists using the default disk
+                  // Handle g_exImg3 using the same S3 upload approach
+                  $file = $request->file('g_exImg3');
+                  
+                  // Delete old image if it exists
                   if ($game->g_exImg3) {
+                      Log::info('Attempting to delete old extra image 3: ' . $game->g_exImg3);
                       Storage::delete($game->g_exImg3);
                   }
-                  // Use default disk (S3)
-                  $game->g_exImg3 = $request->file('g_exImg3')->store('games');
+                  
+                  // Upload using the same S3 approach as above
+                  $directory = 'games';
+                  try {
+                      $s3Client = new S3Client([
+                          'region' => env('AWS_DEFAULT_REGION'),
+                          'version' => 'latest',
+                          'credentials' => [
+                              'key'    => env('AWS_ACCESS_KEY_ID'),
+                              'secret' => env('AWS_SECRET_ACCESS_KEY'),
+                          ],
+                          'http' => [
+                              'verify' => false
+                          ]
+                      ]);
+                      
+                      $key = $directory . '/' . Str::uuid() . '.' . $file->getClientOriginalExtension();
+                      $fileContent = file_get_contents($file->getRealPath());
+                      
+                      $s3Client->putObject([
+                          'Bucket' => env('AWS_BUCKET'),
+                          'Key'    => $key,
+                          'Body'   => $fileContent,
+                          'ContentType' => $file->getMimeType()
+                      ]);
+                      
+                      $game->g_exImg3 = $key;
+                      Log::info('New extra image 3 stored at: ' . $key);
+                      
+                  } catch (\Exception $e) {
+                      Log::error('Error uploading extra image 3: ' . $e->getMessage());
+                      $localPath = $file->store($directory, 'public');
+                      $game->g_exImg3 = $localPath;
+                  }
               }
               
               // Update game basic info
@@ -653,4 +1014,37 @@ class GameController extends Controller
               ], 500);
           }
       }
+
+    /**
+     * Helper method to get the complete profile picture URL
+     */
+    private function getProfilePicUrl($path)
+    {
+        if (!$path) {
+            Log::info('getProfilePicUrl: Path is null or empty');
+            return null;
+        }
+        
+        Log::info('getProfilePicUrl: Processing path', ['path' => $path]);
+        
+        // If it's already a complete URL, return it
+        if (filter_var($path, FILTER_VALIDATE_URL)) {
+            Log::info('getProfilePicUrl: Path is already a URL');
+            return $path;
+        }
+        
+        // If it looks like a local storage path (starts with user_profile/), construct S3 URL
+        if (Str::startsWith($path, 'user_profile/')) {
+            $bucket = env('AWS_BUCKET');
+            $region = env('AWS_DEFAULT_REGION');
+            $url = "https://{$bucket}.s3.{$region}.amazonaws.com/{$path}";
+            Log::info('getProfilePicUrl: Constructed S3 URL', ['url' => $url]);
+            return $url;
+        }
+        
+        // For local storage paths
+        $url = asset('storage/' . $path);
+        Log::info('getProfilePicUrl: Local storage URL', ['url' => $url]);
+        return $url;
+    }
 }
