@@ -158,3 +158,6 @@ Route::get('/store/flash-sales', [GameStoreController::class, 'getFlashSales']);
 Route::get('/store/categories', [GameStoreController::class, 'getCategories']);
 Route::get('/store/best-selling', [GameStoreController::class, 'getBestSelling']);
 Route::get('/store/explore', [GameStoreController::class, 'getExploreProducts']);
+
+// Profile verification route
+Route::get('/check-profile-picture/{userId?}', [UserController::class, 'checkProfilePicture']);

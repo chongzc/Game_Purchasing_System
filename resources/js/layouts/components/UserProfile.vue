@@ -1,8 +1,7 @@
 <script setup>
 import { useAuthStore } from '@/stores/auth'
 import avatar1 from '@images/avatars/avatar-1.png'
-import axios from 'axios'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 
@@ -12,13 +11,34 @@ const router = useRouter()
 // Add getUserProfileImage function
 const userProfileImage = ref(avatar1) // Initialize with default avatar
 
+// Computed property to always get a valid image URL
+const displayProfileImage = computed(() => {
+  const profilePic = userProfileImage.value
+  
+  if (!profilePic) return avatar1
+  
+  // If it's already a valid URL, return it
+  if (profilePic.startsWith('http://') || profilePic.startsWith('https://')) {
+    return profilePic
+  }
+  
+  // Otherwise, try to construct an absolute URL
+  try {
+    return new URL(profilePic, window.location.origin).href
+  } catch (e) {
+    console.error('Invalid profile image path:', profilePic, e)
+    
+    return avatar1
+  }
+})
+
 const fetchUserProfile = async () => {
   try {
-    const response = await axios.get('/api/profile') // Fetch user profile data
-    const userData = response.data // Assuming the response contains user data
-
-    console.log('User profile data:', userData)
-    userProfileImage.value = userData.profilePic ? userData.profilePic : avatar1 // Set the profile image
+    // Use the auth store's refreshUserData method to update user data across the app
+    await authStore.refreshUserData()
+    
+    // Get the profile pic from the auth store
+    userProfileImage.value = authStore.user?.profilePic || avatar1
     console.log('User profile image:', userProfileImage.value)
   } catch (error) {
     console.error('Error fetching user profile:', error)
@@ -71,7 +91,7 @@ onMounted(() => {
       variant="tonal"
     >
       <VImg
-        :src="userProfileImage"
+        :src="displayProfileImage"
         alt="User Profile Image"
       />
 
@@ -99,7 +119,7 @@ onMounted(() => {
                     variant="tonal"
                   >
                     <VImg
-                      :src="userProfileImage"
+                      :src="displayProfileImage"
                       alt="User Profile Image"
                     />
                   </VAvatar>

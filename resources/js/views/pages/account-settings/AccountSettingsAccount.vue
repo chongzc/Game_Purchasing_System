@@ -1,7 +1,11 @@
 <script setup>
+import { useAuthStore } from '@/stores/auth'
 import avatar1 from '@images/avatars/avatar-1.png'
 import axios from 'axios'
 import { computed, onMounted, ref } from 'vue'
+
+// Get auth store instance
+const authStore = useAuthStore()
 
 // Reactive variable to hold the profile image URL
 const userProfileImage = ref('')
@@ -28,20 +32,22 @@ const fetchUserProfile = async () => {
 
 // Function to get profile image source with proper URL handling
 const getUserProfileImage = imageSource => {
-  if (!imageSource) return avatar1
+  // Use default avatar if no image source
+  if (!imageSource) {
+    return avatar1
+  }
   
-  // If it's already a complete URL, return it
+  // If it's already a complete URL (including S3 URLs), return it as-is
   if (imageSource.startsWith('http://') || imageSource.startsWith('https://')) {
+    console.log('Using provided URL directly:', imageSource)
+    
     return imageSource
   }
   
   // If it's a relative path, convert it to absolute URL
-  if (imageSource.startsWith('/')) {
-    return window.location.origin + imageSource
-  }
+  console.log('Converting relative path to absolute URL:', imageSource)
   
-  // For paths without leading slash
-  return window.location.origin + '/' + imageSource
+  return new URL(imageSource, window.location.origin).href
 }
 
 const accountDataLocal = ref({
@@ -77,16 +83,29 @@ const formatBirthDate = date => {
 }
 
 const changeAvatar = event => {
+  console.log('File input change event triggered', event)
+
   const file = event.target.files[0]
+  
   if (file) {
+    console.log('File selected:', file.name, file.size, file.type)
+
     const fileReader = new FileReader()
 
     fileReader.onload = () => {
-      if (typeof fileReader.result === 'string')
+      console.log('File read completed')
+      if (typeof fileReader.result === 'string') {
         userProfileImage.value = fileReader.result // This is a data URL which is a valid path
+        console.log('Preview image updated')
+      }
+    }
+    fileReader.onerror = error => {
+      console.error('Error reading file:', error)
     }
     fileReader.readAsDataURL(file)
   } else {
+    console.log('No file was selected')
+
     // If no file is selected, use default avatar
     userProfileImage.value = avatar1
   }
@@ -126,6 +145,7 @@ const handleSubmit = async () => {
     
     // Update UI with success
     successMessage.value = response.data.message || 'Profile updated successfully'
+    window.location.reload()
     
     // Update the local data with the new profile data
     if (response.data.user?.profilePic) {
@@ -137,13 +157,14 @@ const handleSubmit = async () => {
       
       // Update the display image with proper URL formatting
       userProfileImage.value = getUserProfileImage(response.data.user.profilePic)
+      
+      // Refresh global user data to update the header profile image
+      await authStore.refreshUserData()
     } else {
-      // If no profile picture is returned, use default avatar
-      userProfileImage.value = avatar1
+      // Log this to help debugging
+      console.warn('No profile picture URL in response:', response.data)
     }
     
-    // Refresh page to reflect changes
-    //window.location.reload()
   } catch (error) {
     console.error('Error updating profile:', error)
     errorMessage.value = error.response?.data?.message || error.message || 'Failed to update profile'
@@ -184,7 +205,8 @@ onMounted(() => {
             <div class="d-flex flex-wrap gap-2">
               <VBtn
                 color="primary"
-                @click="refInputEl?.click()"
+                :disabled="isSubmitting"
+                @click="() => { console.log('Upload button clicked'); refInputEl?.click(); }"
               >
                 <VIcon
                   icon="bx-cloud-upload"
@@ -199,7 +221,7 @@ onMounted(() => {
                 name="file"
                 accept=".jpeg,.png,.jpg,GIF"
                 hidden
-                @input="changeAvatar"
+                @change="changeAvatar"
               >
             </div>
 
