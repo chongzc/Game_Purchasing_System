@@ -185,7 +185,7 @@ const fetchWishlist = async () => {
       wishlistGames.value = (response.data.wishlist || []).map(game => ({
         id: game.id,
         title: game.title,
-        image: game.image ? `/storage/${game.image}` : '/images/placeholder-game.jpg',
+        image: game.image || '/images/placeholder-game.jpg',
         price: game.price || 0,
         discount: game.discount || 0,
         rating: game.rating || 0,

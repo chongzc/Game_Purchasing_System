@@ -18,13 +18,63 @@ class AdminController extends Controller
      ****************************/
     
     /**
+     * Helper method to get the proper URL for game images
+     * 
+     * @param string|null $path
+     * @return string|null
+     */
+    private function getGameImageUrl($path)
+    {
+        if (!$path) {
+            Log::info('getGameImageUrl: Path is null or empty');
+            return null;
+        }
+        
+        Log::info('getGameImageUrl: Processing path', ['path' => $path]);
+        
+        // If it's already a complete URL, return it
+        if (filter_var($path, FILTER_VALIDATE_URL)) {
+            Log::info('getGameImageUrl: Path is already a URL');
+            return $path;
+        }
+        
+        // If it looks like an S3 key (starts with games/), construct S3 URL
+        if (strpos($path, 'games/') === 0) {
+            $bucket = env('AWS_BUCKET');
+            $region = env('AWS_DEFAULT_REGION');
+            $url = "https://{$bucket}.s3.{$region}.amazonaws.com/{$path}";
+            Log::info('getGameImageUrl: Constructed S3 URL', ['url' => $url]);
+            return $url;
+        }
+        
+        // For local storage paths
+        $url = asset('storage/' . $path);
+        Log::info('getGameImageUrl: Local storage URL', ['url' => $url]);
+        return $url;
+    }
+    
+    /**
      * Display a listing of all games for admin
      */
     public function getAllGames()
     {
         $games = Game::with(['developer'])
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->get()
+            ->map(function ($game) {
+                return [
+                    'g_id' => $game->g_id,
+                    'g_title' => $game->g_title,
+                    'g_description' => $game->g_description,
+                    'g_price' => $game->g_price,
+                    'g_discount' => $game->g_discount,
+                    'g_status' => $game->g_status,
+                    'g_category' => $game->g_category,
+                    'g_mainImage' => $this->getGameImageUrl($game->g_mainImage),
+                    'created_at' => $game->created_at,
+                    'developer' => $game->developer,
+                ];
+            });
             
         return response()->json([
             'success' => true,
@@ -39,6 +89,9 @@ class AdminController extends Controller
     {
         $game = Game::with(['developer', 'reviews'])
             ->findOrFail($id);
+            
+        // Format the game image URL
+        $game->g_mainImage = $this->getGameImageUrl($game->g_mainImage);
             
         return response()->json([
             'success' => true,
@@ -66,6 +119,9 @@ class AdminController extends Controller
         $game = Game::findOrFail($id);
         $game->g_status = $request->status;
         $game->save();
+        
+        // Format the game image URL
+        $game->g_mainImage = $this->getGameImageUrl($game->g_mainImage);
         
         return response()->json([
             'success' => true,

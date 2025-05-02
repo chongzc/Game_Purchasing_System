@@ -7,9 +7,46 @@ use App\Models\Wishlist;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class WishlistController extends Controller
 {
+    /**
+     * Helper method to get the proper URL for game images
+     * 
+     * @param string|null $path
+     * @return string|null
+     */
+    private function getGameImageUrl($path)
+    {
+        if (!$path) {
+            Log::info('getGameImageUrl: Path is null or empty');
+            return null;
+        }
+        
+        Log::info('getGameImageUrl: Processing path', ['path' => $path]);
+        
+        // If it's already a complete URL, return it
+        if (filter_var($path, FILTER_VALIDATE_URL)) {
+            Log::info('getGameImageUrl: Path is already a URL');
+            return $path;
+        }
+        
+        // If it looks like an S3 key (starts with games/), construct S3 URL
+        if (strpos($path, 'games/') === 0) {
+            $bucket = env('AWS_BUCKET');
+            $region = env('AWS_DEFAULT_REGION');
+            $url = "https://{$bucket}.s3.{$region}.amazonaws.com/{$path}";
+            Log::info('getGameImageUrl: Constructed S3 URL', ['url' => $url]);
+            return $url;
+        }
+        
+        // For local storage paths
+        $url = asset('storage/' . $path);
+        Log::info('getGameImageUrl: Local storage URL', ['url' => $url]);
+        return $url;
+    }
+
     /**
      * Get user's wishlist status for a specific game
      *
@@ -68,7 +105,7 @@ class WishlistController extends Controller
                         'title' => $item->game->g_title,
                         'price' => $item->game->g_price,
                         'discount' => $item->game->g_discount,
-                        'image' => $item->game->g_mainImage,
+                        'image' => $this->getGameImageUrl($item->game->g_mainImage),
                         'rating' => $item->game->g_overallRate,
                         'addedAt' => $item->created_at
                     ];

@@ -6,6 +6,8 @@ use App\Models\Game;
 use App\Models\UserLib;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class UserLibraryController extends Controller
@@ -24,6 +26,42 @@ class UserLibraryController extends Controller
         return UserLib::where('ul_userId', Auth::user()->u_id)
             ->pluck('ul_gameId')
             ->toArray();
+    }
+
+    /**
+     * Helper method to get the proper URL for game images
+     * 
+     * @param string|null $path
+     * @return string|null
+     */
+    private function getGameImageUrl($path)
+    {
+        if (!$path) {
+            Log::info('getGameImageUrl: Path is null or empty');
+            return null;
+        }
+        
+        Log::info('getGameImageUrl: Processing path', ['path' => $path]);
+        
+        // If it's already a complete URL, return it
+        if (filter_var($path, FILTER_VALIDATE_URL)) {
+            Log::info('getGameImageUrl: Path is already a URL');
+            return $path;
+        }
+        
+        // If it looks like an S3 key (starts with games/), construct S3 URL
+        if (strpos($path, 'games/') === 0) {
+            $bucket = env('AWS_BUCKET');
+            $region = env('AWS_DEFAULT_REGION');
+            $url = "https://{$bucket}.s3.{$region}.amazonaws.com/{$path}";
+            Log::info('getGameImageUrl: Constructed S3 URL', ['url' => $url]);
+            return $url;
+        }
+        
+        // For local storage paths
+        $url = asset('storage/' . $path);
+        Log::info('getGameImageUrl: Local storage URL', ['url' => $url]);
+        return $url;
     }
 
     /**
@@ -65,7 +103,7 @@ class UserLibraryController extends Controller
                 'game' => [
                     'g_id' => $game->g_id,
                     'g_title' => $game->g_title,
-                    'g_image' => $game->g_mainImage ? asset('storage/' . $game->g_mainImage) : null,
+                    'g_image' => $this->getGameImageUrl($game->g_mainImage),
                     'g_price' => $game->g_price,
                     'g_description' => $game->g_description,
                     'developer' => $game->developer
